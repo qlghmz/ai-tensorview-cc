@@ -20,9 +20,9 @@ export function Recommendations() {
     <section className="mx-auto mt-16 max-w-[1200px] px-6">
       <div className="flex items-end justify-between">
         <h2 className="text-2xl font-bold text-foreground">为你推荐</h2>
-        <a href="#" className="text-sm text-muted-foreground hover:text-brand-orange transition">
+        <Link to="/search" className="text-sm text-muted-foreground hover:text-brand-orange transition">
           查看更多 →
-        </a>
+        </Link>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-6">
