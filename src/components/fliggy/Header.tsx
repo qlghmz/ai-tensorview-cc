@@ -1,17 +1,19 @@
 import { Search, Camera, ShoppingCart, User } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
 import pigLogo from "@/assets/pig-logo.png";
 
 export function Header() {
+  const navigate = useNavigate();
   return (
     <header className="w-full bg-gradient-to-b from-[oklch(0.96_0.08_95)] to-transparent">
       <div className="mx-auto flex max-w-[1200px] items-center gap-6 px-6 py-5">
         {/* Logo */}
-        <a href="/" className="flex items-center gap-2 shrink-0">
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <img src={pigLogo} alt="飞猪旅行" width={48} height={48} className="h-12 w-12" />
           <span className="text-2xl font-bold tracking-tight text-foreground">
             飞猪<span className="text-brand-orange">旅行</span>
           </span>
-        </a>
+        </Link>
 
         {/* Search */}
         <div className="flex-1 flex items-center rounded-full bg-white shadow-[var(--shadow-soft)] pl-5 pr-1.5 py-1.5 max-w-[560px]">
