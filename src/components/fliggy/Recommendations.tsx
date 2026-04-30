@@ -27,8 +27,10 @@ export function Recommendations() {
 
       <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-6">
         {items.map((item, i) => (
-          <article
+          <Link
             key={i}
+            to="/hotel/$hotelId"
+            params={{ hotelId: String((i % 6) + 1) }}
             className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] hover:-translate-y-1 transition-[var(--transition-smooth)]"
           >
             <div className="aspect-square overflow-hidden">
@@ -54,7 +56,7 @@ export function Recommendations() {
                 <span className="text-[10px] text-muted-foreground">已售{item.sold}/件</span>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
