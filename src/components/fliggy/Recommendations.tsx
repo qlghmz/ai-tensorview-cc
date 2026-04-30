@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import jiuzhai from "@/assets/dest-jiuzhaigou.jpg";
 import disney from "@/assets/dest-disney.jpg";
 import universal from "@/assets/dest-universal.jpg";
