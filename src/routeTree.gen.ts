@@ -19,6 +19,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
+import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -70,6 +71,11 @@ const PProjectIdRoute = PProjectIdRouteImport.update({
   path: '/p/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAiStreamRoute = ApiAiStreamRouteImport.update({
+  id: '/api/ai/stream',
+  path: '/api/ai/stream',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
+  '/api/ai/stream': typeof ApiAiStreamRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
+  '/api/ai/stream': typeof ApiAiStreamRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
+  '/api/ai/stream': typeof ApiAiStreamRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/p/$projectId'
     | '/project/$projectId'
+    | '/api/ai/stream'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/p/$projectId'
     | '/project/$projectId'
+    | '/api/ai/stream'
   id:
     | '__root__'
     | '/'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/p/$projectId'
     | '/project/$projectId'
+    | '/api/ai/stream'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   PProjectIdRoute: typeof PProjectIdRoute
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
+  ApiAiStreamRoute: typeof ApiAiStreamRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/ai/stream': {
+      id: '/api/ai/stream'
+      path: '/api/ai/stream'
+      fullPath: '/api/ai/stream'
+      preLoaderRoute: typeof ApiAiStreamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -246,7 +266,17 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   PProjectIdRoute: PProjectIdRoute,
   ProjectProjectIdRoute: ProjectProjectIdRoute,
+  ApiAiStreamRoute: ApiAiStreamRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
