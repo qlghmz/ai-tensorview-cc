@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import jiuzhai from "@/assets/dest-jiuzhaigou.jpg";
 import disney from "@/assets/dest-disney.jpg";
 import universal from "@/assets/dest-universal.jpg";
@@ -19,15 +20,17 @@ export function Recommendations() {
     <section className="mx-auto mt-16 max-w-[1200px] px-6">
       <div className="flex items-end justify-between">
         <h2 className="text-2xl font-bold text-foreground">为你推荐</h2>
-        <a href="#" className="text-sm text-muted-foreground hover:text-brand-orange transition">
+        <Link to="/search" className="text-sm text-muted-foreground hover:text-brand-orange transition">
           查看更多 →
-        </a>
+        </Link>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-6">
         {items.map((item, i) => (
-          <article
+          <Link
             key={i}
+            to="/hotel/$hotelId"
+            params={{ hotelId: String((i % 6) + 1) }}
             className="group cursor-pointer overflow-hidden rounded-2xl bg-white shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-card)] hover:-translate-y-1 transition-[var(--transition-smooth)]"
           >
             <div className="aspect-square overflow-hidden">
@@ -53,7 +56,7 @@ export function Recommendations() {
                 <span className="text-[10px] text-muted-foreground">已售{item.sold}/件</span>
               </div>
             </div>
-          </article>
+          </Link>
         ))}
       </div>
     </section>
