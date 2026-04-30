@@ -1,12 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
-import { Sparkles, Send, Loader2, ArrowLeft, Code2, Eye, Download } from "lucide-react";
+import { Sparkles, Send, Loader2, ArrowLeft, Code2, Eye, Download, Share2, Check, Copy } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
-import { generateWebsite } from "@/server/ai.functions";
+import { generateWebsite, toggleProjectPublic } from "@/server/ai.functions";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -40,11 +40,17 @@ function ProjectEditor() {
   const { user, loading: authLoading, session } = useAuth();
   const navigate = useNavigate();
 
-  const [project, setProject] = useState<{ name: string; preview_html: string | null } | null>(null);
+  const [project, setProject] = useState<{
+    name: string;
+    preview_html: string | null;
+    is_public: boolean;
+  } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [view, setView] = useState<"preview" | "code">("preview");
+  const [shareOpen, setShareOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -55,12 +61,12 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, preview_html").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, preview_html, is_public").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
         toast.error("项目未找到");
-        navigate({ to: "/dashboard" });
+        navigate({ to: "/dashboard", search: {} });
         return;
       }
       setProject(p.data);
@@ -78,7 +84,6 @@ function ProjectEditor() {
     setInput("");
     setSending(true);
 
-    // Optimistic user message
     const tempId = "tmp-" + Date.now();
     setMessages((prev) => [
       ...prev,
@@ -91,10 +96,9 @@ function ProjectEditor() {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
 
-      // Refresh from DB to get real IDs
       const [{ data: msgs }, { data: proj }] = await Promise.all([
         supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-        supabase.from("projects").select("name, preview_html").eq("id", projectId).single(),
+        supabase.from("projects").select("name, preview_html, is_public").eq("id", projectId).single(),
       ]);
       setMessages(msgs ?? []);
       if (proj) setProject(proj);
@@ -108,7 +112,6 @@ function ProjectEditor() {
     }
   };
 
-  // Fire initial prompt once
   useEffect(() => {
     if (
       !initialFiredRef.current &&
@@ -121,6 +124,7 @@ function ProjectEditor() {
       initialFiredRef.current = true;
       send(search.initial);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, session, messages.length, search.initial]);
 
   const html = project?.preview_html ?? PLACEHOLDER_HTML;
@@ -136,6 +140,32 @@ function ProjectEditor() {
     URL.revokeObjectURL(url);
   };
 
+  const togglePublic = async (next: boolean) => {
+    if (!session || !project) return;
+    try {
+      await toggleProjectPublic({
+        data: { projectId, isPublic: next },
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      setProject({ ...project, is_public: next });
+      toast.success(next ? "已设为公开" : "已设为私有");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "切换失败");
+    }
+  };
+
+  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/p/${projectId}` : "";
+
+  const copyShare = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1600);
+    } catch {
+      toast.error("复制失败");
+    }
+  };
+
   if (authLoading || !project) {
     return (
       <div className="min-h-screen grid place-items-center">
@@ -146,9 +176,8 @@ function ProjectEditor() {
 
   return (
     <div className="h-screen flex flex-col" style={{ background: "var(--gradient-hero)" }}>
-      {/* Top bar */}
       <header className="border-b border-border/40 backdrop-blur-xl bg-background/60 px-4 py-3 flex items-center gap-3 shrink-0">
-        <Link to="/dashboard" className="grid h-8 w-8 place-items-center rounded-lg hover:bg-accent/50 transition">
+        <Link to="/dashboard" search={{}} className="grid h-8 w-8 place-items-center rounded-lg hover:bg-accent/50 transition">
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="grid h-8 w-8 place-items-center rounded-lg btn-brand">
@@ -172,6 +201,57 @@ function ProjectEditor() {
             <Code2 className="h-3 w-3" /> 代码
           </button>
         </div>
+
+        {/* Share */}
+        <div className="relative">
+          <button
+            onClick={() => setShareOpen((o) => !o)}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
+          >
+            <Share2 className="h-3 w-3" /> 分享
+          </button>
+          {shareOpen && (
+            <div className="absolute right-0 top-full mt-2 w-72 glass rounded-2xl p-4 shadow-[var(--shadow-card)] z-50">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-medium">公开访问</div>
+                <button
+                  onClick={() => togglePublic(!project.is_public)}
+                  className={`relative h-5 w-9 rounded-full transition ${project.is_public ? "bg-brand" : "bg-muted"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${project.is_public ? "left-[18px]" : "left-0.5"}`}
+                  />
+                </button>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {project.is_public ? "任何持有链接的人都可以查看你的页面。" : "仅你自己可以访问。"}
+              </p>
+              {project.is_public && (
+                <>
+                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-input border border-border px-2 py-1.5">
+                    <input
+                      readOnly
+                      value={shareUrl}
+                      className="flex-1 bg-transparent text-xs outline-none truncate"
+                    />
+                    <button onClick={copyShare} className="rounded-md btn-brand p-1.5">
+                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    </button>
+                  </div>
+                  <a
+                    href={shareUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 block text-center text-xs text-brand hover:underline"
+                  >
+                    在新标签页打开 ↗
+                  </a>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
         <button
           onClick={download}
           disabled={!project.preview_html}
@@ -181,9 +261,7 @@ function ProjectEditor() {
         </button>
       </header>
 
-      {/* Body */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[420px_1fr] min-h-0">
-        {/* Chat */}
         <aside className="border-r border-border/40 flex flex-col min-h-0 bg-background/40">
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 && !sending && (
@@ -196,15 +274,12 @@ function ProjectEditor() {
               <div key={m.id} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-sm ${
-                    m.role === "user"
-                      ? "btn-brand"
-                      : "glass"
+                    m.role === "user" ? "btn-brand" : "glass"
                   }`}
                 >
                   {m.role === "assistant" ? (
                     <div className="prose prose-sm prose-invert max-w-none [&_pre]:bg-black/40 [&_pre]:rounded-lg [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:text-xs">
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                        {/* Hide raw HTML block from chat for readability */}
                         {m.content.replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见右侧预览_")}
                       </ReactMarkdown>
                     </div>
@@ -256,7 +331,6 @@ function ProjectEditor() {
           </form>
         </aside>
 
-        {/* Preview / Code */}
         <main className="relative min-h-0">
           {view === "preview" ? (
             <iframe

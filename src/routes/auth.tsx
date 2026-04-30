@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Sparkles, Mail, Lock, Loader2 } from "lucide-react";
+import { Sparkles, Mail, Lock, Loader2, Phone, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth-context";
@@ -17,14 +17,26 @@ export const Route = createFileRoute("/auth")({
   component: AuthPage,
 });
 
+type Method = "email" | "phone";
+
 function AuthPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const [mode, setMode] = useState<"signin" | "signup">(search.mode ?? "signin");
+  const [method, setMethod] = useState<Method>("email");
+
+  // email
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+
+  // phone
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -33,7 +45,13 @@ function AuthPage() {
     }
   }, [user, authLoading, navigate, search.prompt]);
 
-  const submit = async (e: React.FormEvent) => {
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const submitEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
@@ -56,6 +74,45 @@ function AuthPage() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "操作失败";
       toast.error(msg.includes("Invalid login") ? "邮箱或密码错误" : msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const sendOtp = async () => {
+    if (!phone.trim()) return toast.error("请输入手机号");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone: phone.trim(),
+        options: mode === "signup" ? { data: { display_name: name || phone } } : undefined,
+      });
+      if (error) throw error;
+      setOtpSent(true);
+      setCooldown(60);
+      toast.success("验证码已发送");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "发送失败";
+      toast.error(msg.includes("Phone provider") ? "手机号登录暂未启用，请联系管理员" : msg);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const verifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp.trim()) return;
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: phone.trim(),
+        token: otp.trim(),
+        type: "sms",
+      });
+      if (error) throw error;
+      toast.success("登录成功");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "验证失败");
     } finally {
       setBusy(false);
     }
@@ -103,56 +160,124 @@ function AuthPage() {
           使用 Google 继续
         </button>
 
-        <div className="my-5 flex items-center gap-3 text-xs text-muted-foreground">
-          <div className="flex-1 h-px bg-border" />
-          或使用邮箱
-          <div className="flex-1 h-px bg-border" />
+        {/* Method tabs */}
+        <div className="mt-5 flex items-center rounded-xl glass p-1 text-sm">
+          {(["email", "phone"] as Method[]).map((m) => (
+            <button
+              key={m}
+              onClick={() => {
+                setMethod(m);
+                setOtpSent(false);
+              }}
+              className={`flex-1 rounded-lg py-1.5 transition ${method === m ? "btn-brand" : "text-muted-foreground hover:text-foreground"}`}
+            >
+              {m === "email" ? "邮箱" : "手机号"}
+            </button>
+          ))}
         </div>
 
-        <form onSubmit={submit} className="space-y-3">
-          {mode === "signup" && (
-            <div className="flex items-center gap-3 rounded-xl bg-input border border-border px-3 py-2.5 focus-within:border-brand transition">
-              <Sparkles className="h-4 w-4 text-muted-foreground" />
+        {method === "email" ? (
+          <form onSubmit={submitEmail} className="mt-4 space-y-3">
+            {mode === "signup" && (
+              <Field icon={Sparkles}>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="显示名称"
+                  className="flex-1 bg-transparent outline-none text-sm"
+                />
+              </Field>
+            )}
+            <Field icon={Mail}>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="显示名称"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="邮箱"
                 className="flex-1 bg-transparent outline-none text-sm"
               />
-            </div>
-          )}
-          <div className="flex items-center gap-3 rounded-xl bg-input border border-border px-3 py-2.5 focus-within:border-brand transition">
-            <Mail className="h-4 w-4 text-muted-foreground" />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="邮箱"
-              className="flex-1 bg-transparent outline-none text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-3 rounded-xl bg-input border border-border px-3 py-2.5 focus-within:border-brand transition">
-            <Lock className="h-4 w-4 text-muted-foreground" />
-            <input
-              type="password"
-              required
-              minLength={6}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="密码（至少 6 位）"
-              className="flex-1 bg-transparent outline-none text-sm"
-            />
-          </div>
+            </Field>
+            <Field icon={Lock}>
+              <input
+                type="password"
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="密码（至少 6 位）"
+                className="flex-1 bg-transparent outline-none text-sm"
+              />
+            </Field>
 
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full rounded-xl btn-brand py-2.5 text-sm font-semibold disabled:opacity-50"
-          >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : mode === "signup" ? "创建账户" : "登录"}
-          </button>
-        </form>
+            {mode === "signin" && (
+              <div className="text-right">
+                <Link to="/forgot-password" className="text-xs text-muted-foreground hover:text-brand">
+                  忘记密码？
+                </Link>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full rounded-xl btn-brand py-2.5 text-sm font-semibold disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : mode === "signup" ? "创建账户" : "登录"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={verifyOtp} className="mt-4 space-y-3">
+            {mode === "signup" && (
+              <Field icon={Sparkles}>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="显示名称（可选）"
+                  className="flex-1 bg-transparent outline-none text-sm"
+                />
+              </Field>
+            )}
+            <Field icon={Phone}>
+              <input
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="手机号（含国家代码，如 +8613800138000）"
+                className="flex-1 bg-transparent outline-none text-sm"
+              />
+            </Field>
+            <Field icon={KeyRound}>
+              <input
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="6 位短信验证码"
+                className="flex-1 bg-transparent outline-none text-sm tracking-widest"
+              />
+              <button
+                type="button"
+                onClick={sendOtp}
+                disabled={busy || cooldown > 0 || !phone}
+                className="text-xs px-3 py-1 rounded-lg btn-brand disabled:opacity-40 whitespace-nowrap"
+              >
+                {cooldown > 0 ? `${cooldown}s` : otpSent ? "重新发送" : "获取验证码"}
+              </button>
+            </Field>
+
+            <button
+              type="submit"
+              disabled={busy || !otp}
+              className="w-full rounded-xl btn-brand py-2.5 text-sm font-semibold disabled:opacity-50"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : mode === "signup" ? "注册并登录" : "登录"}
+            </button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              提示：手机号登录需在后端启用 SMS 服务商。
+            </p>
+          </form>
+        )}
 
         <p className="mt-5 text-center text-sm text-muted-foreground">
           {mode === "signup" ? "已有账户？" : "还没有账户？"}{" "}
@@ -164,6 +289,15 @@ function AuthPage() {
           </button>
         </p>
       </div>
+    </div>
+  );
+}
+
+function Field({ icon: Icon, children }: { icon: React.ComponentType<{ className?: string }>; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-input border border-border px-3 py-2.5 focus-within:border-brand transition">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      {children}
     </div>
   );
 }
