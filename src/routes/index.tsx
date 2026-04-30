@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles, ArrowRight, Wand2, Code2, Database, Rocket, Zap, Shield, Globe, Check } from "lucide-react";
+// Note: Pricing & FAQ on the home page link to dedicated /pricing and /docs routes for better SEO.
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";

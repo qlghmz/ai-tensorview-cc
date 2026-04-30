@@ -1,10 +1,10 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Sparkles, LogOut } from "lucide-react";
+import { Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export function SiteHeader() {
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
+  useNavigate(); // keep for future
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-xl bg-background/60">
@@ -19,8 +19,8 @@ export function SiteHeader() {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="/#features" className="hover:text-foreground transition">功能</a>
           <a href="/#showcase" className="hover:text-foreground transition">案例</a>
-          <a href="/#pricing" className="hover:text-foreground transition">价格</a>
-          <a href="/#faq" className="hover:text-foreground transition">FAQ</a>
+          <Link to="/pricing" className="hover:text-foreground transition">价格</Link>
+          <Link to="/docs" className="hover:text-foreground transition">文档</Link>
         </nav>
 
         <div className="flex items-center gap-2">
@@ -28,20 +28,18 @@ export function SiteHeader() {
             <>
               <Link
                 to="/dashboard"
+                search={{}}
                 className="rounded-full px-4 py-1.5 text-sm hover:bg-accent/50 transition"
               >
                 项目
               </Link>
-              <button
-                onClick={async () => {
-                  await signOut();
-                  navigate({ to: "/" });
-                }}
+              <Link
+                to="/settings"
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition"
-                title="退出"
+                title="设置"
               >
-                <LogOut className="h-4 w-4" />
-              </button>
+                <SettingsIcon className="h-4 w-4" />
+              </Link>
             </>
           ) : (
             <>
