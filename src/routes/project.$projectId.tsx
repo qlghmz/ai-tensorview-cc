@@ -669,6 +669,17 @@ function ProjectEditor() {
           </button>
         ))}
       </nav>
+
+      <RenameProjectDialog
+        open={renameOpen}
+        projectId={projectId}
+        initialName={project.name}
+        initialDescription={project.description}
+        onClose={() => setRenameOpen(false)}
+        onSaved={(next) =>
+          setProject((p) => (p ? { ...p, name: next.name, description: next.description } : p))
+        }
+      />
     </div>
   );
 }
