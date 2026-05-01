@@ -4,6 +4,7 @@ import { Loader2, User, LogOut, Sparkles, Mail, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { CreditsPanel } from "@/components/CreditsPanel";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
@@ -114,9 +115,9 @@ function SettingsPage() {
               保存修改
             </button>
           </section>
+          <CreditsPanel />
 
-          <section className="glass rounded-3xl p-6 mt-5">
-            <div className="font-semibold mb-1">安全</div>
+
             <p className="text-sm text-muted-foreground mb-4">修改密码将向你的邮箱发送重置链接。</p>
             <Link to="/forgot-password" className="rounded-xl glass px-4 py-2 text-sm hover:border-brand/40 transition inline-flex">
               修改密码
