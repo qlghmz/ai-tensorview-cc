@@ -1,92 +1,72 @@
+## 现状
 
-## 你 4 个问题的直接回答
+你的 publish 功能 **已经存在并且国内可访问**：
 
-### 1️⃣ 后端功能（登录/注册/数据库）—— 你**已经有了**
+- 用户在编辑器里把 `is_public` 切成开，就生成一个公开链接 `/p/:projectId`
+- 公开链接由路由 `src/routes/p.$projectId.tsx` 渲染，跑在你自己的网站上（`fliggy-clone-inspired.lovable.app` / 你绑定的域名），**不依赖 vercel，国内可直连**
+- 数据从 Supabase 读 `preview_html` / `preview_sandpack`，Sandpack 在浏览器里跑
 
-你的项目已经接入 **Lovable Cloud**（即托管版 Supabase），等同于 Lovable 的内置后端：
+所以"国内访问不了"这个担心目前不存在。**问题是另外两个**：
 
-- ✅ 登录/注册：`/auth` 页已实现邮箱密码 + Google + 手机号 OTP，使用 `supabase.auth`
-- ✅ 数据库：已有 3 张表 `profiles` / `projects` / `messages`，并配置了 RLS 行级安全
-- ✅ 自动建 profile：`handle_new_user()` 触发器已存在
-- ✅ 部署/发布：右上角 **Publish** 按钮即可发布到 `fliggy-clone-inspired.lovable.app`，前端改动点 Update 生效，后端（Server Functions / 迁移）自动部署
-- ✅ 自定义域名：发布后可在项目设置接
-
-**结论：后端、认证、部署这些"Lovable 式"功能 100% 已经在你项目里了，无需新建。**
+1. `/p/:projectId` 的链接是带 UUID 的丑链接，没有"独立可分享"的感觉，也无法绑定自定义子域名
+2. 用户拿到 URL 后**没有"国内 CDN 加速"**，Sandpack 用的 `@codesandbox/sandpack-react` 默认从 `https://*.codesandbox.io` 拉打包器 bundler iframe — 这一步在国内**不稳定**（这才是真正会被墙/被慢的点）
 
 ---
 
-### 2️⃣ 收不到验证邮件（这是**真 Bug**，原因明确）
+## 方案
 
-**根因**：你目前用的是 Lovable 默认发件服务，没有配置自定义邮件域名。默认服务在中国邮箱（QQ/163/Outlook）经常被丢进垃圾邮件或直接拦截，所以你"一次都没收到"。每次注册确实都触发了一封，但都没到收件箱。
+### 1. 短链 + 自定义 slug（让 publish 链接像 lovable 一样体面）
 
-**两个修复方案**（任选其一）：
+- `projects` 表加一列 `public_slug TEXT UNIQUE`，开启 publish 时自动生成 6 位 slug
+- 新路由 `src/routes/s.$slug.tsx`，按 slug 查项目
+- publish dialog 里把链接显示成 `https://你的域名/s/abc123`，并允许用户改 slug
+- 老的 `/p/:projectId` 保留兼容
 
-- **方案 A · 开发期最快**：在 **Cloud → Users → Auth Settings** 关闭 "Confirm email"，注册后直接登录、不再需要邮箱验证。**强烈推荐你现在用这个**，可立即解除阻塞。
-- **方案 B · 上线期推荐**：配置自定义发件域名（如 `notify.yourdomain.com`），DNS 验证后邮件走自有域名，送达率 ~99%，并可定制邮件模板品牌。
+### 2. 国内可访问的 Sandpack（关键改动）
 
----
+Sandpack 默认 bundler URL 是国外的，**这是国内打不开 publish 页的真正原因**。两条路任选：
 
-### 3️⃣ 对标 Lovable 的功能差距 & 完整补全规划
+- **A 方案（推荐，零成本）**：给 `<SandpackProvider>` 传 `bundlerURL` 指向**自托管 bundler**。最简单是用 codesandbox 的 sandpack-bundler 部署到 Cloudflare Pages 的 `*.pages.dev`（国内通），或者 Netlify、或者你自己的 lovable 域名子路径。我们会在代码里做成可配的环境变量 `VITE_SANDPACK_BUNDLER_URL`，留空就走默认。
+- **B 方案（更彻底）**：publish 的时候把 sandpack bundle **预编译成静态 HTML+JS**（用 esbuild-wasm 在浏览器里打包，或在 server function 里用 esbuild），存到 `preview_html`，公开页直接 iframe srcDoc 渲染，**完全不依赖 sandpack 在线 bundler**。代价是每次 publish 多一步编译。
 
-**当前已有**：登录注册、项目 CRUD、AI 流式生成、Sandpack 多页预览、聊天历史、公开分享 `/p/:id`、定价页、文档页、设置页。
+我建议两个都做：默认 A（无感、即时），用户点"发布稳定版"按钮时走 B（生成快照）。
 
-**对标 Lovable 仍缺的核心能力（按优先级）**：
+### 3. 自定义子域名 / 自定义域名（可选，做不做你定）
 
-| # | 功能 | 说明 |
-|---|---|---|
-| P0 | **邮件验证可达** | 见问题 2，先关 confirm 或配域名 |
-| P0 | **明亮主题** | 见问题 4 |
-| P1 | **项目重命名 + 描述编辑** | 列表/编辑器中行内改名 |
-| P1 | **项目复制 / Remix** | 一键复制别人的公开项目到自己账户 |
-| P1 | **版本历史 / 回滚** | 每次 AI 生成存一个 snapshot，可回到任意版本 |
-| P1 | **代码视图 + 单文件编辑** | 不止预览，能切到代码 tab、改一个文件后热更新（已有 sandpack 基础） |
-| P2 | **Token / 用量计数** | 个人页显示本月消耗，与 pricing 联动 |
-| P2 | **下载 ZIP / GitHub 导出** | 把 sandpack 多文件打包下载 |
-| P2 | **协作分享链接（带权限）** | 公开 / 仅有链接 / 仅自己 三档 |
-| P2 | **图片上传 → 转网页** | 上传截图，AI 还原成页面 |
-| P3 | **自定义域名 UI 引导** | 设置页里走域名连接流程 |
-| P3 | **模板市场 / Discover** | 公开项目展示流 |
-| P3 | **键盘快捷键 + 命令面板** | ⌘K 打开操作面板 |
-
-**建议分批构建**（每批一次会话内完成，避免一次过大导致 build 失败）：
-
-- **Batch 1（本次）**：明亮主题改色 + 关闭邮件验证（解锁注册）
-- **Batch 2**：项目改名 / 删除确认 / Remix / 代码视图 tab
-- **Batch 3**：版本历史 + 回滚 + ZIP 下载
-- **Batch 4**：用量统计 + 模板市场 + 命令面板
-- **Batch 5（可选）**：图片转网页 + 自定义域名 UI
+- 给 publish 出来的页加自定义域名，得有 wildcard DNS + 反向代理，**这一块依赖你的部署环境**（lovable.app 子域不能你自己控制）。本轮不做，先把 1+2 跑通。
 
 ---
 
-### 4️⃣ 主题改成"白色 + 粉色"明亮风（本次执行）
+## 技术实现清单
 
-只改 `src/styles.css` 中的设计 token，不动组件代码，全站立刻变亮。
+**数据库迁移**
+- `projects` 加 `public_slug TEXT UNIQUE`
+- 加函数 `generate_public_slug()` 生成 6 位随机 slug
+- RLS：允许任何人 `select` 当 `is_public = true`（已有策略检查一下）
 
-**新配色**（明亮、苹果风、粉色保留为品牌色）：
+**前端**
+- 新路由 `src/routes/s.$slug.tsx`，复用 `p.$projectId.tsx` 的渲染逻辑（抽成 `<PublicProjectView>` 组件）
+- 编辑器 publish 区块：显示 `/s/{slug}` 链接 + "复制" + "改 slug" 输入框
+- `LovableSandpack.tsx` 读取 `import.meta.env.VITE_SANDPACK_BUNDLER_URL`，传给 `SandpackProvider` 的 `options.bundlerURL`
+- 新 server function `publishSnapshot(projectId)`：用 esbuild-wasm 把 bundle 打成单文件 HTML，写回 `preview_html`，公开页优先用 snapshot，没 snapshot 就 fallback 到 sandpack
 
-```text
-背景 background : 接近纯白 (oklch 0.99)
-前景 foreground : 深灰近黑 (oklch 0.18)
-卡片 card       : 白 (oklch 1)
-边框 border     : 浅灰粉 (oklch 0.93)
-品牌主色 primary: 玫粉 (oklch 0.68 0.22 350) — 保留
-品牌渐变 hero   : 白底 + 淡粉/淡紫光晕（替换原深空紫）
-玻璃 glass      : 白色半透明 + 细描边
-阴影 shadow     : 柔和粉色光晕，不再是黑色重阴影
-```
+**新组件 / 文件**
+- `src/components/PublicProjectView.tsx`（抽出来复用）
+- `src/routes/s.$slug.tsx`
+- `src/lib/publish-snapshot.ts`（esbuild-wasm 打包逻辑）
+- `src/fn/publish-snapshot.ts`（server function 入口，可选，先做客户端版）
 
-同时去掉 `.dark` 强制覆盖，让整站默认亮色。`btn-brand` / `text-gradient` / `bg-grid` 这些工具类同步调整为亮色版本。
+**用户文案**
+- publish 面板里加一行说明："国内访问已优化，使用稳定快照模式"
 
 ---
 
-## 本次（Batch 1）我会执行的具体改动
+## 需要你确认 1 件事
 
-1. 重写 `src/styles.css` 的 `:root` token：背景白、文字深灰、品牌粉保留、渐变换浅色、阴影变柔
-2. 调整 `.dark` 段，避免被自动覆盖回深色
-3. 调整 `bg-grid` / `glass` / `btn-brand` 为亮色版本
-4. **关闭邮箱确认**（通过 configure_auth），让你立刻能注册登录 —— 这是解决"收不到邮件"最直接的办法
-5. 在 `/auth` 页面提示文案改为"注册后可直接登录"，删除"请查收邮件"误导文案
+Sandpack bundler 自托管这块，我**默认先用 A 方案**（环境变量留空 = 用默认；你后面想加速，自己部署一个 bundler 把 URL 填进 `.env` 就行），同时把 B 方案（esbuild-wasm 预编译快照）也做出来作为默认 publish 行为。
 
-> 不在本批做的：自定义邮件域名（需要你提供域名 + 改 DNS，建议上线前再做）；功能补全 Batch 2~5（每批一次会话）。
+**这样组合后**：
+- 编辑器里实时预览 = sandpack 在线 bundler（开发体验好）
+- publish 出去给别人看的链接 = 预编译快照 HTML（国内秒开，不依赖任何外网）
 
-确认后我切到执行模式开始改。
+如果同意，我就按这个走。
