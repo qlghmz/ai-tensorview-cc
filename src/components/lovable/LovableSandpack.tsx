@@ -99,7 +99,7 @@ export function LovableSandpack({ bundle, readOnly, view = "split", onSaveFiles 
               />
             )}
             {showPreview && (
-              <SandpackPreview showNavigator={false} style={{ height: "100%", flex: view === "code" ? 1 : undefined }} />
+              <SandpackPreview showNavigator={false} style={{ height: "100%", flex: view === "split" ? 1 : undefined }} />
             )}
           </SandpackLayout>
 
