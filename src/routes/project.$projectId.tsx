@@ -370,7 +370,29 @@ function ProjectEditor() {
             <ClientLovableSandpack
               bundle={lovableBundle}
               view={view === "preview" ? "preview" : "code"}
-              readOnly={view === "code"}
+              readOnly={false}
+              onSaveFiles={async (files) => {
+                // Persist edited files back to the project's sandpack bundle.
+                const nextBundle: LovableBundle = {
+                  routes: lovableBundle.routes,
+                  files,
+                };
+                const { error } = await supabase
+                  .from("projects")
+                  .update({
+                    preview_sandpack: nextBundle as unknown as Json,
+                    updated_at: new Date().toISOString(),
+                  })
+                  .eq("id", projectId);
+                if (error) {
+                  toast.error("保存失败：" + error.message);
+                  return;
+                }
+                setProject((p) =>
+                  p ? { ...p, preview_sandpack: nextBundle as unknown as Json } : p,
+                );
+                toast.success("代码已保存");
+              }}
             />
           </div>
         ) : view === "preview" ? (
