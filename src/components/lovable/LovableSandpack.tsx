@@ -66,7 +66,6 @@ export function LovableSandpack({
             recompileMode: "delayed",
             recompileDelay: 400,
             externalResources: ["https://cdn.tailwindcss.com"],
-            readOnly: !!readOnly,
           }}
           customSetup={{
             dependencies: {
@@ -75,7 +74,7 @@ export function LovableSandpack({
           }}
         >
           <SandpackLayout>
-            <SandpackCodeEditor showTabs showLineNumbers />
+            <SandpackCodeEditor showTabs showLineNumbers readOnly={!!readOnly} />
             <SandpackPreview showNavigator={false} />
           </SandpackLayout>
         </SandpackProvider>
