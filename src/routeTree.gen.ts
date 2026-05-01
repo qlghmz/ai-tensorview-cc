@@ -21,6 +21,7 @@ import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -82,6 +83,12 @@ const ApiAiStreamRoute = ApiAiStreamRouteImport.update({
   path: '/api/ai/stream',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -96,6 +103,7 @@ export interface FileRoutesByFullPath {
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +134,7 @@ export interface FileRoutesById {
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/project/$projectId'
     | '/s/$slug'
     | '/api/ai/stream'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/project/$projectId'
     | '/s/$slug'
     | '/api/ai/stream'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -169,6 +181,7 @@ export interface FileRouteTypes {
     | '/project/$projectId'
     | '/s/$slug'
     | '/api/ai/stream'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -184,6 +197,7 @@ export interface RootRouteChildren {
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
   SSlugRoute: typeof SSlugRoute
   ApiAiStreamRoute: typeof ApiAiStreamRoute
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -272,6 +286,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAiStreamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -288,16 +309,8 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectProjectIdRoute: ProjectProjectIdRoute,
   SSlugRoute: SSlugRoute,
   ApiAiStreamRoute: ApiAiStreamRoute,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
