@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Sparkles, Settings as SettingsIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { CreditBadge } from "@/components/CreditBadge";
 
 export function SiteHeader() {
   const { user } = useAuth();
@@ -26,6 +27,7 @@ export function SiteHeader() {
         <div className="flex items-center gap-2">
           {user ? (
             <>
+              <CreditBadge />
               <Link
                 to="/dashboard"
                 search={{}}

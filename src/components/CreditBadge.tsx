@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Coins } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/lib/auth-context";
+import { getMyCredits } from "@/server/credits.functions";
 
 interface Balance {
   plan: string;
@@ -12,34 +13,32 @@ interface Balance {
 }
 
 export function CreditBadge() {
+  const { user } = useAuth();
   const [bal, setBal] = useState<Balance | null>(null);
 
-  const refresh = async () => {
-    const { data: sess } = await supabase.auth.getSession();
-    const token = sess.session?.access_token;
-    if (!token) return;
-    try {
-      const res = await fetch("/_serverFn/src_server_credits_functions_ts--getMyCredits_createServerFn_handler", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      // 兼容：直接调用 server function 包装
-      if (!res.ok) return;
-      const json = (await res.json()) as { result?: Balance } | Balance;
-      const data = "result" in (json as object) ? (json as { result: Balance }).result : (json as Balance);
-      setBal(data);
-    } catch {
-      // ignore
-    }
-  };
-
   useEffect(() => {
-    void refresh();
-    const t = setInterval(refresh, 30_000);
-    return () => clearInterval(t);
-  }, []);
+    if (!user) {
+      setBal(null);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const data = (await getMyCredits()) as Balance;
+        if (!cancelled) setBal(data);
+      } catch (e) {
+        console.error("[CreditBadge]", e);
+      }
+    };
+    void load();
+    const t = setInterval(load, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [user]);
 
-  if (!bal) return null;
+  if (!user || !bal) return null;
 
   return (
     <Link
