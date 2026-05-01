@@ -576,43 +576,15 @@ function ProjectEditor() {
 
         <div className="flex lg:hidden items-center gap-1.5 ml-auto">
           {previewCodeToggle}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShareOpen((o) => !o)}
-              className="rounded-full glass px-2.5 py-1.5 text-[11px] flex items-center gap-1"
-            >
-              <Share2 className="h-3 w-3" />
-              <span className="hidden sm:inline">分享</span>
-            </button>
-            {shareOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1rem))] glass rounded-2xl p-3 shadow-[var(--shadow-card)] z-50">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs font-medium">公开访问</div>
-                  <button
-                    type="button"
-                    onClick={() => togglePublic(!project.is_public)}
-                    className={`relative h-5 w-9 shrink-0 rounded-full transition ${project.is_public ? "bg-brand" : "bg-muted"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${project.is_public ? "left-[18px]" : "left-0.5"}`}
-                    />
-                  </button>
-                </div>
-                <p className="mt-1 text-[10px] text-muted-foreground leading-snug">
-                  {project.is_public ? "链接可公开访问。" : "仅自己可访问。"}
-                </p>
-                {project.is_public && (
-                  <div className="mt-2 flex items-center gap-1 rounded-lg bg-input border border-border px-2 py-1">
-                    <input readOnly value={shareUrl} className="flex-1 min-w-0 bg-transparent text-[10px] outline-none truncate" />
-                    <button type="button" onClick={copyShare} className="rounded-md btn-brand p-1 shrink-0">
-                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setPublishOpen(true)}
+            className="rounded-full glass px-2.5 py-1.5 text-[11px] flex items-center gap-1"
+            title="发布"
+          >
+            <Share2 className="h-3 w-3" />
+            <span className="hidden sm:inline">{project.is_public ? "已发布" : "发布"}</span>
+          </button>
           <button
             type="button"
             onClick={() => setPushOpen(true)}
