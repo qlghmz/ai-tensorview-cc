@@ -464,7 +464,8 @@ function ProjectEditor() {
               }
             }}
             rows={2}
-            placeholder="继续描述要修改什么..."
+            placeholder={sending ? "AI 正在运行，请稍候..." : "继续描述要修改什么..."}
+            disabled={sending}
             className="flex-1 bg-transparent px-2 sm:px-3 py-2 text-sm outline-none placeholder:text-muted-foreground resize-none min-h-[44px]"
           />
           <button
