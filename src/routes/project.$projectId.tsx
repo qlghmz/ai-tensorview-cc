@@ -128,6 +128,18 @@ function ProjectEditor() {
       { id: tempUserId, role: "user", content: prompt, created_at: new Date().toISOString() },
     ]);
 
+    const asstId = "tmp-asst-" + Date.now();
+    setStreamAssistId(asstId);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: asstId,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
     try {
       const res = await fetch("/api/ai/stream", {
         method: "POST",
@@ -145,22 +157,49 @@ function ProjectEditor() {
 
       if (!res.body) throw new Error("无响应流");
 
-      const asstId = "tmp-asst-" + Date.now();
-      setStreamAssistId(asstId);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: asstId,
-          role: "assistant",
-          content: "",
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let lineBuf = "";
       let gotFinalSandpack = false;
+      let pendingSandpack: Json | null = null;
+      let finalReply: string | null = null;
+
+      const handleLine = (line: string) => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        let evt: {
+          type?: string;
+          content?: string;
+          sandpack?: unknown;
+          reply?: string;
+          message?: string;
+        };
+        try {
+          evt = JSON.parse(trimmed) as typeof evt;
+        } catch {
+          return;
+        }
+        // 生成期间不展示具体代码内容，仅作为状态信号；保留最后的 reply 用于完成后展示。
+        if (evt.type === "preview" && evt.sandpack != null) {
+          const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+          if (parsed.success) {
+            pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+          }
+        }
+        if (evt.type === "final") {
+          if (evt.sandpack != null) {
+            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+            if (parsed.success) {
+              pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+              gotFinalSandpack = true;
+            }
+          }
+          if (evt.reply) finalReply = evt.reply;
+        }
+        if (evt.type === "error" && evt.message) {
+          toast.error(evt.message);
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -170,57 +209,40 @@ function ProjectEditor() {
         while ((nl = lineBuf.indexOf("\n")) !== -1) {
           const line = lineBuf.slice(0, nl);
           lineBuf = lineBuf.slice(nl + 1);
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          let evt: {
-            type?: string;
-            content?: string;
-            html?: string | null;
-            sandpack?: unknown;
-            reply?: string;
-            message?: string;
-          };
-          try {
-            evt = JSON.parse(trimmed) as typeof evt;
-          } catch {
-            continue;
-          }
-          if (evt.type === "delta" && evt.content) {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === asstId ? { ...m, content: m.content + evt.content } : m)),
-            );
-          }
-          if (evt.type === "preview" && evt.sandpack != null) {
-            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
-            if (parsed.success) {
-              const asJson = JSON.parse(JSON.stringify(parsed.data)) as Json;
-              setProject((p) => (p ? { ...p, preview_sandpack: asJson, preview_html: null } : p));
-            }
-            if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
-              setMobileTab("canvas");
-            }
-          }
-          if (evt.type === "final") {
-            if (evt.sandpack != null) {
-              const parsed = lovableBundleSchema.safeParse(evt.sandpack);
-              if (parsed.success) gotFinalSandpack = true;
-            }
-            if (evt.reply) {
-              setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, content: evt.reply! } : m)));
-            }
-          }
-          if (evt.type === "error" && evt.message) {
-            toast.error(evt.message);
-          }
+          handleLine(line);
+        }
+      }
+      if (lineBuf.trim()) handleLine(lineBuf);
+
+      // 一次性更新预览，避免中途闪烁
+      if (pendingSandpack) {
+        const sp = pendingSandpack;
+        setProject((p) => (p ? { ...p, preview_sandpack: sp, preview_html: null } : p));
+        if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+          setMobileTab("canvas");
         }
       }
 
+      // 用最终回复替换占位
+      const cleanReply = finalReply
+        ? finalReply
+            .replace(/```lovable[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+            .replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+        : gotFinalSandpack
+          ? "✨ 已生成网页 — 见预览面板"
+          : "生成已完成。";
+      setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, content: cleanReply } : m)));
+
       await reloadThread();
       if (gotFinalSandpack) toast.success("已更新预览");
+      else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "生成失败";
       toast.error(msg);
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserId && !m.id.startsWith("tmp-asst-")));
+      // 保留用户消息，把占位 assistant 替换成错误说明
+      setMessages((prev) =>
+        prev.map((m) => (m.id === asstId ? { ...m, content: `⚠️ 生成失败：${msg}` } : m)),
+      );
     } finally {
       setSending(false);
       setStreamAssistId(null);
