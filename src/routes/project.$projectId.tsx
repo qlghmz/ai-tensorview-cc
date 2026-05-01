@@ -103,6 +103,7 @@ function ProjectEditor() {
     is_public: boolean;
     public_slug: string | null;
     has_snapshot: boolean;
+    published_url: string | null;
   } | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -130,7 +131,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html, published_url").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -147,6 +148,7 @@ function ProjectEditor() {
         is_public: d.is_public,
         public_slug: d.public_slug ?? null,
         has_snapshot: !!d.published_html,
+        published_url: d.published_url ?? null,
       });
       setMessages(m.data ?? []);
     });
@@ -159,7 +161,7 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html, published_url").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
     if (proj) {
@@ -171,6 +173,7 @@ function ProjectEditor() {
         is_public: proj.is_public,
         public_slug: proj.public_slug ?? null,
         has_snapshot: !!proj.published_html,
+        published_url: proj.published_url ?? null,
       });
     }
   };
@@ -350,7 +353,12 @@ function ProjectEditor() {
 
   const canDownload = !!(lovableBundle || project?.preview_html);
 
-  const updatePublishState = (patch: { isPublic?: boolean; publicSlug?: string | null; hasSnapshot?: boolean }) => {
+  const updatePublishState = (patch: {
+    isPublic?: boolean;
+    publicSlug?: string | null;
+    hasSnapshot?: boolean;
+    publishedUrl?: string | null;
+  }) => {
     setProject((prev) =>
       prev
         ? {
@@ -358,6 +366,8 @@ function ProjectEditor() {
             is_public: patch.isPublic ?? prev.is_public,
             public_slug: patch.publicSlug !== undefined ? patch.publicSlug : prev.public_slug,
             has_snapshot: patch.hasSnapshot ?? prev.has_snapshot,
+            published_url:
+              patch.publishedUrl !== undefined ? patch.publishedUrl : prev.published_url,
           }
         : prev,
     );
@@ -678,6 +688,7 @@ function ProjectEditor() {
         publicSlug={project.public_slug}
         bundle={lovableBundle}
         hasSnapshot={project.has_snapshot}
+        publishedUrl={project.published_url}
         onChange={updatePublishState}
       />
     </div>

@@ -120,6 +120,7 @@ export type Database = {
           preview_sandpack: Json | null
           public_slug: string | null
           published_html: string | null
+          published_url: string | null
           updated_at: string
           user_id: string
         }
@@ -133,6 +134,7 @@ export type Database = {
           preview_sandpack?: Json | null
           public_slug?: string | null
           published_html?: string | null
+          published_url?: string | null
           updated_at?: string
           user_id: string
         }
@@ -146,6 +148,7 @@ export type Database = {
           preview_sandpack?: Json | null
           public_slug?: string | null
           published_html?: string | null
+          published_url?: string | null
           updated_at?: string
           user_id?: string
         }
