@@ -669,6 +669,18 @@ function ProjectEditor() {
         bundle={lovableBundle}
         userId={session?.user.id ?? ""}
       />
+
+      <PublishDialog
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        projectId={projectId}
+        projectName={project.name}
+        isPublic={project.is_public}
+        publicSlug={project.public_slug}
+        bundle={lovableBundle}
+        hasSnapshot={project.has_snapshot}
+        onChange={updatePublishState}
+      />
     </div>
   );
 }
