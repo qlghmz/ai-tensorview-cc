@@ -302,28 +302,35 @@ function ProjectEditor() {
     );
   }
 
-  const canvasPreview =
-    view === "preview" ? (
-      lovableBundle ? (
-        <div className="absolute inset-0 flex flex-col min-h-0 bg-background/40 p-2 sm:p-3 overflow-hidden">
-          <ClientLovableSandpack bundle={lovableBundle} />
-        </div>
-      ) : (
-        <iframe
-          key={html.length}
-          srcDoc={html}
-          title="preview"
-          sandbox="allow-scripts"
-          className="absolute inset-0 w-full h-full border-0 bg-white"
-        />
-      )
-    ) : (
-      <pre className="absolute inset-0 overflow-auto p-3 sm:p-4 text-[11px] sm:text-xs bg-background/80 m-0">
-        <code className="break-words whitespace-pre-wrap">
-          {lovableBundle ? JSON.stringify(lovableBundle, null, 2) : project.preview_html ?? "// 还没有生成代码"}
-        </code>
-      </pre>
-    );
+  const canvasPreview = (
+    <div className="absolute inset-0 p-3 sm:p-4 flex flex-col min-h-0">
+      <div className="flex-1 min-h-0 rounded-2xl border border-border/60 bg-[#0b0a14] overflow-hidden shadow-[var(--shadow-card)] relative flex flex-col">
+        {lovableBundle ? (
+          <div className="flex-1 min-h-0 flex flex-col p-2">
+            <ClientLovableSandpack
+              bundle={lovableBundle}
+              view={view === "preview" ? "preview" : "code"}
+              readOnly={view === "code"}
+            />
+          </div>
+        ) : view === "preview" ? (
+          <iframe
+            key={html.length}
+            srcDoc={html}
+            title="preview"
+            sandbox="allow-scripts"
+            className="absolute inset-0 w-full h-full border-0 bg-white"
+          />
+        ) : (
+          <pre className="absolute inset-0 overflow-auto p-3 sm:p-4 text-[11px] sm:text-xs bg-[#0b0a14] m-0">
+            <code className="break-words whitespace-pre-wrap text-muted-foreground">
+              {project.preview_html ?? "// 还没有生成代码"}
+            </code>
+          </pre>
+        )}
+      </div>
+    </div>
+  );
 
   const previewCodeToggle = (
     <div className="flex items-center rounded-full glass p-1 shrink-0">

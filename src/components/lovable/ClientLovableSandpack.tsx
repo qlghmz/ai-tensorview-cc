@@ -1,13 +1,13 @@
 import { useEffect, useState, type ComponentType } from "react";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 
-type Props = { bundle: LovableBundle; readOnly?: boolean };
+type Props = { bundle: LovableBundle; readOnly?: boolean; view?: "split" | "preview" | "code" };
 
 /**
  * Sandpack 依赖浏览器全局（如 `self`），不能在 SSR / Node 里静态引入。
  * 仅在客户端 mount 后再动态加载真实 Sandpack 组件。
  */
-export function ClientLovableSandpack({ bundle, readOnly }: Props) {
+export function ClientLovableSandpack({ bundle, readOnly, view }: Props) {
   const [Inner, setInner] = useState<ComponentType<Props> | null>(null);
 
   useEffect(() => {
@@ -28,5 +28,5 @@ export function ClientLovableSandpack({ bundle, readOnly }: Props) {
     );
   }
 
-  return <Inner bundle={bundle} readOnly={readOnly} />;
+  return <Inner bundle={bundle} readOnly={readOnly} view={view} />;
 }

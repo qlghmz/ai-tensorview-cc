@@ -11,9 +11,11 @@ import { buildSandpackFiles, bundleSignature, type LovableBundle } from "@/lib/l
 export function LovableSandpack({
   bundle,
   readOnly,
+  view = "split",
 }: {
   bundle: LovableBundle;
   readOnly?: boolean;
+  view?: "split" | "preview" | "code";
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -39,25 +41,27 @@ export function LovableSandpack({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 gap-2">
-      <div className="flex flex-wrap items-center gap-2 shrink-0 px-1">
-        <span className="text-xs text-muted-foreground whitespace-nowrap">页面</span>
-        <select
-          value={route}
-          onChange={(e) => setRoute(e.target.value)}
-          className="text-xs rounded-lg border border-border bg-background px-2 py-1.5 min-w-[160px] max-w-full"
-          aria-label="选择预览路由"
-          disabled={readOnly}
-        >
-          {bundle.routes.map((r) => (
-            <option key={r.path} value={r.path}>
-              {r.label} · {r.path}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="flex-1 min-h-[320px] rounded-xl overflow-hidden border border-border/60 [&_.sp-layout]:min-h-[300px] [&_.sp-stack]:min-h-[280px]">
+      {view !== "code" && (
+        <div className="flex flex-wrap items-center gap-2 shrink-0 px-1">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">页面</span>
+          <select
+            value={route}
+            onChange={(e) => setRoute(e.target.value)}
+            className="text-xs rounded-lg border border-border bg-background px-2 py-1.5 min-w-[160px] max-w-full"
+            aria-label="选择预览路由"
+            disabled={readOnly}
+          >
+            {bundle.routes.map((r) => (
+              <option key={r.path} value={r.path}>
+                {r.label} · {r.path}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <div className="flex-1 min-h-[320px] rounded-xl overflow-hidden border border-border/60 [&_.sp-layout]:!min-h-full [&_.sp-layout]:!h-full [&_.sp-stack]:!min-h-full [&_.sp-stack]:!h-full [&_.sp-wrapper]:!h-full [&_.sp-preview]:!h-full [&_.sp-preview-container]:!h-full [&_.sp-preview-iframe]:!h-full">
         <SandpackProvider
-          key={`${bundleSignature(bundle)}|${route}`}
+          key={`${bundleSignature(bundle)}|${route}|${view}`}
           template="react-ts"
           theme={defaultDark}
           files={files}
@@ -73,9 +77,11 @@ export function LovableSandpack({
             },
           }}
         >
-          <SandpackLayout>
-            <SandpackCodeEditor showTabs showLineNumbers readOnly={!!readOnly} />
-            <SandpackPreview showNavigator={false} />
+          <SandpackLayout style={{ height: "100%" }}>
+            {view !== "preview" && (
+              <SandpackCodeEditor showTabs showLineNumbers readOnly={!!readOnly} style={{ height: "100%" }} />
+            )}
+            {view !== "code" && <SandpackPreview showNavigator={false} style={{ height: "100%" }} />}
           </SandpackLayout>
         </SandpackProvider>
       </div>
