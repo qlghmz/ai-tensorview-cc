@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Loader2, Sparkles } from "lucide-react";
-import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
+import { Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { buildPublishedHtml } from "@/lib/publish-snapshot";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 
 export type PublicViewState =
@@ -10,7 +11,38 @@ export type PublicViewState =
   | { kind: "sandpack"; name: string; bundle: LovableBundle }
   | { kind: "html"; name: string; html: string };
 
+/**
+ * 公开访问的"成品页"。
+ * 设计目标：访问者看到的就是用户做出来的网站本身，不带任何平台外壳。
+ * - 有 published_html 快照 → 直接 iframe srcDoc 全屏渲染
+ * - 没有快照但有 bundle → 浏览器侧即时编译成 HTML，再 iframe 渲染
+ * - 兜底 preview_html → 也直接 iframe
+ */
 export function PublicProjectView({ state }: { state: PublicViewState }) {
+  const [liveHtml, setLiveHtml] = useState<string | null>(null);
+  const [liveError, setLiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state.kind !== "sandpack") {
+      setLiveHtml(null);
+      setLiveError(null);
+      return;
+    }
+    let cancelled = false;
+    setLiveHtml(null);
+    setLiveError(null);
+    buildPublishedHtml(state.bundle, { title: state.name })
+      .then((html) => {
+        if (!cancelled) setLiveHtml(html);
+      })
+      .catch((e: unknown) => {
+        if (!cancelled) setLiveError(e instanceof Error ? e.message : "加载失败");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [state]);
+
   if (state.kind === "loading") {
     return (
       <div className="min-h-screen grid place-items-center bg-background">
@@ -33,37 +65,42 @@ export function PublicProjectView({ state }: { state: PublicViewState }) {
     );
   }
 
+  // 决定要喂给 iframe 的 HTML
+  let html: string | null = null;
+  if (state.kind === "snapshot" || state.kind === "html") {
+    html = state.html;
+  } else if (state.kind === "sandpack") {
+    html = liveHtml;
+  }
+
+  if (!html) {
+    // sandpack 还在编译，或者编译失败
+    return (
+      <div className="fixed inset-0 grid place-items-center bg-background">
+        {liveError ? (
+          <div className="text-center max-w-md px-6">
+            <div className="text-sm text-destructive">{liveError}</div>
+            <div className="mt-2 text-xs text-muted-foreground">
+              建议作者在编辑器里点「生成稳定快照」后再分享。
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            正在加载页面…
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // 全屏 iframe — 访问者看到的就是干净成品，没有任何平台外壳
   return (
-    <div className="h-screen flex flex-col bg-background min-h-0">
-      <header className="shrink-0 border-b border-border/40 backdrop-blur-xl bg-background/80 px-4 py-2.5 flex items-center gap-3">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid h-7 w-7 place-items-center rounded-lg btn-brand">
-            <Sparkles className="h-3.5 w-3.5" />
-          </span>
-          <span className="text-sm font-bold">特挠率i额外</span>
-        </Link>
-        <div className="text-xs text-muted-foreground">·</div>
-        <div className="text-sm font-medium truncate flex-1">{state.name}</div>
-        <Link
-          to="/auth"
-          search={{ mode: "signup" }}
-          className="rounded-full btn-brand px-3 py-1.5 text-xs font-medium inline-flex items-center gap-1"
-        >
-          自己也做一个 <ExternalLink className="h-3 w-3" />
-        </Link>
-      </header>
-      {state.kind === "snapshot" || state.kind === "html" ? (
-        <iframe
-          srcDoc={state.html}
-          title={state.name}
-          sandbox="allow-scripts allow-same-origin"
-          className="flex-1 border-0 bg-white min-h-0"
-        />
-      ) : (
-        <div className="flex-1 min-h-0 flex flex-col p-2 sm:p-3 overflow-hidden bg-background/40">
-          <ClientLovableSandpack bundle={state.bundle} readOnly />
-        </div>
-      )}
-    </div>
+    <iframe
+      srcDoc={html}
+      title={state.kind !== "loading" && state.kind !== "notfound" ? state.name : ""}
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+      className="fixed inset-0 w-screen h-screen border-0 bg-white"
+    />
   );
 }
