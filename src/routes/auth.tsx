@@ -65,7 +65,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("注册成功！请查收邮件验证账户。");
+        toast.success("注册成功，已自动登录");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
