@@ -1,7 +1,7 @@
 import { useEffect, useState, type ComponentType } from "react";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 
-type Props = { bundle: LovableBundle; readOnly?: boolean };
+type Props = { bundle: LovableBundle; readOnly?: boolean; view?: "split" | "preview" | "code" };
 
 /**
  * Sandpack 依赖浏览器全局（如 `self`），不能在 SSR / Node 里静态引入。
