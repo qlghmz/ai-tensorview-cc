@@ -98,7 +98,7 @@ export function PublicProjectView({ state }: { state: PublicViewState }) {
   return (
     <iframe
       srcDoc={html}
-      title={state.kind !== "loading" && state.kind !== "notfound" ? state.name : ""}
+      title={state.name}
       sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
       className="fixed inset-0 w-screen h-screen border-0 bg-white"
     />
