@@ -50,11 +50,11 @@ export const generateWebsite = createServerFn({ method: "POST" })
     const json = (await res.json()) as {
       choices?: Array<{ message?: { content?: string } }>;
     };
-    const reply = json.choices?.[0]?.message?.content ?? "（无内容）";
+    const replyContent = json.choices?.[0]?.message?.content ?? "（无内容）";
 
-    const { html } = await persistGenerationResult(supabase, userId, data.projectId, reply);
+    const { sandpack } = await persistGenerationResult(supabase, userId, data.projectId, replyContent);
 
-    return { reply, html };
+    return { reply: replyContent, sandpack };
   });
 
 export const toggleProjectPublic = createServerFn({ method: "POST" })

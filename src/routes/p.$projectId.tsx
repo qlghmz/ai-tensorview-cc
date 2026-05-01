@@ -2,29 +2,44 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { LovableSandpack } from "@/components/lovable/LovableSandpack";
+import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 
 export const Route = createFileRoute("/p/$projectId")({
   component: PublicPreviewPage,
 });
 
+type PreviewState =
+  | "loading"
+  | "notfound"
+  | { name: string; kind: "sandpack"; bundle: LovableBundle }
+  | { name: string; kind: "html"; html: string };
+
 function PublicPreviewPage() {
   const { projectId } = Route.useParams();
-  const [state, setState] = useState<{ name: string; html: string } | "loading" | "notfound">(
-    "loading",
-  );
+  const [state, setState] = useState<PreviewState>("loading");
 
   useEffect(() => {
     supabase
       .from("projects")
-      .select("name, preview_html, is_public")
+      .select("name, preview_html, preview_sandpack, is_public")
       .eq("id", projectId)
       .maybeSingle()
       .then(({ data }) => {
-        if (!data || !data.is_public || !data.preview_html) {
+        if (!data || !data.is_public) {
           setState("notfound");
-        } else {
-          setState({ name: data.name, html: data.preview_html });
+          return;
         }
+        const parsed = data.preview_sandpack != null ? lovableBundleSchema.safeParse(data.preview_sandpack) : null;
+        if (parsed?.success) {
+          setState({ name: data.name, kind: "sandpack", bundle: parsed.data });
+          return;
+        }
+        if (data.preview_html) {
+          setState({ name: data.name, kind: "html", html: data.preview_html });
+          return;
+        }
+        setState("notfound");
       });
   }, [projectId]);
 
@@ -59,7 +74,7 @@ function PublicPreviewPage() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-screen flex flex-col bg-background min-h-0">
       <header className="shrink-0 border-b border-border/40 backdrop-blur-xl bg-background/80 px-4 py-2.5 flex items-center gap-3">
         <Link to="/" className="flex items-center gap-2 group">
           <span className="grid h-7 w-7 place-items-center rounded-lg btn-brand">
@@ -77,12 +92,18 @@ function PublicPreviewPage() {
           自己也做一个 <ExternalLink className="h-3 w-3" />
         </Link>
       </header>
-      <iframe
-        srcDoc={state.html}
-        title={state.name}
-        sandbox="allow-scripts"
-        className="flex-1 border-0 bg-white"
-      />
+      {state.kind === "sandpack" ? (
+        <div className="flex-1 min-h-0 flex flex-col p-2 sm:p-3 overflow-hidden bg-background/40">
+          <LovableSandpack bundle={state.bundle} readOnly />
+        </div>
+      ) : (
+        <iframe
+          srcDoc={state.html}
+          title={state.name}
+          sandbox="allow-scripts"
+          className="flex-1 border-0 bg-white min-h-0"
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import {
   Sparkles,
@@ -17,7 +17,10 @@ import {
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
+import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
+import { LovableSandpack } from "@/components/lovable/LovableSandpack";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
@@ -57,6 +60,7 @@ function ProjectEditor() {
   const [project, setProject] = useState<{
     name: string;
     preview_html: string | null;
+    preview_sandpack: Json | null;
     is_public: boolean;
   } | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -70,6 +74,13 @@ function ProjectEditor() {
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const lovableBundle = useMemo((): LovableBundle | null => {
+    const raw = project?.preview_sandpack;
+    if (raw == null) return null;
+    const r = lovableBundleSchema.safeParse(raw);
+    return r.success ? r.data : null;
+  }, [project?.preview_sandpack]);
+
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
   }, [user, authLoading, navigate]);
@@ -77,7 +88,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, preview_html, is_public").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -97,7 +108,7 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, preview_html, is_public").eq("id", projectId).single(),
+      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
     if (proj) setProject(proj);
@@ -147,7 +158,7 @@ function ProjectEditor() {
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let lineBuf = "";
-      let gotFinalHtml = false;
+      let gotFinalSandpack = false;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -159,7 +170,14 @@ function ProjectEditor() {
           lineBuf = lineBuf.slice(nl + 1);
           const trimmed = line.trim();
           if (!trimmed) continue;
-          let evt: { type?: string; content?: string; html?: string | null; reply?: string; message?: string };
+          let evt: {
+            type?: string;
+            content?: string;
+            html?: string | null;
+            sandpack?: unknown;
+            reply?: string;
+            message?: string;
+          };
           try {
             evt = JSON.parse(trimmed) as typeof evt;
           } catch {
@@ -170,14 +188,21 @@ function ProjectEditor() {
               prev.map((m) => (m.id === asstId ? { ...m, content: m.content + evt.content } : m)),
             );
           }
-          if (evt.type === "preview" && evt.html) {
-            setProject((p) => (p ? { ...p, preview_html: evt.html as string } : p));
+          if (evt.type === "preview" && evt.sandpack != null) {
+            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+            if (parsed.success) {
+              const asJson = JSON.parse(JSON.stringify(parsed.data)) as Json;
+              setProject((p) => (p ? { ...p, preview_sandpack: asJson, preview_html: null } : p));
+            }
             if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
               setMobileTab("canvas");
             }
           }
           if (evt.type === "final") {
-            if (evt.html) gotFinalHtml = true;
+            if (evt.sandpack != null) {
+              const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+              if (parsed.success) gotFinalSandpack = true;
+            }
             if (evt.reply) {
               setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, content: evt.reply! } : m)));
             }
@@ -189,7 +214,7 @@ function ProjectEditor() {
       }
 
       await reloadThread();
-      if (gotFinalHtml) toast.success("已更新预览");
+      if (gotFinalSandpack) toast.success("已更新预览");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "生成失败";
       toast.error(msg);
@@ -218,7 +243,18 @@ function ProjectEditor() {
   const html = project?.preview_html ?? PLACEHOLDER_HTML;
 
   const download = () => {
-    if (!project?.preview_html) return;
+    if (!project) return;
+    if (lovableBundle) {
+      const blob = new Blob([JSON.stringify(lovableBundle, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${project.name}.lovable.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      return;
+    }
+    if (!project.preview_html) return;
     const blob = new Blob([project.preview_html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -227,6 +263,8 @@ function ProjectEditor() {
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  const canDownload = !!(lovableBundle || project?.preview_html);
 
   const togglePublic = async (next: boolean) => {
     if (!session || !project) return;
@@ -261,6 +299,29 @@ function ProjectEditor() {
       </div>
     );
   }
+
+  const canvasPreview =
+    view === "preview" ? (
+      lovableBundle ? (
+        <div className="absolute inset-0 flex flex-col min-h-0 bg-background/40 p-2 sm:p-3 overflow-hidden">
+          <LovableSandpack bundle={lovableBundle} />
+        </div>
+      ) : (
+        <iframe
+          key={html.length}
+          srcDoc={html}
+          title="preview"
+          sandbox="allow-scripts"
+          className="absolute inset-0 w-full h-full border-0 bg-white"
+        />
+      )
+    ) : (
+      <pre className="absolute inset-0 overflow-auto p-3 sm:p-4 text-[11px] sm:text-xs bg-background/80 m-0">
+        <code className="break-words whitespace-pre-wrap">
+          {lovableBundle ? JSON.stringify(lovableBundle, null, 2) : project.preview_html ?? "// 还没有生成代码"}
+        </code>
+      </pre>
+    );
 
   const previewCodeToggle = (
     <div className="flex items-center rounded-full glass p-1 shrink-0">
@@ -308,7 +369,9 @@ function ProjectEditor() {
                     </div>
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {m.content.replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")}
+                      {m.content
+                        .replace(/```lovable[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+                        .replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")}
                     </ReactMarkdown>
                   )}
                 </div>
@@ -431,7 +494,7 @@ function ProjectEditor() {
           <button
             type="button"
             onClick={download}
-            disabled={!project.preview_html}
+            disabled={!canDownload}
             className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
           >
             <Download className="h-3 w-3" /> 下载
@@ -480,7 +543,7 @@ function ProjectEditor() {
           <button
             type="button"
             onClick={download}
-            disabled={!project.preview_html}
+            disabled={!canDownload}
             className="rounded-full glass px-2.5 py-1.5 text-[11px] disabled:opacity-40 flex items-center gap-1"
           >
             <Download className="h-3 w-3" />
@@ -492,21 +555,7 @@ function ProjectEditor() {
       <div className="hidden lg:grid flex-1 grid-cols-[minmax(280px,420px)_1fr] min-h-0">
         {chatPanel}
         <main className="relative min-h-0 flex flex-col">
-          <div className="flex-1 min-h-0 relative">
-            {view === "preview" ? (
-              <iframe
-                key={html.length}
-                srcDoc={html}
-                title="preview"
-                sandbox="allow-scripts"
-                className="absolute inset-0 w-full h-full border-0 bg-white"
-              />
-            ) : (
-              <pre className="absolute inset-0 overflow-auto p-4 text-xs bg-background/80 m-0">
-                <code className="break-words whitespace-pre-wrap">{project.preview_html ?? "// 还没有生成代码"}</code>
-              </pre>
-            )}
-          </div>
+          <div className="flex-1 min-h-0 relative">{canvasPreview}</div>
         </main>
       </div>
 
@@ -519,23 +568,7 @@ function ProjectEditor() {
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border/40 bg-background/40 shrink-0">
             {previewCodeToggle}
           </div>
-          <div className="flex-1 min-h-0 relative">
-            {view === "preview" ? (
-              <iframe
-                key={html.length}
-                srcDoc={html}
-                title="preview"
-                sandbox="allow-scripts"
-                className="absolute inset-0 w-full h-full border-0 bg-white"
-              />
-            ) : (
-              <pre className="absolute inset-0 overflow-auto p-3 text-[11px] sm:text-xs bg-background/80 m-0">
-                <code className="break-words whitespace-pre-wrap">
-                  {project.preview_html ?? "// 还没有生成代码"}
-                </code>
-              </pre>
-            )}
-          </div>
+          <div className="flex-1 min-h-0 relative">{canvasPreview}</div>
         </div>
       </div>
 

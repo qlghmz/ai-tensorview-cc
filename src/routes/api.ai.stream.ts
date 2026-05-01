@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getAIConfig, chatCompletionStream } from "@/lib/ai-config";
 import { getAuthedSupabaseFromRequest } from "@/integrations/supabase/request-auth";
 import { beginWebsiteGeneration, persistGenerationResult } from "@/lib/ai-generate-shared";
-import { extractCompleteHtmlBlock, extractPartialHtmlAfterFence } from "@/lib/ai-stream-parse";
+import { extractLovableFence, tryParseLovableBundle } from "@/lib/lovable-bundle";
 
 const bodySchema = z.object({
   projectId: z.string().uuid(),
@@ -86,15 +86,14 @@ export const Route = createFileRoute("/api/ai/stream")({
                   controller.enqueue(
                     encoder.encode(JSON.stringify({ type: "delta", content: piece }) + "\n"),
                   );
-                  const partial = extractPartialHtmlAfterFence(fullReply);
-                  const complete = extractCompleteHtmlBlock(fullReply);
-                  const previewHtml = complete ?? partial;
-                  if (previewHtml) {
-                    controller.enqueue(
-                      encoder.encode(
-                        JSON.stringify({ type: "preview", html: previewHtml }) + "\n",
-                      ),
-                    );
+                  const fence = extractLovableFence(fullReply);
+                  if (fence) {
+                    const bundle = tryParseLovableBundle(fence);
+                    if (bundle) {
+                      controller.enqueue(
+                        encoder.encode(JSON.stringify({ type: "preview", sandpack: bundle }) + "\n"),
+                      );
+                    }
                   }
                 }
               } catch {
@@ -116,10 +115,11 @@ export const Route = createFileRoute("/api/ai/stream")({
               }
               if (lineBuf.trim()) flushLine(lineBuf);
 
-              await persistGenerationResult(supabase, userId, begun.projectId, fullReply);
-              const html = extractCompleteHtmlBlock(fullReply);
+              const { sandpack } = await persistGenerationResult(supabase, userId, begun.projectId, fullReply);
               controller.enqueue(
-                encoder.encode(JSON.stringify({ type: "final", reply: fullReply, html }) + "\n"),
+                encoder.encode(
+                  JSON.stringify({ type: "final", reply: fullReply, sandpack }) + "\n",
+                ),
               );
               controller.close();
             } catch (e) {

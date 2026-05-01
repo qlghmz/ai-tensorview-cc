@@ -1,20 +1,59 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
-import { extractCompleteHtmlBlock } from "@/lib/ai-stream-parse";
+import type { Database, Json } from "@/integrations/supabase/types";
+import {
+  extractLovableFence,
+  lovableBundleSchema,
+  tryParseLovableBundle,
+  type LovableBundle,
+} from "@/lib/lovable-bundle";
 
-export const SYSTEM_PROMPT = `你是"特挠率i额外"——一个 AI 网页生成助手。用户用自然语言描述他们想要的网页，你需要：
+export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
-1. 用友好、简洁的中文回应一两句你将要做什么。
-2. 输出一个**完整的、独立运行的 HTML 文档**，包含 <!DOCTYPE html> 到 </html>，使用：
-   - Tailwind CDN：<script src="https://cdn.tailwindcss.com"></script>
-   - 内联 SVG 图标
-   - 现代、精致的视觉：深色主题、紫粉渐变、玻璃拟态、流畅微动画、响应式
-   - 真实可用的内容（不要 lorem ipsum，按用户描述生成对应文案）
-3. HTML 必须严格用三个反引号 + html 标记的代码块包裹：\`\`\`html ... \`\`\`
-4. **增量修改**：如果用户在已有项目上提出修改，必须基于上一版 HTML 做最小改动，保留原有结构与内容，仅修改用户提到的部分。
-5. 不要解释 HTML 细节，让代码自己说话。
+## 输出格式（必须严格遵守）
 
-要求：响应式、视觉精美、交互流畅、即开即用。每次只输出一个完整 HTML 文档。`;
+1. 先用一两句中文说明你准备生成 / 修改哪些页面与组件。
+2. 然后**只输出一个** Markdown 代码块，语言标记必须是 **lovable**，内容为**合法 JSON**（不要夹杂注释、不要有尾逗号），结构如下：
+
+\`\`\`lovable
+{
+  "routes": [
+    { "path": "/", "label": "首页" },
+    { "path": "/about", "label": "关于" }
+  ],
+  "files": {
+    "/App.tsx": "import { Routes, Route, Link } from 'react-router-dom';\\nimport Home from './pages/Home';\\n...",
+    "/pages/Home.tsx": "export default function Home() { ... }",
+    "/styles.css": "body { margin:0; ... }"
+  }
+}
+\`\`\`
+
+## JSON 字段要求
+
+- **routes**：至少 1 条；**path** 必须以 \`/\` 开头；**label** 为中文或简短英文，用于预览切换下拉框。
+- **files**：键为**绝对路径**（必须以 \`/\` 开头），值是**完整文件源码字符串**（换行用 \\n 写在 JSON 里）。
+- **必须包含** \`/App.tsx\`：默认导出 \`App\`，内部使用 **react-router-dom** 的 \`<Routes>\`、\`<Route>\`、\`<Link>\` 或 \`<NavLink>\`，与 **routes** 一致。
+- **不要**在 \`/App.tsx\` 外层再包 \`BrowserRouter\` / \`HashRouter\` / \`MemoryRouter\`（运行环境会由宿主注入 \`MemoryRouter\`）。
+- **入口** \`/index.tsx\` **不要**输出，由宿主覆盖。
+- 可使用 **\`/styles.css\`** 写全局样式；可配合 **Tailwind** 类名（预览已注入 Tailwind CDN）。
+- 依赖**仅限**：react、react-dom、react-router-dom（均为模板已有或可解析版本）；**不要**引用其它 npm 包。
+- 视觉：深色现代、玻璃拟态、渐变、响应式；文案按用户描述写真实中文，不要用 Lorem。
+
+## 增量修改
+
+若对话里带有「当前项目文件」上下文，必须在**保留未提及文件**的前提下做最小改动；routes 与路由组件保持同步。
+
+每次回复**只包含一个** \`\`\`lovable\`\`\` 代码块（JSON），不要额外输出第二个代码块。`;
+
+function summarizeSandpackForContext(bundle: LovableBundle, maxPerFile = 1200): string {
+  const lines: string[] = [];
+  lines.push("routes: " + JSON.stringify(bundle.routes));
+  for (const [path, code] of Object.entries(bundle.files)) {
+    const body = code.length > maxPerFile ? code.slice(0, maxPerFile) + "\n/* …截断… */" : code;
+    lines.push(`文件 ${path}:\n\`\`\`tsx\n${body}\n\`\`\``);
+  }
+  return lines.join("\n\n");
+}
 
 export async function beginWebsiteGeneration(
   supabase: SupabaseClient<Database>,
@@ -31,7 +70,7 @@ export async function beginWebsiteGeneration(
 > {
   const { data: project, error: pErr } = await supabase
     .from("projects")
-    .select("id, preview_html")
+    .select("id, preview_html, preview_sandpack")
     .eq("id", projectId)
     .eq("user_id", userId)
     .single();
@@ -56,17 +95,29 @@ export async function beginWebsiteGeneration(
 
   const messages: Array<{ role: string; content: string }> = [{ role: "system", content: SYSTEM_PROMPT }];
 
-  if (project.preview_html) {
+  const sandpackRow = project.preview_sandpack;
+  if (sandpackRow != null && typeof sandpackRow === "object") {
+    const parsedDb = lovableBundleSchema.safeParse(sandpackRow);
+    if (parsedDb.success) {
+      messages.push({
+        role: "system",
+        content: `当前 React 项目（基于以下文件增量修改）：\n${summarizeSandpackForContext(parsedDb.data)}`,
+      });
+    }
+  } else if (project.preview_html) {
     messages.push({
       role: "system",
-      content: `当前页面 HTML（用户基于这个版本进行修改）：\n\`\`\`html\n${project.preview_html.slice(0, 12000)}\n\`\`\``,
+      content:
+        "（历史）该项目曾使用单页 HTML 预览；请按 Lovable JSON 规范生成新的 React 多文件项目替换之。旧 HTML 参考：\n```html\n" +
+        project.preview_html.slice(0, 8000) +
+        "\n```",
     });
   }
 
   for (const m of history ?? []) {
     const content =
       m.role === "assistant"
-        ? m.content.replace(/```html[\s\S]*?```/gi, "（生成了一版 HTML）")
+        ? m.content.replace(/```lovable[\s\S]*?```/gi, "（生成了一版 React 项目 JSON）")
         : m.content;
     messages.push({ role: m.role, content });
   }
@@ -81,7 +132,8 @@ export async function persistGenerationResult(
   projectId: string,
   reply: string,
 ) {
-  const newHtml = extractCompleteHtmlBlock(reply);
+  const fence = extractLovableFence(reply);
+  const bundle = fence ? tryParseLovableBundle(fence) : null;
 
   await supabase.from("messages").insert({
     project_id: projectId,
@@ -90,12 +142,16 @@ export async function persistGenerationResult(
     content: reply,
   });
 
-  if (newHtml) {
+  if (bundle) {
     await supabase
       .from("projects")
-      .update({ preview_html: newHtml, updated_at: new Date().toISOString() })
+      .update({
+        preview_sandpack: bundle as unknown as Json,
+        preview_html: null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", projectId);
   }
 
-  return { reply, html: newHtml };
+  return { reply, sandpack: bundle };
 }
