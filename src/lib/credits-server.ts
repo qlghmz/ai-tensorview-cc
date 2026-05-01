@@ -1,6 +1,9 @@
 // Server-only helpers (do not import from client)
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const DAILY_CREDITS = 5;
+const MONTHLY_CREDITS: Record<string, number> = { pro: 100, team: 500 };
+
 export type ConsumeResult =
   | { success: true; balance: number }
   | { success: false; error: string; balance: number };
@@ -19,7 +22,7 @@ export async function consumeCredits(
 
   const { data: row, error: readErr } = await supabaseAdmin
     .from("user_credits")
-    .select("daily_credits, monthly_credits, bonus_credits, daily_reset_at")
+    .select("plan, daily_credits, monthly_credits, bonus_credits, daily_reset_at, monthly_reset_at")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -28,16 +31,25 @@ export async function consumeCredits(
     return { success: false, error: "no_record", balance: 0 };
   }
 
-  // 每日补给
+  // 每日补给 + 会员每月补给
   let daily = row.daily_credits;
+  let monthly = row.monthly_credits;
   let dailyResetAt = row.daily_reset_at;
+  let monthlyResetAt = row.monthly_reset_at;
   const last = new Date(row.daily_reset_at).getTime();
   if (Date.now() - last > 24 * 60 * 60 * 1000) {
-    daily = 5;
+    daily = DAILY_CREDITS;
     dailyResetAt = new Date().toISOString();
   }
 
-  const total = daily + row.monthly_credits + row.bonus_credits;
+  const monthlyAllowance = MONTHLY_CREDITS[row.plan] ?? 0;
+  const monthlyLast = new Date(row.monthly_reset_at).getTime();
+  if (monthlyAllowance > 0 && Date.now() - monthlyLast > 30 * 24 * 60 * 60 * 1000) {
+    monthly = monthlyAllowance;
+    monthlyResetAt = new Date().toISOString();
+  }
+
+  const total = daily + monthly + row.bonus_credits;
   if (total < amount) {
     return { success: false, error: "insufficient_credits", balance: total };
   }
@@ -45,8 +57,8 @@ export async function consumeCredits(
   let remaining = amount;
   const newDaily = Math.max(0, daily - remaining);
   remaining -= daily - newDaily;
-  const newMonthly = Math.max(0, row.monthly_credits - remaining);
-  remaining -= row.monthly_credits - newMonthly;
+  const newMonthly = Math.max(0, monthly - remaining);
+  remaining -= monthly - newMonthly;
   const newBonus = Math.max(0, row.bonus_credits - remaining);
 
   const newTotal = newDaily + newMonthly + newBonus;
@@ -58,6 +70,7 @@ export async function consumeCredits(
       monthly_credits: newMonthly,
       bonus_credits: newBonus,
       daily_reset_at: dailyResetAt,
+      monthly_reset_at: monthlyResetAt,
     })
     .eq("user_id", userId);
 
