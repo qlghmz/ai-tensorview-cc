@@ -110,6 +110,7 @@ function ProjectEditor() {
   const [view, setView] = useState<"preview" | "code">("preview");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [shareOpen, setShareOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
