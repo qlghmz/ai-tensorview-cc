@@ -9,6 +9,7 @@ export function SandpackProvider() { return null; }
 export function SandpackLayout() { return null; }
 export function SandpackCodeEditor() { return null; }
 export function SandpackPreview() { return null; }
+export function useSandpack() { return { sandpack: { files: {}, updateFile: () => {} } }; }
 `;
 
 /**
