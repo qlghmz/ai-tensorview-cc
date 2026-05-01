@@ -11,9 +11,11 @@ import { buildSandpackFiles, bundleSignature, type LovableBundle } from "@/lib/l
 export function LovableSandpack({
   bundle,
   readOnly,
+  view = "split",
 }: {
   bundle: LovableBundle;
   readOnly?: boolean;
+  view?: "split" | "preview" | "code";
 }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
