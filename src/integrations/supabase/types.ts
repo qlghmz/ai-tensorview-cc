@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      credit_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          id: string
+          metadata: Json | null
+          reason: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          reason?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -154,6 +184,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_credits: {
+        Row: {
+          bonus_credits: number
+          created_at: string
+          daily_credits: number
+          daily_reset_at: string
+          monthly_credits: number
+          monthly_reset_at: string
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_credits?: number
+          created_at?: string
+          daily_credits?: number
+          daily_reset_at?: string
+          monthly_credits?: number
+          monthly_reset_at?: string
+          plan?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_credits?: number
+          created_at?: string
+          daily_credits?: number
+          daily_reset_at?: string
+          monthly_credits?: number
+          monthly_reset_at?: string
+          plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_integrations: {
         Row: {
           access_token: string
@@ -189,7 +255,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_credits: {
+        Args: {
+          _amount: number
+          _kind: string
+          _metadata?: Json
+          _reason: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      consume_credits: {
+        Args: {
+          _amount: number
+          _metadata?: Json
+          _reason: string
+          _user_id: string
+        }
+        Returns: Json
+      }
       generate_project_slug: { Args: never; Returns: string }
+      get_credit_balance: { Args: { _user_id: string }; Returns: number }
     }
     Enums: {
       [_ in never]: never
