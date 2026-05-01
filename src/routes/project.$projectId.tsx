@@ -131,7 +131,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html, published_url").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -148,6 +148,7 @@ function ProjectEditor() {
         is_public: d.is_public,
         public_slug: d.public_slug ?? null,
         has_snapshot: !!d.published_html,
+        published_url: d.published_url ?? null,
       });
       setMessages(m.data ?? []);
     });
