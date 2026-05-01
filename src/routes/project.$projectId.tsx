@@ -11,7 +11,6 @@ import {
   Download,
   Share2,
   Check,
-  Copy,
   MessageSquare,
   GitBranch,
 } from "lucide-react";
