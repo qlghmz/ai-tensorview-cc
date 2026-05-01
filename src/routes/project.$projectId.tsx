@@ -501,8 +501,15 @@ function ProjectEditor() {
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold truncate text-sm sm:text-base">{project.name}</div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">特挠率i额外项目</div>
+            <button
+              type="button"
+              onClick={() => setRenameOpen(true)}
+              className="font-semibold truncate text-sm sm:text-base hover:text-brand transition text-left max-w-full"
+              title="点击重命名"
+            >
+              {project.name}
+            </button>
+            <div className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">点击名称重命名</div>
           </div>
         </div>
 
