@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Loader2, ExternalLink, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { LovableSandpack } from "@/components/lovable/LovableSandpack";
+import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 
 export const Route = createFileRoute("/p/$projectId")({
@@ -94,7 +94,7 @@ function PublicPreviewPage() {
       </header>
       {state.kind === "sandpack" ? (
         <div className="flex-1 min-h-0 flex flex-col p-2 sm:p-3 overflow-hidden bg-background/40">
-          <LovableSandpack bundle={state.bundle} readOnly />
+          <ClientLovableSandpack bundle={state.bundle} readOnly />
         </div>
       ) : (
         <iframe

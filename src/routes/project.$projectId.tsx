@@ -20,7 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
-import { LovableSandpack } from "@/components/lovable/LovableSandpack";
+import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
@@ -304,7 +304,7 @@ function ProjectEditor() {
     view === "preview" ? (
       lovableBundle ? (
         <div className="absolute inset-0 flex flex-col min-h-0 bg-background/40 p-2 sm:p-3 overflow-hidden">
-          <LovableSandpack bundle={lovableBundle} />
+          <ClientLovableSandpack bundle={lovableBundle} />
         </div>
       ) : (
         <iframe
