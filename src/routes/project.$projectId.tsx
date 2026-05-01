@@ -302,42 +302,31 @@ function ProjectEditor() {
     );
   }
 
-  const canvasInner =
-    view === "preview" ? (
-      lovableBundle ? (
-        <ClientLovableSandpack bundle={lovableBundle} view="preview" />
-      ) : (
-        <iframe
-          key={html.length}
-          srcDoc={html}
-          title="preview"
-          sandbox="allow-scripts"
-          className="absolute inset-0 w-full h-full border-0 bg-white"
-        />
-      )
-    ) : lovableBundle ? (
-      <ClientLovableSandpack bundle={lovableBundle} view="code" readOnly />
-    ) : (
-      <pre className="absolute inset-0 overflow-auto p-3 sm:p-4 text-[11px] sm:text-xs bg-[#0b0a14] m-0">
-        <code className="break-words whitespace-pre-wrap text-muted-foreground">
-          {project.preview_html ?? "// 还没有生成代码"}
-        </code>
-      </pre>
-    );
-
   const canvasPreview = (
     <div className="absolute inset-0 p-3 sm:p-4 flex flex-col min-h-0">
       <div className="flex-1 min-h-0 rounded-2xl border border-border/60 bg-[#0b0a14] overflow-hidden shadow-[var(--shadow-card)] relative flex flex-col">
-        {view === "preview" && lovableBundle ? (
+        {lovableBundle ? (
           <div className="flex-1 min-h-0 flex flex-col p-2">
-            <ClientLovableSandpack bundle={lovableBundle} view="preview" />
+            <ClientLovableSandpack
+              bundle={lovableBundle}
+              view={view === "preview" ? "preview" : "code"}
+              readOnly={view === "code"}
+            />
           </div>
-        ) : view === "code" && lovableBundle ? (
-          <div className="flex-1 min-h-0 flex flex-col p-2">
-            <ClientLovableSandpack bundle={lovableBundle} view="code" readOnly />
-          </div>
+        ) : view === "preview" ? (
+          <iframe
+            key={html.length}
+            srcDoc={html}
+            title="preview"
+            sandbox="allow-scripts"
+            className="absolute inset-0 w-full h-full border-0 bg-white"
+          />
         ) : (
-          <div className="flex-1 min-h-0 relative">{canvasInner}</div>
+          <pre className="absolute inset-0 overflow-auto p-3 sm:p-4 text-[11px] sm:text-xs bg-[#0b0a14] m-0">
+            <code className="break-words whitespace-pre-wrap text-muted-foreground">
+              {project.preview_html ?? "// 还没有生成代码"}
+            </code>
+          </pre>
         )}
       </div>
     </div>
