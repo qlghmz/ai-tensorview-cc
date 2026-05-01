@@ -117,7 +117,8 @@ function SettingsPage() {
           </section>
           <CreditsPanel />
 
-
+          <section className="glass rounded-3xl p-6 mt-5">
+            <div className="font-semibold mb-1">账户安全</div>
             <p className="text-sm text-muted-foreground mb-4">修改密码将向你的邮箱发送重置链接。</p>
             <Link to="/forgot-password" className="rounded-xl glass px-4 py-2 text-sm hover:border-brand/40 transition inline-flex">
               修改密码
