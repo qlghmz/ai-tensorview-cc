@@ -13,6 +13,7 @@ import {
   Check,
   Copy,
   MessageSquare,
+  GitBranch,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -22,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
+import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
