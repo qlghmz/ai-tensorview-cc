@@ -102,6 +102,8 @@ function ProjectEditor() {
     preview_html: string | null;
     preview_sandpack: Json | null;
     is_public: boolean;
+    public_slug: string | null;
+    has_snapshot: boolean;
   } | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -109,9 +111,8 @@ function ProjectEditor() {
   const [sending, setSending] = useState(false);
   const [view, setView] = useState<"preview" | "code">("preview");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
-  const [shareOpen, setShareOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
