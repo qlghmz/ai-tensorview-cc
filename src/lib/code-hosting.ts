@@ -258,7 +258,7 @@ async function ghUpsertFile(
     branch,
   };
   if (sha) body.sha = sha;
-  const res = await ghReq(`${token}`, `/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
+  const res = await ghReq(token, `/repos/${owner}/${repo}/contents/${encodeURIComponent(path)}`, {
     method: "PUT",
     body: JSON.stringify(body),
   });
