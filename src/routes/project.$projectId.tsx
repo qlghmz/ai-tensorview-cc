@@ -547,56 +547,14 @@ function ProjectEditor() {
 
         <div className="hidden lg:flex items-center gap-2 ml-auto flex-wrap justify-end">
           {previewCodeToggle}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShareOpen((o) => !o)}
-              className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
-            >
-              <Share2 className="h-3 w-3" /> 分享
-            </button>
-            {shareOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] glass rounded-2xl p-4 shadow-[var(--shadow-card)] z-50">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">公开访问</div>
-                  <button
-                    type="button"
-                    onClick={() => togglePublic(!project.is_public)}
-                    className={`relative h-5 w-9 rounded-full transition ${project.is_public ? "bg-brand" : "bg-muted"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${project.is_public ? "left-[18px]" : "left-0.5"}`}
-                    />
-                  </button>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {project.is_public ? "任何持有链接的人都可以查看你的页面。" : "仅你自己可以访问。"}
-                </p>
-                {project.is_public && (
-                  <>
-                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-input border border-border px-2 py-1.5">
-                      <input
-                        readOnly
-                        value={shareUrl}
-                        className="flex-1 bg-transparent text-xs outline-none truncate min-w-0"
-                      />
-                      <button type="button" onClick={copyShare} className="rounded-md btn-brand p-1.5 shrink-0">
-                        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      </button>
-                    </div>
-                    <a
-                      href={shareUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 block text-center text-xs text-brand hover:underline"
-                    >
-                      在新标签页打开 ↗
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setPublishOpen(true)}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
+            title="发布到公网（国内可访问）"
+          >
+            <Share2 className="h-3 w-3" /> {project.is_public ? "已发布" : "发布"}
+          </button>
           <button
             type="button"
             onClick={() => setPushOpen(true)}
