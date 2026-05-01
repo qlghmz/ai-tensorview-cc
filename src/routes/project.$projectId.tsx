@@ -395,10 +395,7 @@ function ProjectEditor() {
               {m.role === "assistant" ? (
                 <div className="prose prose-sm prose-invert max-w-none [&_pre]:bg-black/40 [&_pre]:rounded-lg [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:text-xs">
                   {m.id === streamAssistId && !m.content.trim() ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" />
-                      <span>AI 正在生成...</span>
-                    </div>
+                    <GeneratingStatus />
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {m.content
