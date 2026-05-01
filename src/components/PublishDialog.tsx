@@ -263,8 +263,6 @@ export function PublishDialog({
           </button>
         </div>
 
-        {/* hidden Link to satisfy typed import in some configs */}
-        <Link to="/" className="sr-only">home</Link>
       </div>
     </div>
   );
