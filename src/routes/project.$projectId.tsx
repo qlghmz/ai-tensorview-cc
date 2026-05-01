@@ -127,7 +127,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -147,7 +147,7 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
     if (proj) setProject(proj);
