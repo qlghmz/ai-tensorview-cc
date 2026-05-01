@@ -21,6 +21,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
+import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
@@ -95,10 +96,12 @@ function ProjectEditor() {
 
   const [project, setProject] = useState<{
     name: string;
+    description: string | null;
     preview_html: string | null;
     preview_sandpack: Json | null;
     is_public: boolean;
   } | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
