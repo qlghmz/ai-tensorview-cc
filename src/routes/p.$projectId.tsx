@@ -6,6 +6,8 @@ import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpac
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 
 export const Route = createFileRoute("/p/$projectId")({
+  /** 与编辑器页一致：Sandpack 不在 Node 中加载路由 chunk。 */
+  ssr: false,
   component: PublicPreviewPage,
 });
 

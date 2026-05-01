@@ -30,6 +30,8 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/project/$projectId")({
   validateSearch: (s) => searchSchema.parse(s),
+  /** Sandpack 等依赖仅在浏览器可用；禁止服务端 loadRouteChunk，避免 `self is not defined`。 */
+  ssr: false,
   component: ProjectEditor,
 });
 
