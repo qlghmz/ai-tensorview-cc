@@ -2,6 +2,9 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const DAILY_CREDITS = 5;
+const MONTHLY_CREDITS: Record<string, number> = { pro: 100, team: 500 };
+
 export const getMyCredits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -26,23 +29,34 @@ export const getMyCredits = createServerFn({ method: "GET" })
       };
     }
 
-    // 每日补给：超 24 小时则补到 5
+    // 每日补给：超 24 小时则补到 5；会员 credits 每月补到套餐额度。
     let daily = row.daily_credits;
+    let monthly = row.monthly_credits;
     const last = new Date(row.daily_reset_at).getTime();
     if (Date.now() - last > 24 * 60 * 60 * 1000) {
-      daily = 5;
+      daily = DAILY_CREDITS;
       await supabaseAdmin
         .from("user_credits")
-        .update({ daily_credits: 5, daily_reset_at: new Date().toISOString() })
+        .update({ daily_credits: DAILY_CREDITS, daily_reset_at: new Date().toISOString() })
+        .eq("user_id", userId);
+    }
+
+    const monthlyAllowance = MONTHLY_CREDITS[row.plan] ?? 0;
+    const monthlyLast = new Date(row.monthly_reset_at).getTime();
+    if (monthlyAllowance > 0 && Date.now() - monthlyLast > 30 * 24 * 60 * 60 * 1000) {
+      monthly = monthlyAllowance;
+      await supabaseAdmin
+        .from("user_credits")
+        .update({ monthly_credits: monthlyAllowance, monthly_reset_at: new Date().toISOString() })
         .eq("user_id", userId);
     }
 
     return {
       plan: row.plan,
       daily,
-      monthly: row.monthly_credits,
+      monthly,
       bonus: row.bonus_credits,
-      total: daily + row.monthly_credits + row.bonus_credits,
+      total: daily + monthly + row.bonus_credits,
     };
   });
 

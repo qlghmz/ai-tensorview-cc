@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Check, Sparkles } from "lucide-react";
+import { Check, Sparkles, WalletCards } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 
@@ -21,7 +21,7 @@ const PLANS = [
     period: "永久免费",
     desc: "适合体验和小项目",
     cta: "开始使用",
-    features: ["每月 5 次 AI 生成", "1 个项目", "公开预览链接", "社区支持"],
+    features: ["注册赠送 30 credits", "每日补到 5 credits", "1 个项目", "公开预览链接"],
     highlight: false,
   },
   {
@@ -30,7 +30,7 @@ const PLANS = [
     period: "/月",
     desc: "适合个人创作者",
     cta: "升级专业版",
-    features: ["每月 200 次 AI 生成", "无限项目", "自定义域名", "无水印导出", "优先邮件支持"],
+    features: ["每月 100 Pro credits", "每日补到 5 credits", "无限项目", "自定义域名", "优先邮件支持"],
     highlight: true,
   },
   {
@@ -39,7 +39,7 @@ const PLANS = [
     period: "/月",
     desc: "适合团队协作",
     cta: "联系销售",
-    features: ["无限 AI 生成", "团队协作（5 席位）", "项目权限管理", "私有部署选项", "专属客服"],
+    features: ["每月 500 Team credits", "每日补到 5 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
     highlight: false,
   },
 ];
@@ -98,6 +98,26 @@ function PricingPage() {
               </div>
             ))}
           </div>
+
+          <section className="mt-10 max-w-5xl mx-auto glass rounded-3xl p-6">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-xl btn-brand shrink-0">
+                <WalletCards className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">支付与收款</h2>
+                <p className="mt-2 text-sm text-muted-foreground leading-6">
+                  国际卡支付会接入 Paddle，适合海外用户；国内用户更习惯支付宝和微信支付，通常需要单独接入国内支付通道。
+                  Paddle 的款项会进入你的 Paddle 商户余额，完成审核和绑定收款账户后提现；支付宝/微信则进入对应商户号。
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full border border-border px-3 py-1">Paddle：海外卡/订阅</span>
+                  <span className="rounded-full border border-border px-3 py-1">支付宝：国内用户</span>
+                  <span className="rounded-full border border-border px-3 py-1">微信支付：国内用户</span>
+                </div>
+              </div>
+            </div>
+          </section>
 
           <div className="mt-16 text-center text-sm text-muted-foreground">
             还有疑问？查看

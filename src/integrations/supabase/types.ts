@@ -276,6 +276,26 @@ export type Database = {
       }
       generate_project_slug: { Args: never; Returns: string }
       get_credit_balance: { Args: { _user_id: string }; Returns: number }
+      refill_user_credits: {
+        Args: { _user_id: string }
+        Returns: {
+          bonus_credits: number
+          created_at: string
+          daily_credits: number
+          daily_reset_at: string
+          monthly_credits: number
+          monthly_reset_at: string
+          plan: string
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "user_credits"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
     }
     Enums: {
       [_ in never]: never
