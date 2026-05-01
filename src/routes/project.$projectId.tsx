@@ -650,6 +650,15 @@ function ProjectEditor() {
           </div>
           <button
             type="button"
+            onClick={() => setPushOpen(true)}
+            disabled={!lovableBundle}
+            className="rounded-full glass px-2.5 py-1.5 text-[11px] disabled:opacity-40 flex items-center gap-1"
+            title="推送到 Gitee / GitHub"
+          >
+            <GitBranch className="h-3 w-3" />
+          </button>
+          <button
+            type="button"
             onClick={download}
             disabled={!canDownload}
             className="rounded-full glass px-2.5 py-1.5 text-[11px] disabled:opacity-40 flex items-center gap-1"
