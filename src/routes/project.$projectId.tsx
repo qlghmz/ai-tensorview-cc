@@ -53,6 +53,40 @@ const PLACEHOLDER_HTML = `<!DOCTYPE html>
 
 type MobileTab = "chat" | "canvas";
 
+const STATUS_STEPS = [
+  "正在理解你的需求",
+  "正在规划页面与路由",
+  "正在生成 React 组件",
+  "正在组装多页面预览",
+  "正在保存并刷新预览",
+];
+
+function GeneratingStatus() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setIdx((i) => (i + 1 < STATUS_STEPS.length ? i + 1 : i));
+    }, 4000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" />
+        <span className="text-sm">{STATUS_STEPS[idx]}…</span>
+      </div>
+      <div className="flex flex-col gap-1 text-[11px] text-muted-foreground/80">
+        {STATUS_STEPS.slice(0, idx).map((s) => (
+          <div key={s} className="flex items-center gap-1.5">
+            <Check className="h-3 w-3 text-brand/80" />
+            <span>{s}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProjectEditor() {
   const { projectId } = Route.useParams();
   const search = Route.useSearch();
@@ -128,6 +162,18 @@ function ProjectEditor() {
       { id: tempUserId, role: "user", content: prompt, created_at: new Date().toISOString() },
     ]);
 
+    const asstId = "tmp-asst-" + Date.now();
+    setStreamAssistId(asstId);
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: asstId,
+        role: "assistant",
+        content: "",
+        created_at: new Date().toISOString(),
+      },
+    ]);
+
     try {
       const res = await fetch("/api/ai/stream", {
         method: "POST",
@@ -145,22 +191,49 @@ function ProjectEditor() {
 
       if (!res.body) throw new Error("无响应流");
 
-      const asstId = "tmp-asst-" + Date.now();
-      setStreamAssistId(asstId);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: asstId,
-          role: "assistant",
-          content: "",
-          created_at: new Date().toISOString(),
-        },
-      ]);
-
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let lineBuf = "";
       let gotFinalSandpack = false;
+      let pendingSandpack: Json | null = null;
+      let finalReply: string = "";
+
+      const handleLine = (line: string) => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+        let evt: {
+          type?: string;
+          content?: string;
+          sandpack?: unknown;
+          reply?: string;
+          message?: string;
+        };
+        try {
+          evt = JSON.parse(trimmed) as typeof evt;
+        } catch {
+          return;
+        }
+        // 生成期间不展示具体代码内容，仅作为状态信号；保留最后的 reply 用于完成后展示。
+        if (evt.type === "preview" && evt.sandpack != null) {
+          const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+          if (parsed.success) {
+            pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+          }
+        }
+        if (evt.type === "final") {
+          if (evt.sandpack != null) {
+            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+            if (parsed.success) {
+              pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+              gotFinalSandpack = true;
+            }
+          }
+          if (evt.reply) finalReply = evt.reply;
+        }
+        if (evt.type === "error" && evt.message) {
+          toast.error(evt.message);
+        }
+      };
 
       while (true) {
         const { done, value } = await reader.read();
@@ -170,57 +243,41 @@ function ProjectEditor() {
         while ((nl = lineBuf.indexOf("\n")) !== -1) {
           const line = lineBuf.slice(0, nl);
           lineBuf = lineBuf.slice(nl + 1);
-          const trimmed = line.trim();
-          if (!trimmed) continue;
-          let evt: {
-            type?: string;
-            content?: string;
-            html?: string | null;
-            sandpack?: unknown;
-            reply?: string;
-            message?: string;
-          };
-          try {
-            evt = JSON.parse(trimmed) as typeof evt;
-          } catch {
-            continue;
-          }
-          if (evt.type === "delta" && evt.content) {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === asstId ? { ...m, content: m.content + evt.content } : m)),
-            );
-          }
-          if (evt.type === "preview" && evt.sandpack != null) {
-            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
-            if (parsed.success) {
-              const asJson = JSON.parse(JSON.stringify(parsed.data)) as Json;
-              setProject((p) => (p ? { ...p, preview_sandpack: asJson, preview_html: null } : p));
-            }
-            if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
-              setMobileTab("canvas");
-            }
-          }
-          if (evt.type === "final") {
-            if (evt.sandpack != null) {
-              const parsed = lovableBundleSchema.safeParse(evt.sandpack);
-              if (parsed.success) gotFinalSandpack = true;
-            }
-            if (evt.reply) {
-              setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, content: evt.reply! } : m)));
-            }
-          }
-          if (evt.type === "error" && evt.message) {
-            toast.error(evt.message);
-          }
+          handleLine(line);
+        }
+      }
+      if (lineBuf.trim()) handleLine(lineBuf);
+
+      // 一次性更新预览，避免中途闪烁
+      if (pendingSandpack) {
+        const sp = pendingSandpack;
+        setProject((p) => (p ? { ...p, preview_sandpack: sp, preview_html: null } : p));
+        if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+          setMobileTab("canvas");
         }
       }
 
+      // 用最终回复替换占位
+      const cleanReply = finalReply
+        ? finalReply
+            .replace(/```lovable[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+            .replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+        : gotFinalSandpack
+          ? "✨ 已生成网页 — 见预览面板"
+          : "生成已完成。";
+      setMessages((prev) => prev.map((m) => (m.id === asstId ? { ...m, content: cleanReply } : m)));
+
       await reloadThread();
       if (gotFinalSandpack) toast.success("已更新预览");
+      else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
+      else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "生成失败";
       toast.error(msg);
-      setMessages((prev) => prev.filter((m) => m.id !== tempUserId && !m.id.startsWith("tmp-asst-")));
+      // 保留用户消息，把占位 assistant 替换成错误说明
+      setMessages((prev) =>
+        prev.map((m) => (m.id === asstId ? { ...m, content: `⚠️ 生成失败：${msg}` } : m)),
+      );
     } finally {
       setSending(false);
       setStreamAssistId(null);
@@ -372,10 +429,7 @@ function ProjectEditor() {
               {m.role === "assistant" ? (
                 <div className="prose prose-sm prose-invert max-w-none [&_pre]:bg-black/40 [&_pre]:rounded-lg [&_pre]:p-2 [&_pre]:text-xs [&_pre]:overflow-x-auto [&_code]:text-xs">
                   {m.id === streamAssistId && !m.content.trim() ? (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" />
-                      <span>AI 正在生成...</span>
-                    </div>
+                    <GeneratingStatus />
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {m.content
@@ -410,7 +464,8 @@ function ProjectEditor() {
               }
             }}
             rows={2}
-            placeholder="继续描述要修改什么..."
+            placeholder={sending ? "AI 正在运行，请稍候..." : "继续描述要修改什么..."}
+            disabled={sending}
             className="flex-1 bg-transparent px-2 sm:px-3 py-2 text-sm outline-none placeholder:text-muted-foreground resize-none min-h-[44px]"
           />
           <button
