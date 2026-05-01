@@ -351,30 +351,17 @@ function ProjectEditor() {
 
   const canDownload = !!(lovableBundle || project?.preview_html);
 
-  const togglePublic = async (next: boolean) => {
-    if (!session || !project) return;
-    try {
-      await toggleProjectPublic({
-        data: { projectId, isPublic: next },
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      setProject({ ...project, is_public: next });
-      toast.success(next ? "已设为公开" : "已设为私有");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "切换失败");
-    }
-  };
-
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/p/${projectId}` : "";
-
-  const copyShare = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      toast.error("复制失败");
-    }
+  const updatePublishState = (patch: { isPublic?: boolean; publicSlug?: string | null; hasSnapshot?: boolean }) => {
+    setProject((prev) =>
+      prev
+        ? {
+            ...prev,
+            is_public: patch.isPublic ?? prev.is_public,
+            public_slug: patch.publicSlug !== undefined ? patch.publicSlug : prev.public_slug,
+            has_snapshot: patch.hasSnapshot ?? prev.has_snapshot,
+          }
+        : prev,
+    );
   };
 
   if (authLoading || !project) {
