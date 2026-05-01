@@ -353,7 +353,12 @@ function ProjectEditor() {
 
   const canDownload = !!(lovableBundle || project?.preview_html);
 
-  const updatePublishState = (patch: { isPublic?: boolean; publicSlug?: string | null; hasSnapshot?: boolean }) => {
+  const updatePublishState = (patch: {
+    isPublic?: boolean;
+    publicSlug?: string | null;
+    hasSnapshot?: boolean;
+    publishedUrl?: string | null;
+  }) => {
     setProject((prev) =>
       prev
         ? {
@@ -361,6 +366,8 @@ function ProjectEditor() {
             is_public: patch.isPublic ?? prev.is_public,
             public_slug: patch.publicSlug !== undefined ? patch.publicSlug : prev.public_slug,
             has_snapshot: patch.hasSnapshot ?? prev.has_snapshot,
+            published_url:
+              patch.publishedUrl !== undefined ? patch.publishedUrl : prev.published_url,
           }
         : prev,
     );
