@@ -24,7 +24,7 @@ import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
-import { toggleProjectPublic } from "@/fn/website-ai";
+import { PublishDialog } from "@/components/PublishDialog";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
