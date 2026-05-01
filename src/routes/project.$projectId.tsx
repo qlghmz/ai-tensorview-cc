@@ -53,6 +53,40 @@ const PLACEHOLDER_HTML = `<!DOCTYPE html>
 
 type MobileTab = "chat" | "canvas";
 
+const STATUS_STEPS = [
+  "正在理解你的需求",
+  "正在规划页面与路由",
+  "正在生成 React 组件",
+  "正在组装多页面预览",
+  "正在保存并刷新预览",
+];
+
+function GeneratingStatus() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      setIdx((i) => (i + 1 < STATUS_STEPS.length ? i + 1 : i));
+    }, 4000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-2 text-foreground">
+        <Loader2 className="h-3.5 w-3.5 animate-spin text-brand" />
+        <span className="text-sm">{STATUS_STEPS[idx]}…</span>
+      </div>
+      <div className="flex flex-col gap-1 text-[11px] text-muted-foreground/80">
+        {STATUS_STEPS.slice(0, idx).map((s) => (
+          <div key={s} className="flex items-center gap-1.5">
+            <Check className="h-3 w-3 text-brand/80" />
+            <span>{s}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ProjectEditor() {
   const { projectId } = Route.useParams();
   const search = Route.useSearch();
