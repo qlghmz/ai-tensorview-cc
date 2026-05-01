@@ -4,6 +4,7 @@ import { getAIConfig, chatCompletionStream } from "@/lib/ai-config";
 import { getAuthedSupabaseFromRequest } from "@/integrations/supabase/request-auth";
 import { beginWebsiteGeneration, persistGenerationResult } from "@/lib/ai-generate-shared";
 import { extractLovableFence, tryParseLovableBundle } from "@/lib/lovable-bundle";
+import { consumeCredits } from "@/lib/credits-server";
 
 const bodySchema = z.object({
   projectId: z.string().uuid(),
@@ -36,6 +37,17 @@ export const Route = createFileRoute("/api/ai/stream")({
           return Response.json(
             { error: "AI 未配置：请设置 DASHSCOPE_API_KEY 等环境变量" },
             { status: 503 },
+          );
+        }
+
+        // 扣 1 积分（生成前预扣）
+        const charge = await consumeCredits(userId, 1, "ai_generate", {
+          projectId: parsed.data.projectId,
+        });
+        if (!charge.success) {
+          return Response.json(
+            { error: "积分不足，请充值或等待每日补给", balance: charge.balance },
+            { status: 402 },
           );
         }
 
