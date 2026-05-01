@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
-import { Loader2, Check, Copy, Globe, Lock, Sparkles, ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Check, Copy, Globe, Sparkles, ExternalLink, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 import { buildPublishedHtml } from "@/lib/publish-snapshot";
+import { publishToEdgeOne } from "@/server/edgeone-deploy.functions";
 
 interface Props {
   open: boolean;
@@ -13,138 +14,78 @@ interface Props {
   isPublic: boolean;
   publicSlug: string | null;
   bundle: LovableBundle | null;
+  /** 是否已经把页面快照写入数据库（编译过一次） */
   hasSnapshot: boolean;
-  onChange: (next: { isPublic?: boolean; publicSlug?: string | null; hasSnapshot?: boolean }) => void;
+  onChange: (next: {
+    isPublic?: boolean;
+    publicSlug?: string | null;
+    hasSnapshot?: boolean;
+    publishedUrl?: string | null;
+  }) => void;
+  /** 之前部署得到的 edgeone 链接（如果有） */
+  publishedUrl?: string | null;
 }
 
+/**
+ * 「一键发布」对话框 —— 仿 Lovable 的体验：
+ *   - 客户不需要登记任何第三方账号
+ *   - 点一下，平台代客户把 HTML 推到腾讯云 EdgeOne
+ *   - 拿到一个独立的 *.edgeone.app 公开链接，国内可直接访问
+ */
 export function PublishDialog({
   open,
   onClose,
   projectId,
   projectName,
-  isPublic,
-  publicSlug,
   bundle,
-  hasSnapshot,
   onChange,
+  publishedUrl,
 }: Props) {
   const [busy, setBusy] = useState(false);
-  const [building, setBuilding] = useState(false);
-  const [slugInput, setSlugInput] = useState("");
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (open) setSlugInput(publicSlug ?? "");
-  }, [open, publicSlug]);
+  const [currentUrl, setCurrentUrl] = useState<string | null>(publishedUrl ?? null);
 
   if (!open) return null;
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const slugUrl = publicSlug ? `${origin}/s/${publicSlug}` : "";
-  const fallbackUrl = `${origin}/p/${projectId}`;
-  const liveUrl = publicSlug ? slugUrl : fallbackUrl;
-
-  const ensureSlug = async (): Promise<string | null> => {
-    if (publicSlug) return publicSlug;
-    const { data, error } = await supabase.rpc("generate_project_slug");
-    if (error || !data) {
-      // 兜底：本地随机
-      const fallback = Math.random().toString(36).slice(2, 8);
-      const { error: e2 } = await supabase
-        .from("projects")
-        .update({ public_slug: fallback })
-        .eq("id", projectId);
-      if (e2) {
-        toast.error("生成短链失败");
-        return null;
-      }
-      onChange({ publicSlug: fallback });
-      return fallback;
-    }
-    const { error: upErr } = await supabase
-      .from("projects")
-      .update({ public_slug: data as string })
-      .eq("id", projectId);
-    if (upErr) {
-      toast.error("写入短链失败");
-      return null;
-    }
-    onChange({ publicSlug: data as string });
-    return data as string;
-  };
-
-  const togglePublish = async (next: boolean) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      let nextSlug = publicSlug;
-      if (next && !publicSlug) {
-        nextSlug = await ensureSlug();
-      }
-      const { error } = await supabase
-        .from("projects")
-        .update({ is_public: next })
-        .eq("id", projectId);
-      if (error) throw error;
-      onChange({ isPublic: next, publicSlug: nextSlug });
-      toast.success(next ? "已发布，国内可访问" : "已下线");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "操作失败");
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const buildSnapshot = async () => {
+  const deploy = async () => {
     if (!bundle) {
-      toast.error("还没有可发布的页面");
+      toast.error("还没有可发布的页面，先生成页面再发布");
       return;
     }
-    setBuilding(true);
+    setBusy(true);
     try {
+      // 1) 浏览器侧编译成自包含 HTML
       const html = await buildPublishedHtml(bundle, { title: projectName });
-      const { error } = await supabase
+
+      // 2) 调服务端 -> 腾讯云 EdgeOne，拿独立公网链接
+      const res = await publishToEdgeOne({
+        data: { projectId, html },
+      });
+
+      // 3) 同时把 HTML 也存进数据库做备份（可选展示）
+      await supabase
         .from("projects")
         .update({ published_html: html })
         .eq("id", projectId);
-      if (error) throw error;
-      onChange({ hasSnapshot: true });
-      toast.success("已生成稳定快照（国内秒开）");
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "生成快照失败");
-    } finally {
-      setBuilding(false);
-    }
-  };
 
-  const saveSlug = async () => {
-    const v = slugInput.trim().toLowerCase();
-    if (!/^[a-z0-9-]{3,32}$/.test(v)) {
-      toast.error("短链只能用小写字母、数字、横线，3–32 位");
-      return;
-    }
-    if (v === publicSlug) return;
-    setBusy(true);
-    try {
-      const { error } = await supabase
-        .from("projects")
-        .update({ public_slug: v })
-        .eq("id", projectId);
-      if (error) {
-        if (error.code === "23505") toast.error("这个短链已被占用");
-        else toast.error(error.message);
-        return;
-      }
-      onChange({ publicSlug: v });
-      toast.success("短链已更新");
+      setCurrentUrl(res.url);
+      onChange({
+        isPublic: true,
+        publishedUrl: res.url,
+        hasSnapshot: true,
+      });
+      toast.success("发布成功，国内可直接访问");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "发布失败");
     } finally {
       setBusy(false);
     }
   };
 
   const copy = async () => {
+    if (!currentUrl) return;
     try {
-      await navigator.clipboard.writeText(liveUrl);
+      await navigator.clipboard.writeText(currentUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
@@ -163,106 +104,75 @@ export function PublishDialog({
       >
         <div className="flex items-center gap-2">
           <span className="grid h-8 w-8 place-items-center rounded-lg btn-brand">
-            <Sparkles className="h-4 w-4" />
+            <Rocket className="h-4 w-4" />
           </span>
           <div className="flex-1">
-            <div className="text-sm font-semibold">发布到公网</div>
-            <div className="text-[11px] text-muted-foreground">国内可直接访问，无需翻墙</div>
+            <div className="text-sm font-semibold">一键发布到公网</div>
+            <div className="text-[11px] text-muted-foreground">
+              独立域名，国内可访问，无需账号
+            </div>
           </div>
         </div>
 
-        {/* 开关 */}
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/30 px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            {isPublic ? <Globe className="h-4 w-4 text-brand" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
-            <div>
-              <div className="text-sm font-medium">{isPublic ? "已发布" : "未发布"}</div>
-              <div className="text-[11px] text-muted-foreground">
-                {isPublic ? "任何人持链接可访问" : "打开后会生成短链"}
-              </div>
-            </div>
-          </div>
-          <button
-            type="button"
-            disabled={busy}
-            onClick={() => togglePublish(!isPublic)}
-            className={`relative h-6 w-11 rounded-full transition disabled:opacity-50 ${isPublic ? "bg-brand" : "bg-muted"}`}
-          >
-            <span
-              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${isPublic ? "left-[22px]" : "left-0.5"}`}
-            />
-          </button>
-        </div>
-
-        {isPublic && (
-          <>
-            {/* 短链 */}
-            <div className="mt-4">
-              <label className="text-xs text-muted-foreground">访问链接</label>
-              <div className="mt-1 flex items-center gap-1 rounded-lg bg-input border border-border px-2 py-1.5">
-                <span className="text-[11px] text-muted-foreground shrink-0">{origin}/s/</span>
-                <input
-                  value={slugInput}
-                  onChange={(e) => setSlugInput(e.target.value)}
-                  className="flex-1 min-w-0 bg-transparent text-xs outline-none"
-                  placeholder="my-app"
-                />
-                <button
-                  type="button"
-                  onClick={saveSlug}
-                  disabled={busy || !slugInput.trim() || slugInput.trim() === publicSlug}
-                  className="rounded-md btn-brand px-2 py-1 text-[11px] disabled:opacity-40"
-                >
-                  保存
-                </button>
-              </div>
-              {publicSlug && (
-                <div className="mt-2 flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1.5">
-                  <input readOnly value={liveUrl} className="flex-1 min-w-0 bg-transparent text-xs outline-none truncate" />
-                  <button type="button" onClick={copy} className="rounded-md btn-brand p-1 shrink-0">
-                    {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </button>
-                  <a href={liveUrl} target="_blank" rel="noreferrer" className="rounded-md glass p-1 shrink-0">
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                </div>
-              )}
-            </div>
-
-            {/* 快照 */}
-            <div className="mt-4 rounded-xl border border-border/60 p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm font-medium">国内加速快照</div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    把页面预编译成静态 HTML，不依赖 codesandbox bundler，国内秒开
-                  </div>
-                </div>
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full ${hasSnapshot ? "bg-brand/20 text-brand" : "bg-muted text-muted-foreground"}`}
-                >
-                  {hasSnapshot ? "已生成" : "未生成"}
-                </span>
-              </div>
+        {/* 已发布链接 */}
+        {currentUrl && (
+          <div className="mt-4">
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Globe className="h-3 w-3 text-brand" />
+              已发布的公网链接
+            </label>
+            <div className="mt-1 flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1.5">
+              <input
+                readOnly
+                value={currentUrl}
+                className="flex-1 min-w-0 bg-transparent text-xs outline-none truncate"
+              />
               <button
                 type="button"
-                onClick={buildSnapshot}
-                disabled={building || !bundle}
-                className="mt-3 w-full rounded-lg btn-brand py-2 text-xs font-medium disabled:opacity-40 flex items-center justify-center gap-1.5"
+                onClick={copy}
+                className="rounded-md btn-brand p-1 shrink-0"
+                title="复制链接"
               >
-                {building ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-                {building ? "编译中…" : hasSnapshot ? "重新生成快照" : "生成稳定快照"}
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </button>
+              <a
+                href={currentUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md glass p-1 shrink-0"
+                title="打开"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
-          </>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              链接由腾讯云 EdgeOne 提供，完全独立，跟本平台无关
+            </div>
+          </div>
         )}
+
+        {/* 主操作 */}
+        <button
+          type="button"
+          onClick={deploy}
+          disabled={busy || !bundle}
+          className="mt-4 w-full rounded-lg btn-brand py-2.5 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+        >
+          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {busy ? "正在发布…" : currentUrl ? "重新部署最新版本" : "立即发布"}
+        </button>
+
+        <div className="mt-3 text-[11px] text-muted-foreground leading-relaxed">
+          点击发布后，平台会把页面打包推送到腾讯云 EdgeOne，自动给你分配一个独立的
+          <span className="text-foreground font-medium"> .edgeone.app </span>
+          链接。任何人打开都能直接看到成品页，不需要登录、不依赖本平台。
+        </div>
 
         <div className="mt-4 flex justify-end gap-2">
           <button type="button" onClick={onClose} className="rounded-lg glass px-3 py-1.5 text-xs">
             完成
           </button>
         </div>
-
       </div>
     </div>
   );
