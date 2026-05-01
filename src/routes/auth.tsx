@@ -65,7 +65,7 @@ function AuthPage() {
           },
         });
         if (error) throw error;
-        toast.success("注册成功，已自动登录");
+        toast.success("验证邮件已发送，请先到邮箱确认后再登录");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -148,7 +148,7 @@ function AuthPage() {
       <div className="relative w-full max-w-md glass rounded-3xl p-8 shadow-[var(--shadow-card)]">
         <h1 className="text-2xl font-bold">{mode === "signup" ? "创建账户" : "欢迎回来"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {mode === "signup" ? "免费开始，无需信用卡。" : "登录继续你的创作。"}
+              {mode === "signup" ? "注册后需要先完成邮箱验证。" : "登录继续你的创作。"}
         </p>
 
         <button
@@ -225,6 +225,11 @@ function AuthPage() {
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : mode === "signup" ? "创建账户" : "登录"}
             </button>
+            {mode === "signup" && (
+              <p className="text-xs text-muted-foreground text-center">
+                没收到邮件时，请先检查垃圾箱；同一邮箱短时间重复注册可能不会连续发送。
+              </p>
+            )}
           </form>
         ) : (
           <form onSubmit={verifyOtp} className="mt-4 space-y-3">
