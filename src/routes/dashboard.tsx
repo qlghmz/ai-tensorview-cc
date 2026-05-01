@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Plus, Loader2, Sparkles, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, Loader2, Sparkles, ExternalLink, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
@@ -32,6 +33,7 @@ function Dashboard() {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [prompt, setPrompt] = useState(search.prompt ?? "");
   const [creating, setCreating] = useState(false);
+  const [renaming, setRenaming] = useState<Project | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
@@ -154,6 +156,13 @@ function Dashboard() {
                           {p.name}
                         </Link>
                         <button
+                          onClick={() => setRenaming(p)}
+                          className="text-muted-foreground hover:text-brand transition"
+                          title="重命名"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
                           onClick={() => del(p.id)}
                           className="text-muted-foreground hover:text-destructive transition"
                           title="删除"
@@ -172,6 +181,25 @@ function Dashboard() {
           </div>
         </main>
       </div>
+
+      {renaming && (
+        <RenameProjectDialog
+          open={!!renaming}
+          projectId={renaming.id}
+          initialName={renaming.name}
+          initialDescription={renaming.description}
+          onClose={() => setRenaming(null)}
+          onSaved={(next) => {
+            setProjects((prev) =>
+              prev?.map((x) =>
+                x.id === renaming.id
+                  ? { ...x, name: next.name, description: next.description, updated_at: new Date().toISOString() }
+                  : x,
+              ) ?? null,
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

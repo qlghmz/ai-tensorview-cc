@@ -21,6 +21,7 @@ import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
+import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
@@ -95,10 +96,12 @@ function ProjectEditor() {
 
   const [project, setProject] = useState<{
     name: string;
+    description: string | null;
     preview_html: string | null;
     preview_sandpack: Json | null;
     is_public: boolean;
   } | null>(null);
+  const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -124,7 +127,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -144,7 +147,7 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
     if (proj) setProject(proj);
@@ -498,8 +501,15 @@ function ProjectEditor() {
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold truncate text-sm sm:text-base">{project.name}</div>
-            <div className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">特挠率i额外项目</div>
+            <button
+              type="button"
+              onClick={() => setRenameOpen(true)}
+              className="font-semibold truncate text-sm sm:text-base hover:text-brand transition text-left max-w-full"
+              title="点击重命名"
+            >
+              {project.name}
+            </button>
+            <div className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">点击名称重命名</div>
           </div>
         </div>
 
@@ -659,6 +669,17 @@ function ProjectEditor() {
           </button>
         ))}
       </nav>
+
+      <RenameProjectDialog
+        open={renameOpen}
+        projectId={projectId}
+        initialName={project.name}
+        initialDescription={project.description}
+        onClose={() => setRenameOpen(false)}
+        onSaved={(next) =>
+          setProject((p) => (p ? { ...p, name: next.name, description: next.description } : p))
+        }
+      />
     </div>
   );
 }
