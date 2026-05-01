@@ -39,6 +39,24 @@ function AuthPage() {
 
   const [busy, setBusy] = useState(false);
 
+  const resendVerification = async () => {
+    if (!email.trim()) return toast.error("请先输入邮箱");
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: email.trim(),
+        options: { emailRedirectTo: window.location.origin + "/dashboard" },
+      });
+      if (error) throw error;
+      toast.success("验证邮件已重新发送");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "发送失败，请稍后再试");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       navigate({ to: "/dashboard", search: search.prompt ? { prompt: search.prompt } : {} });
@@ -226,9 +244,12 @@ function AuthPage() {
               {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : mode === "signup" ? "创建账户" : "登录"}
             </button>
             {mode === "signup" && (
-              <p className="text-xs text-muted-foreground text-center">
+              <div className="text-center text-xs text-muted-foreground">
                 没收到邮件时，请先检查垃圾箱；同一邮箱短时间重复注册可能不会连续发送。
-              </p>
+                <button type="button" onClick={resendVerification} className="ml-1 text-brand hover:underline">
+                  重新发送
+                </button>
+              </div>
             )}
           </form>
         ) : (
