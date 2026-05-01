@@ -13,6 +13,7 @@ import {
   Check,
   Copy,
   MessageSquare,
+  GitBranch,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -22,6 +23,7 @@ import { useAuth } from "@/lib/auth-context";
 import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
+import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { toggleProjectPublic } from "@/fn/website-ai";
 import { toast } from "sonner";
 
@@ -108,6 +110,7 @@ function ProjectEditor() {
   const [view, setView] = useState<"preview" | "code">("preview");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [shareOpen, setShareOpen] = useState(false);
+  const [pushOpen, setPushOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
@@ -589,6 +592,15 @@ function ProjectEditor() {
           </div>
           <button
             type="button"
+            onClick={() => setPushOpen(true)}
+            disabled={!lovableBundle}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
+            title="推送到 Gitee / GitHub"
+          >
+            <GitBranch className="h-3 w-3" /> 推送代码
+          </button>
+          <button
+            type="button"
             onClick={download}
             disabled={!canDownload}
             className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
@@ -636,6 +648,15 @@ function ProjectEditor() {
               </div>
             )}
           </div>
+          <button
+            type="button"
+            onClick={() => setPushOpen(true)}
+            disabled={!lovableBundle}
+            className="rounded-full glass px-2.5 py-1.5 text-[11px] disabled:opacity-40 flex items-center gap-1"
+            title="推送到 Gitee / GitHub"
+          >
+            <GitBranch className="h-3 w-3" />
+          </button>
           <button
             type="button"
             onClick={download}
@@ -701,6 +722,15 @@ function ProjectEditor() {
         onSaved={(next) =>
           setProject((p) => (p ? { ...p, name: next.name, description: next.description } : p))
         }
+      />
+
+      <PushToRepoDialog
+        open={pushOpen}
+        onOpenChange={setPushOpen}
+        projectId={projectId}
+        projectName={project.name}
+        bundle={lovableBundle}
+        userId={session?.user.id ?? ""}
       />
     </div>
   );

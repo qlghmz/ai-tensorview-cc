@@ -70,6 +70,45 @@ export type Database = {
         }
         Relationships: []
       }
+      project_repos: {
+        Row: {
+          created_at: string
+          default_branch: string
+          id: string
+          last_pushed_at: string | null
+          project_id: string
+          provider: string
+          repo_name: string
+          repo_owner: string
+          repo_url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_branch?: string
+          id?: string
+          last_pushed_at?: string | null
+          project_id: string
+          provider: string
+          repo_name: string
+          repo_owner: string
+          repo_url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_branch?: string
+          id?: string
+          last_pushed_at?: string | null
+          project_id?: string
+          provider?: string
+          repo_name?: string
+          repo_owner?: string
+          repo_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       projects: {
         Row: {
           created_at: string
@@ -103,6 +142,36 @@ export type Database = {
           preview_sandpack?: Json | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_integrations: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          provider: string
+          updated_at: string
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          id?: string
+          provider: string
+          updated_at?: string
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          provider?: string
+          updated_at?: string
+          user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
