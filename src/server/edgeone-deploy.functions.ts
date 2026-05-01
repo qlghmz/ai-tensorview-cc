@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { getRequestAuth } from "@/integrations/supabase/request-auth";
-import { createSupabaseServerClient } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * 调用腾讯云 EdgeOne Pages 公开部署接口（无账号、无 token）：
@@ -9,12 +8,12 @@ import { createSupabaseServerClient } from "@/integrations/supabase/client.serve
  *   2. POST baseUrl   body: { value: <html> }    -> { url: "https://xxx.edgeone.app" }
  *
  * 这个 API 是 EdgeOne 给 AI 工具用的「一次性 HTML 托管」，链接公开可访问、国内速度好。
- * 我们用它把客户做好的成品页一键发到独立域名，跟 Lovable 内部域名完全分离。
+ * 我们用它把客户做好的成品页一键发到独立域名，跟 Lovable 平台域名完全分离。
  */
 
 const InputSchema = z.object({
   projectId: z.string().uuid(),
-  html: z.string().min(20).max(5_000_000), // ~5MB 上限，避免被滥用
+  html: z.string().min(20).max(5_000_000),
 });
 
 interface EdgeOneBaseResp {
@@ -30,7 +29,6 @@ async function deployHtmlToEdgeOne(html: string): Promise<string> {
   const { baseUrl } = (await baseRes.json()) as EdgeOneBaseResp;
   if (!baseUrl) throw new Error("EdgeOne baseUrl 返回为空");
 
-  // installationId：稳定到项目级别，方便 EdgeOne 那边按 id 关联（不暴露用户身份）
   const installationId = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
   const depRes = await fetch(baseUrl, {
@@ -51,26 +49,21 @@ async function deployHtmlToEdgeOne(html: string): Promise<string> {
 }
 
 export const publishToEdgeOne = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => InputSchema.parse(data))
-  .handler(async ({ data }) => {
-    const auth = await getRequestAuth();
-    if (!auth) throw new Error("未登录");
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
 
-    const supabase = createSupabaseServerClient(auth.accessToken);
-
-    // 校验：必须是项目所有者
     const { data: project, error: pErr } = await supabase
       .from("projects")
       .select("id, user_id")
       .eq("id", data.projectId)
       .maybeSingle();
     if (pErr) throw new Error(pErr.message);
-    if (!project || project.user_id !== auth.userId) throw new Error("无权操作此项目");
+    if (!project || project.user_id !== userId) throw new Error("无权操作此项目");
 
-    // 调 EdgeOne 部署
     const publicUrl = await deployHtmlToEdgeOne(data.html);
 
-    // 写回项目
     const { error: uErr } = await supabase
       .from("projects")
       .update({ published_url: publicUrl, is_public: true })
