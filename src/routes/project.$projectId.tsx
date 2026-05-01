@@ -723,6 +723,15 @@ function ProjectEditor() {
           setProject((p) => (p ? { ...p, name: next.name, description: next.description } : p))
         }
       />
+
+      <PushToRepoDialog
+        open={pushOpen}
+        onOpenChange={setPushOpen}
+        projectId={projectId}
+        projectName={project.name}
+        bundle={lovableBundle}
+        userId={session?.user.id ?? ""}
+      />
     </div>
   );
 }
