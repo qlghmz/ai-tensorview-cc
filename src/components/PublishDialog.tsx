@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Loader2, Check, Copy, Globe, Lock, Sparkles, ExternalLink } from "lucide-react";
-import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { LovableBundle } from "@/lib/lovable-bundle";
