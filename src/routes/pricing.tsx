@@ -99,6 +99,26 @@ function PricingPage() {
             ))}
           </div>
 
+          <section className="mt-10 max-w-5xl mx-auto glass rounded-3xl p-6">
+            <div className="flex items-start gap-3">
+              <span className="grid h-10 w-10 place-items-center rounded-xl btn-brand shrink-0">
+                <WalletCards className="h-5 w-5" />
+              </span>
+              <div>
+                <h2 className="text-lg font-semibold">支付与收款</h2>
+                <p className="mt-2 text-sm text-muted-foreground leading-6">
+                  国际卡支付会接入 Paddle，适合海外用户；国内用户更习惯支付宝和微信支付，通常需要单独接入国内支付通道。
+                  Paddle 的款项会进入你的 Paddle 商户余额，完成审核和绑定收款账户后提现；支付宝/微信则进入对应商户号。
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full border border-border px-3 py-1">Paddle：海外卡/订阅</span>
+                  <span className="rounded-full border border-border px-3 py-1">支付宝：国内用户</span>
+                  <span className="rounded-full border border-border px-3 py-1">微信支付：国内用户</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div className="mt-16 text-center text-sm text-muted-foreground">
             还有疑问？查看
             <Link to="/docs" className="text-brand hover:underline mx-1">使用文档</Link>
