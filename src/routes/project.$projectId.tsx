@@ -131,7 +131,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -139,7 +139,16 @@ function ProjectEditor() {
         navigate({ to: "/dashboard", search: {} });
         return;
       }
-      setProject(p.data);
+      const d = p.data;
+      setProject({
+        name: d.name,
+        description: d.description,
+        preview_html: d.preview_html,
+        preview_sandpack: d.preview_sandpack,
+        is_public: d.is_public,
+        public_slug: d.public_slug ?? null,
+        has_snapshot: !!d.published_html,
+      });
       setMessages(m.data ?? []);
     });
   }, [user, projectId, navigate]);
@@ -151,10 +160,20 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
-    if (proj) setProject(proj);
+    if (proj) {
+      setProject({
+        name: proj.name,
+        description: proj.description,
+        preview_html: proj.preview_html,
+        preview_sandpack: proj.preview_sandpack,
+        is_public: proj.is_public,
+        public_slug: proj.public_slug ?? null,
+        has_snapshot: !!proj.published_html,
+      });
+    }
   };
 
   const send = async (text?: string) => {
