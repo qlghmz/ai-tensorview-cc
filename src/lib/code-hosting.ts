@@ -19,7 +19,7 @@ export function bundleToFiles(bundle: LovableBundle): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [path, value] of Object.entries(bundle.files)) {
     if (path === "/index.tsx") continue;
-    const code = typeof value === "string" ? value : (value as { code: string }).code;
+    const code = value;
     // Strip leading slash for repo paths
     const repoPath = path.startsWith("/") ? path.slice(1) : path;
     out[repoPath] = code;
