@@ -11,7 +11,6 @@ import {
   Download,
   Share2,
   Check,
-  Copy,
   MessageSquare,
   GitBranch,
 } from "lucide-react";
@@ -24,7 +23,7 @@ import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
-import { toggleProjectPublic } from "@/fn/website-ai";
+import { PublishDialog } from "@/components/PublishDialog";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -102,6 +101,8 @@ function ProjectEditor() {
     preview_html: string | null;
     preview_sandpack: Json | null;
     is_public: boolean;
+    public_slug: string | null;
+    has_snapshot: boolean;
   } | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -109,9 +110,8 @@ function ProjectEditor() {
   const [sending, setSending] = useState(false);
   const [view, setView] = useState<"preview" | "code">("preview");
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
-  const [shareOpen, setShareOpen] = useState(false);
+  const [publishOpen, setPublishOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -130,7 +130,7 @@ function ProjectEditor() {
   useEffect(() => {
     if (!user) return;
     Promise.all([
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).maybeSingle(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).maybeSingle(),
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
     ]).then(([p, m]) => {
       if (p.error || !p.data) {
@@ -138,7 +138,16 @@ function ProjectEditor() {
         navigate({ to: "/dashboard", search: {} });
         return;
       }
-      setProject(p.data);
+      const d = p.data;
+      setProject({
+        name: d.name,
+        description: d.description,
+        preview_html: d.preview_html,
+        preview_sandpack: d.preview_sandpack,
+        is_public: d.is_public,
+        public_slug: d.public_slug ?? null,
+        has_snapshot: !!d.published_html,
+      });
       setMessages(m.data ?? []);
     });
   }, [user, projectId, navigate]);
@@ -150,10 +159,20 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
-    if (proj) setProject(proj);
+    if (proj) {
+      setProject({
+        name: proj.name,
+        description: proj.description,
+        preview_html: proj.preview_html,
+        preview_sandpack: proj.preview_sandpack,
+        is_public: proj.is_public,
+        public_slug: proj.public_slug ?? null,
+        has_snapshot: !!proj.published_html,
+      });
+    }
   };
 
   const send = async (text?: string) => {
@@ -331,30 +350,17 @@ function ProjectEditor() {
 
   const canDownload = !!(lovableBundle || project?.preview_html);
 
-  const togglePublic = async (next: boolean) => {
-    if (!session || !project) return;
-    try {
-      await toggleProjectPublic({
-        data: { projectId, isPublic: next },
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      setProject({ ...project, is_public: next });
-      toast.success(next ? "已设为公开" : "已设为私有");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "切换失败");
-    }
-  };
-
-  const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/p/${projectId}` : "";
-
-  const copyShare = async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      toast.error("复制失败");
-    }
+  const updatePublishState = (patch: { isPublic?: boolean; publicSlug?: string | null; hasSnapshot?: boolean }) => {
+    setProject((prev) =>
+      prev
+        ? {
+            ...prev,
+            is_public: patch.isPublic ?? prev.is_public,
+            public_slug: patch.publicSlug !== undefined ? patch.publicSlug : prev.public_slug,
+            has_snapshot: patch.hasSnapshot ?? prev.has_snapshot,
+          }
+        : prev,
+    );
   };
 
   if (authLoading || !project) {
@@ -540,56 +546,14 @@ function ProjectEditor() {
 
         <div className="hidden lg:flex items-center gap-2 ml-auto flex-wrap justify-end">
           {previewCodeToggle}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShareOpen((o) => !o)}
-              className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
-            >
-              <Share2 className="h-3 w-3" /> 分享
-            </button>
-            {shareOpen && (
-              <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] glass rounded-2xl p-4 shadow-[var(--shadow-card)] z-50">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">公开访问</div>
-                  <button
-                    type="button"
-                    onClick={() => togglePublic(!project.is_public)}
-                    className={`relative h-5 w-9 rounded-full transition ${project.is_public ? "bg-brand" : "bg-muted"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${project.is_public ? "left-[18px]" : "left-0.5"}`}
-                    />
-                  </button>
-                </div>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {project.is_public ? "任何持有链接的人都可以查看你的页面。" : "仅你自己可以访问。"}
-                </p>
-                {project.is_public && (
-                  <>
-                    <div className="mt-3 flex items-center gap-2 rounded-lg bg-input border border-border px-2 py-1.5">
-                      <input
-                        readOnly
-                        value={shareUrl}
-                        className="flex-1 bg-transparent text-xs outline-none truncate min-w-0"
-                      />
-                      <button type="button" onClick={copyShare} className="rounded-md btn-brand p-1.5 shrink-0">
-                        {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                      </button>
-                    </div>
-                    <a
-                      href={shareUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="mt-2 block text-center text-xs text-brand hover:underline"
-                    >
-                      在新标签页打开 ↗
-                    </a>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setPublishOpen(true)}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
+            title="发布到公网（国内可访问）"
+          >
+            <Share2 className="h-3 w-3" /> {project.is_public ? "已发布" : "发布"}
+          </button>
           <button
             type="button"
             onClick={() => setPushOpen(true)}
@@ -611,43 +575,15 @@ function ProjectEditor() {
 
         <div className="flex lg:hidden items-center gap-1.5 ml-auto">
           {previewCodeToggle}
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShareOpen((o) => !o)}
-              className="rounded-full glass px-2.5 py-1.5 text-[11px] flex items-center gap-1"
-            >
-              <Share2 className="h-3 w-3" />
-              <span className="hidden sm:inline">分享</span>
-            </button>
-            {shareOpen && (
-              <div className="absolute right-0 top-full mt-2 w-[min(18rem,calc(100vw-1rem))] glass rounded-2xl p-3 shadow-[var(--shadow-card)] z-50">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-xs font-medium">公开访问</div>
-                  <button
-                    type="button"
-                    onClick={() => togglePublic(!project.is_public)}
-                    className={`relative h-5 w-9 shrink-0 rounded-full transition ${project.is_public ? "bg-brand" : "bg-muted"}`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition ${project.is_public ? "left-[18px]" : "left-0.5"}`}
-                    />
-                  </button>
-                </div>
-                <p className="mt-1 text-[10px] text-muted-foreground leading-snug">
-                  {project.is_public ? "链接可公开访问。" : "仅自己可访问。"}
-                </p>
-                {project.is_public && (
-                  <div className="mt-2 flex items-center gap-1 rounded-lg bg-input border border-border px-2 py-1">
-                    <input readOnly value={shareUrl} className="flex-1 min-w-0 bg-transparent text-[10px] outline-none truncate" />
-                    <button type="button" onClick={copyShare} className="rounded-md btn-brand p-1 shrink-0">
-                      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => setPublishOpen(true)}
+            className="rounded-full glass px-2.5 py-1.5 text-[11px] flex items-center gap-1"
+            title="发布"
+          >
+            <Share2 className="h-3 w-3" />
+            <span className="hidden sm:inline">{project.is_public ? "已发布" : "发布"}</span>
+          </button>
           <button
             type="button"
             onClick={() => setPushOpen(true)}
@@ -731,6 +667,18 @@ function ProjectEditor() {
         projectName={project.name}
         bundle={lovableBundle}
         userId={session?.user.id ?? ""}
+      />
+
+      <PublishDialog
+        open={publishOpen}
+        onClose={() => setPublishOpen(false)}
+        projectId={projectId}
+        projectName={project.name}
+        isPublic={project.is_public}
+        publicSlug={project.public_slug}
+        bundle={lovableBundle}
+        hasSnapshot={project.has_snapshot}
+        onChange={updatePublishState}
       />
     </div>
   );

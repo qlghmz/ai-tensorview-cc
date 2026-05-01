@@ -4,20 +4,20 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovableBundleSchema } from "@/lib/lovable-bundle";
 import { PublicProjectView, type PublicViewState } from "@/components/PublicProjectView";
 
-export const Route = createFileRoute("/p/$projectId")({
+export const Route = createFileRoute("/s/$slug")({
   ssr: false,
-  component: PublicPreviewPage,
+  component: SlugPreviewPage,
 });
 
-function PublicPreviewPage() {
-  const { projectId } = Route.useParams();
+function SlugPreviewPage() {
+  const { slug } = Route.useParams();
   const [state, setState] = useState<PublicViewState>({ kind: "loading" });
 
   useEffect(() => {
     supabase
       .from("projects")
       .select("name, preview_html, preview_sandpack, published_html, is_public")
-      .eq("id", projectId)
+      .eq("public_slug", slug)
       .maybeSingle()
       .then(({ data }) => {
         if (!data || !data.is_public) {
@@ -39,7 +39,7 @@ function PublicPreviewPage() {
         }
         setState({ kind: "notfound" });
       });
-  }, [projectId]);
+  }, [slug]);
 
   return <PublicProjectView state={state} />;
 }

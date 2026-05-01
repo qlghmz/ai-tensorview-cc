@@ -118,6 +118,8 @@ export type Database = {
           name: string
           preview_html: string | null
           preview_sandpack: Json | null
+          public_slug: string | null
+          published_html: string | null
           updated_at: string
           user_id: string
         }
@@ -129,6 +131,8 @@ export type Database = {
           name: string
           preview_html?: string | null
           preview_sandpack?: Json | null
+          public_slug?: string | null
+          published_html?: string | null
           updated_at?: string
           user_id: string
         }
@@ -140,6 +144,8 @@ export type Database = {
           name?: string
           preview_html?: string | null
           preview_sandpack?: Json | null
+          public_slug?: string | null
+          published_html?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -180,7 +186,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      generate_project_slug: { Args: never; Returns: string }
     }
     Enums: {
       [_ in never]: never
