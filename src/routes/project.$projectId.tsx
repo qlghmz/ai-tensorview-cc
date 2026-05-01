@@ -103,6 +103,7 @@ function ProjectEditor() {
     is_public: boolean;
     public_slug: string | null;
     has_snapshot: boolean;
+    published_url: string | null;
   } | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
