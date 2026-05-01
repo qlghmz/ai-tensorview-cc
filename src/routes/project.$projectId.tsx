@@ -688,6 +688,7 @@ function ProjectEditor() {
         publicSlug={project.public_slug}
         bundle={lovableBundle}
         hasSnapshot={project.has_snapshot}
+        publishedUrl={project.published_url}
         onChange={updatePublishState}
       />
     </div>
