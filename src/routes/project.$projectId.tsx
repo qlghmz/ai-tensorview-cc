@@ -161,7 +161,7 @@ function ProjectEditor() {
   const reloadThread = async () => {
     const [{ data: msgs }, { data: proj }] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
-      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html").eq("id", projectId).single(),
+      supabase.from("projects").select("name, description, preview_html, preview_sandpack, is_public, public_slug, published_html, published_url").eq("id", projectId).single(),
     ]);
     setMessages(msgs ?? []);
     if (proj) {
@@ -173,6 +173,7 @@ function ProjectEditor() {
         is_public: proj.is_public,
         public_slug: proj.public_slug ?? null,
         has_snapshot: !!proj.published_html,
+        published_url: proj.published_url ?? null,
       });
     }
   };
