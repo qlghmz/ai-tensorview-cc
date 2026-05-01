@@ -1,10 +1,11 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { z } from "zod";
-import { Plus, Loader2, Sparkles, ExternalLink, Trash2 } from "lucide-react";
+import { Plus, Loader2, Sparkles, ExternalLink, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
+import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN } from "date-fns/locale";
