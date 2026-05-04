@@ -131,15 +131,15 @@ function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  className={`mt-6 block text-center rounded-full py-2.5 text-sm font-semibold ${
+                <button
+                  onClick={() => handleUpgrade(p)}
+                  disabled={busy}
+                  className={`mt-6 block w-full text-center rounded-full py-2.5 text-sm font-semibold disabled:opacity-50 ${
                     p.highlight ? "btn-brand" : "border border-border hover:bg-accent/30 transition"
                   }`}
                 >
                   {p.cta}
-                </Link>
+                </button>
               </div>
             ))}
           </div>
@@ -173,6 +173,40 @@ function PricingPage() {
         </main>
         <SiteFooter />
       </div>
+
+      <Dialog open={!!order} onOpenChange={(o) => !o && setOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>订单已创建</DialogTitle>
+            <DialogDescription>
+              请联系管理员完成支付，付款后管理员将手动激活套餐。
+            </DialogDescription>
+          </DialogHeader>
+          {order && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">订单号</span>
+                <span className="font-mono">{order.orderNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">套餐</span>
+                <span>{order.plan}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">金额</span>
+                <span>¥{order.amount}</span>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                请截图此订单号，并联系 1561363371@qq.com 完成付款。激活后积分将自动到账。
+              </div>
+              <Button className="w-full" onClick={() => setOrder(null)}>
+                我知道了
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
     </div>
   );
 }
