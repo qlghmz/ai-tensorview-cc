@@ -37,15 +37,22 @@ export function PublishDialog({
   onClose,
   projectId,
   projectName,
+  publicSlug,
   bundle,
   onChange,
   publishedUrl,
 }: Props) {
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<"edgeone" | "slug" | null>(null);
   const [currentUrl, setCurrentUrl] = useState<string | null>(publishedUrl ?? null);
+  const [currentSlug, setCurrentSlug] = useState<string | null>(publicSlug);
 
   if (!open) return null;
+
+  const slugUrl =
+    currentSlug && typeof window !== "undefined"
+      ? `${window.location.origin}/s/${currentSlug}`
+      : null;
 
   const deploy = async () => {
     if (!bundle) {
@@ -62,16 +69,27 @@ export function PublishDialog({
         data: { projectId, html },
       });
 
-      // 3) 同时把 HTML 也存进数据库做备份（可选展示）
+      // 3) 把 HTML 写回数据库 + 设公开 + 没 slug 就生成
+      let nextSlug = currentSlug;
+      if (!nextSlug) {
+        const { data: slugRow } = await supabase.rpc("generate_project_slug");
+        if (typeof slugRow === "string") nextSlug = slugRow;
+      }
       await supabase
         .from("projects")
-        .update({ published_html: html })
+        .update({
+          published_html: html,
+          is_public: true,
+          ...(nextSlug ? { public_slug: nextSlug } : {}),
+        })
         .eq("id", projectId);
 
       setCurrentUrl(res.url);
+      setCurrentSlug(nextSlug);
       onChange({
         isPublic: true,
         publishedUrl: res.url,
+        publicSlug: nextSlug,
         hasSnapshot: true,
       });
       toast.success("发布成功，国内可直接访问");
@@ -82,12 +100,11 @@ export function PublishDialog({
     }
   };
 
-  const copy = async () => {
-    if (!currentUrl) return;
+  const copy = async (text: string, key: "edgeone" | "slug") => {
     try {
-      await navigator.clipboard.writeText(currentUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 1500);
     } catch {
       toast.error("复制失败");
     }
