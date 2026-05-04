@@ -202,7 +202,18 @@ function ProjectEditor() {
       },
     ]);
 
+    // 90 秒无任何数据则视为流卡死，主动中断
+    const ac = new AbortController();
+    let idleTimer: ReturnType<typeof setTimeout> | null = null;
+    const resetIdle = () => {
+      if (idleTimer) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        ac.abort(new Error("连接超时：90 秒未收到 AI 数据，请重试"));
+      }, 90_000);
+    };
+
     try {
+      resetIdle();
       const res = await fetch("/api/ai/stream", {
         method: "POST",
         headers: {
@@ -210,6 +221,7 @@ function ProjectEditor() {
           Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ projectId, prompt }),
+        signal: ac.signal,
       });
 
       if (!res.ok) {
