@@ -146,11 +146,11 @@ export function PublishDialog({
               />
               <button
                 type="button"
-                onClick={copy}
+                onClick={() => copy(currentUrl, "edgeone")}
                 className="rounded-md btn-brand p-1 shrink-0"
                 title="复制链接"
               >
-                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied === "edgeone" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
               </button>
               <a
                 href={currentUrl}
@@ -164,6 +164,40 @@ export function PublishDialog({
             </div>
             <div className="mt-1 text-[10px] text-muted-foreground">
               链接由腾讯云 EdgeOne 提供，完全独立，跟本平台无关
+            </div>
+          </div>
+        )}
+
+        {/* 站内短链 */}
+        {slugUrl && (
+          <div className="mt-3">
+            <label className="text-xs text-muted-foreground flex items-center gap-1">
+              <Globe className="h-3 w-3 text-brand" />
+              站内短链（带 TensorView 头部）
+            </label>
+            <div className="mt-1 flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1.5">
+              <input
+                readOnly
+                value={slugUrl}
+                className="flex-1 min-w-0 bg-transparent text-xs outline-none truncate"
+              />
+              <button
+                type="button"
+                onClick={() => copy(slugUrl, "slug")}
+                className="rounded-md btn-brand p-1 shrink-0"
+                title="复制短链"
+              >
+                {copied === "slug" ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              </button>
+              <a
+                href={slugUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-md glass p-1 shrink-0"
+                title="打开"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
         )}
