@@ -100,9 +100,17 @@ function AuthPage() {
         if (error) throw error;
         toast.success("验证邮件已发送，请先到邮箱确认后再登录");
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("欢迎回来");
+        toast.success("登录成功，正在跳转…");
+        if (data.session) {
+          const target = search.prompt
+            ? `/dashboard?prompt=${encodeURIComponent(search.prompt)}`
+            : "/dashboard";
+          setTimeout(() => {
+            window.location.href = target;
+          }, 300);
+        }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : "操作失败";
