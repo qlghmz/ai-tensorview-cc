@@ -37,7 +37,7 @@ export function SiteFooter() {
     <footer className="border-t border-border/40 mt-24">
       <div className="mx-auto max-w-[1280px] px-6 py-10 grid gap-8 md:grid-cols-4 text-sm">
         <div>
-          <div className="font-bold text-base">特挠率i额外</div>
+          <div className="font-bold text-base">TensorView</div>
           <p className="mt-2 text-muted-foreground">用一句话生成可运行的网页和应用。</p>
         </div>
         {groups.map((c) => (
@@ -58,7 +58,7 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-border/40 py-5 text-center text-xs text-muted-foreground">
-        © 2026 特挠率i额外 · 让创造更简单
+        © 2026 TensorView · 让创造更简单
       </div>
     </footer>
   );

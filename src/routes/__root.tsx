@@ -30,7 +30,7 @@ export const Route = createRootRoute({
       { title: "tensorview — 用一句话生成网页应用" },
       {
         name: "description",
-        content: "特挠率i额外是 AI 网页生成平台。用自然语言描述，立即生成可运行的网站和应用。",
+        content: "TensorView是 AI 网页生成平台。用自然语言描述，立即生成可运行的网站和应用。",
       },
       { property: "og:title", content: "tensorview — 用一句话生成网页应用" },
       { property: "og:description", content: "A travel booking platform for flights, hotels, and tours, inspired by Fliggy.com." },
