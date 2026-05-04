@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Coins, Gift, Calendar, Crown } from "lucide-react";
 import { Link } from "@tanstack/react-router";
-import { getMyCredits, getMyCreditTransactions } from "@/server/credits.functions";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Balance {
   plan: string;
@@ -29,21 +30,45 @@ const REASON_LABEL: Record<string, string> = {
 };
 
 export function CreditsPanel() {
+  const { user, loading: authLoading } = useAuth();
   const [bal, setBal] = useState<Balance | null>(null);
   const [tx, setTx] = useState<Tx[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      setBal(null);
+      setTx([]);
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
     (async () => {
       try {
-        const [b, t] = await Promise.all([
-          getMyCredits() as Promise<Balance>,
-          getMyCreditTransactions() as Promise<{ items: Tx[] }>,
+        const [creditRes, txRes] = await Promise.all([
+          supabase
+            .from("user_credits")
+            .select("plan, daily_credits, monthly_credits, bonus_credits")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("credit_transactions")
+            .select("id, amount, reason, balance_after, created_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(50),
         ]);
         if (!cancelled) {
-          setBal(b);
-          setTx(Array.isArray(t?.items) ? t.items : []);
+          const row = creditRes.data;
+          setBal({
+            plan: row?.plan ?? "free",
+            daily: row?.daily_credits ?? 5,
+            monthly: row?.monthly_credits ?? 0,
+            bonus: row?.bonus_credits ?? 0,
+            total: (row?.daily_credits ?? 5) + (row?.monthly_credits ?? 0) + (row?.bonus_credits ?? 0),
+          });
+          setTx(Array.isArray(txRes.data) ? txRes.data : []);
         }
       } catch (e) {
         console.error(e);
@@ -54,7 +79,7 @@ export function CreditsPanel() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authLoading, user]);
 
   if (loading || !bal) {
     return (

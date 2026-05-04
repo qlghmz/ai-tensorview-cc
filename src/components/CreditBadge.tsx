@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Coins } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { getMyCredits } from "@/server/credits.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Balance {
   plan: string;
@@ -24,8 +24,20 @@ export function CreditBadge() {
     let cancelled = false;
     const load = async () => {
       try {
-        const data = (await getMyCredits()) as Balance;
-        if (!cancelled) setBal(data);
+        const { data } = await supabase
+          .from("user_credits")
+          .select("plan, daily_credits, monthly_credits, bonus_credits")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (!cancelled) {
+          setBal({
+            plan: data?.plan ?? "free",
+            daily: data?.daily_credits ?? 5,
+            monthly: data?.monthly_credits ?? 0,
+            bonus: data?.bonus_credits ?? 0,
+            total: (data?.daily_credits ?? 5) + (data?.monthly_credits ?? 0) + (data?.bonus_credits ?? 0),
+          });
+        }
       } catch (e) {
         console.error("[CreditBadge]", e);
       }
