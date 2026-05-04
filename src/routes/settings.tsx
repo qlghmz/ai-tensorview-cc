@@ -207,7 +207,7 @@ function PasswordSection() {
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
       <div className="text-xs text-muted-foreground mb-1.5">{label}</div>
