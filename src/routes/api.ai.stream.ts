@@ -127,6 +127,9 @@ export const Route = createFileRoute("/api/ai/stream")({
               }
             };
 
+            // 立刻发一个 ready 帧，前端就知道连接已建立
+            controller.enqueue(encoder.encode(JSON.stringify({ type: "ready" }) + "\n"));
+
             try {
               while (true) {
                 const { done, value } = await reader.read();
