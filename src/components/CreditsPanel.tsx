@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Coins, Gift, Calendar, Crown } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { getMyCredits, getMyCreditTransactions } from "@/server/credits.functions";
