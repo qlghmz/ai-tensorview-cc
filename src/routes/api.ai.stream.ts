@@ -96,6 +96,29 @@ export const Route = createFileRoute("/api/ai/stream")({
           async start(controller) {
             let lineBuf = "";
             let fullReply = "";
+            let closed = false;
+
+            const safeEnqueue = (payload: unknown) => {
+              if (closed) return false;
+              try {
+                controller.enqueue(encoder.encode(JSON.stringify(payload) + "\n"));
+                return true;
+              } catch {
+                closed = true;
+                reader.cancel().catch(() => undefined);
+                return false;
+              }
+            };
+
+            const safeClose = () => {
+              if (closed) return;
+              closed = true;
+              try {
+                controller.close();
+              } catch {
+                // client already disconnected
+              }
+            };
 
             const flushLine = (line: string) => {
               const trimmed = line.trim();
@@ -109,16 +132,12 @@ export const Route = createFileRoute("/api/ai/stream")({
                 const piece = json.choices?.[0]?.delta?.content ?? "";
                 if (piece) {
                   fullReply += piece;
-                  controller.enqueue(
-                    encoder.encode(JSON.stringify({ type: "delta", content: piece }) + "\n"),
-                  );
+                  safeEnqueue({ type: "delta", content: piece });
                   const fence = extractLovableFence(fullReply);
                   if (fence) {
                     const bundle = tryParseLovableBundle(fence);
                     if (bundle) {
-                      controller.enqueue(
-                        encoder.encode(JSON.stringify({ type: "preview", sandpack: bundle }) + "\n"),
-                      );
+                      safeEnqueue({ type: "preview", sandpack: bundle });
                     }
                   }
                 }
@@ -128,7 +147,10 @@ export const Route = createFileRoute("/api/ai/stream")({
             };
 
             // 立刻发一个 ready 帧，前端就知道连接已建立
-            controller.enqueue(encoder.encode(JSON.stringify({ type: "ready" }) + "\n"));
+            safeEnqueue({ type: "ready" });
+            const heartbeat = setInterval(() => {
+              safeEnqueue({ type: "ping" });
+            }, 12_000);
 
             try {
               while (true) {
@@ -145,24 +167,23 @@ export const Route = createFileRoute("/api/ai/stream")({
               if (lineBuf.trim()) flushLine(lineBuf);
 
               const { sandpack } = await persistGenerationResult(supabase, userId, begun.projectId, fullReply);
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({ type: "final", reply: fullReply, sandpack }) + "\n",
-                ),
-              );
-              controller.close();
+              safeEnqueue({ type: "final", reply: fullReply, sandpack });
+              safeClose();
             } catch (e) {
-              console.error("[api/ai/stream]", e);
-              controller.enqueue(
-                encoder.encode(
-                  JSON.stringify({
-                    type: "error",
-                    message: e instanceof Error ? e.message : "流式生成失败",
-                  }) + "\n",
-                ),
-              );
-              controller.close();
+              if (!closed) {
+                console.error("[api/ai/stream]", e);
+                safeEnqueue({
+                  type: "error",
+                  message: e instanceof Error ? e.message : "流式生成失败",
+                });
+              }
+              safeClose();
+            } finally {
+              clearInterval(heartbeat);
             }
+          },
+          cancel() {
+            reader.cancel().catch(() => undefined);
           },
         });
 
