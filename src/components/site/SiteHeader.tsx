@@ -35,6 +35,15 @@ export function SiteHeader() {
               >
                 项目
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition text-amber-300"
+                  title="管理员后台"
+                >
+                  <Shield className="h-4 w-4" />
+                </Link>
+              )}
               <Link
                 to="/settings"
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition"
