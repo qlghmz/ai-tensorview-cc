@@ -19,7 +19,7 @@ import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
-import { lovableBundleSchema, type LovableBundle } from "@/lib/lovable-bundle";
+import { lovableBundleSchema, sanitizeLovableBundle, type LovableBundle } from "@/lib/lovable-bundle";
 import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
@@ -121,7 +121,7 @@ function ProjectEditor() {
     const raw = project?.preview_sandpack;
     if (raw == null) return null;
     const r = lovableBundleSchema.safeParse(raw);
-    return r.success ? r.data : null;
+    return r.success ? sanitizeLovableBundle(r.data) : null;
   }, [project?.preview_sandpack]);
 
   useEffect(() => {
@@ -257,14 +257,14 @@ function ProjectEditor() {
         if (evt.type === "preview" && evt.sandpack != null) {
           const parsed = lovableBundleSchema.safeParse(evt.sandpack);
           if (parsed.success) {
-            pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+            pendingSandpack = JSON.parse(JSON.stringify(sanitizeLovableBundle(parsed.data))) as Json;
           }
         }
         if (evt.type === "final") {
           if (evt.sandpack != null) {
             const parsed = lovableBundleSchema.safeParse(evt.sandpack);
             if (parsed.success) {
-              pendingSandpack = JSON.parse(JSON.stringify(parsed.data)) as Json;
+              pendingSandpack = JSON.parse(JSON.stringify(sanitizeLovableBundle(parsed.data))) as Json;
               gotFinalSandpack = true;
             }
           }
@@ -410,10 +410,11 @@ function ProjectEditor() {
                   routes: lovableBundle.routes,
                   files,
                 };
+                const safeBundle = sanitizeLovableBundle(nextBundle);
                 const { error } = await supabase
                   .from("projects")
                   .update({
-                    preview_sandpack: nextBundle as unknown as Json,
+                    preview_sandpack: safeBundle as unknown as Json,
                     updated_at: new Date().toISOString(),
                   })
                   .eq("id", projectId);
@@ -422,7 +423,7 @@ function ProjectEditor() {
                   return;
                 }
                 setProject((p) =>
-                  p ? { ...p, preview_sandpack: nextBundle as unknown as Json } : p,
+                  p ? { ...p, preview_sandpack: safeBundle as unknown as Json } : p,
                 );
                 toast.success("代码已保存");
               }}
