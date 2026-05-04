@@ -320,6 +320,7 @@ function ProjectEditor() {
         prev.map((m) => (m.id === asstId ? { ...m, content: `⚠️ 生成失败：${msg}` } : m)),
       );
     } finally {
+      if (idleTimer) clearTimeout(idleTimer);
       setSending(false);
       setStreamAssistId(null);
     }
