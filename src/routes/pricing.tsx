@@ -18,9 +18,9 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "价格 — 特挠率i额外" },
-      { name: "description", content: "特挠率i额外的简单透明定价。从免费开始，按需扩展。" },
-      { property: "og:title", content: "价格 — 特挠率i额外" },
+      { title: "价格 — TensorView" },
+      { name: "description", content: "TensorView的简单透明定价。从免费开始，按需扩展。" },
+      { property: "og:title", content: "价格 — TensorView" },
     ],
   }),
   component: PricingPage,

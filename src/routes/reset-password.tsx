@@ -41,7 +41,7 @@ function ResetPasswordPage() {
         <span className="grid h-8 w-8 place-items-center rounded-lg btn-brand">
           <Sparkles className="h-4 w-4" />
         </span>
-        <span className="text-lg font-bold">特挠率i额外</span>
+        <span className="text-lg font-bold">TensorView</span>
       </Link>
 
       <div className="relative w-full max-w-md glass rounded-3xl p-8 shadow-[var(--shadow-card)]">

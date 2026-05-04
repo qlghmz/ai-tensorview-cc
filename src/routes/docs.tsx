@@ -6,9 +6,9 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
-      { title: "使用文档 — 特挠率i额外" },
-      { name: "description", content: "了解如何使用特挠率i额外用一句话生成、编辑、发布你的网页。" },
-      { property: "og:title", content: "使用文档 — 特挠率i额外" },
+      { title: "使用文档 — TensorView" },
+      { name: "description", content: "了解如何使用TensorView用一句话生成、编辑、发布你的网页。" },
+      { property: "og:title", content: "使用文档 — TensorView" },
     ],
   }),
   component: DocsPage,
@@ -56,7 +56,7 @@ function DocsPage() {
             <h1 className="mt-5 text-4xl md:text-5xl font-bold">
               使用<span className="text-gradient">文档</span>
             </h1>
-            <p className="mt-4 text-muted-foreground">从注册到发布，了解特挠率i额外的核心工作流。</p>
+            <p className="mt-4 text-muted-foreground">从注册到发布，了解TensorView的核心工作流。</p>
           </div>
 
           <div className="mt-14 space-y-4">

@@ -47,7 +47,7 @@ function Landing() {
           <span className="text-gradient">生成你的网站</span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          特挠率i额外把你的想法变成可运行的网页应用。无需写一行代码。
+          TensorView把你的想法变成可运行的网页应用。无需写一行代码。
         </p>
 
         {/* Prompt box */}
@@ -121,7 +121,7 @@ function Landing() {
       <section id="showcase" className="relative mx-auto max-w-[1200px] px-6 py-20">
         <div className="text-center mb-14">
           <h2 className="text-4xl md:text-5xl font-bold">用户在创造什么</h2>
-          <p className="mt-3 text-muted-foreground">100,000+ 项目已经在特挠率i额外上诞生。</p>
+          <p className="mt-3 text-muted-foreground">100,000+ 项目已经在TensorView上诞生。</p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {[
