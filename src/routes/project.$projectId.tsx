@@ -311,7 +311,6 @@ function ProjectEditor() {
       await reloadThread();
       if (gotFinalSandpack) toast.success("已更新预览");
       else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
-      else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "生成失败";
       toast.error(msg);
