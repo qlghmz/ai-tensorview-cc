@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
 import { createOrder } from "@/server/orders.functions";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import {
   Dialog,
   DialogContent,
@@ -84,6 +85,19 @@ function PricingPage() {
         plan: row.plan as string,
         amount: row.amount_cny as number,
       });
+      // Fire-and-forget order confirmation email — failure must not block UI.
+      if (user?.email) {
+        sendTransactionalEmail({
+          templateName: "order-created",
+          recipientEmail: user.email,
+          idempotencyKey: `order-created-${row.id}`,
+          templateData: {
+            orderNo: row.order_no,
+            plan: row.plan,
+            amount: row.amount_cny,
+          },
+        }).catch((e) => console.warn("order-created email failed", e));
+      }
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

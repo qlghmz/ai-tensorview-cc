@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { listAdminOrders, adminActivateOrder } from "@/server/admin.functions";
+import { sendTransactionalEmail } from "@/lib/email/send";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -29,6 +30,16 @@ function AdminOrders() {
     try {
       await adminActivateOrder({ data: { orderId: id } });
       toast.success("已激活");
+      const o = items.find((x) => (x.id as string) === id);
+      const email = (o as { email?: string } | undefined)?.email;
+      if (email && o) {
+        sendTransactionalEmail({
+          templateName: "order-activated",
+          recipientEmail: email,
+          idempotencyKey: `order-activated-${id}`,
+          templateData: { orderNo: o.order_no, plan: o.plan },
+        }).catch((e) => console.warn("order-activated email failed", e));
+      }
       load();
     } catch (e) {
       toast.error((e as Error).message);
