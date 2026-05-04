@@ -43,7 +43,7 @@ export function CreditsPanel() {
         ]);
         if (!cancelled) {
           setBal(b);
-          setTx(t.items);
+          setTx(Array.isArray(t?.items) ? t.items : []);
         }
       } catch (e) {
         console.error(e);
