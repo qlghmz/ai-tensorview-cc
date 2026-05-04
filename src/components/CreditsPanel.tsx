@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { Coins, Gift, Calendar, Crown } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { getMyCredits, getMyCreditTransactions } from "@/server/credits.functions";
@@ -42,7 +43,7 @@ export function CreditsPanel() {
         ]);
         if (!cancelled) {
           setBal(b);
-          setTx(t.items);
+          setTx(Array.isArray(t?.items) ? t.items : []);
         }
       } catch (e) {
         console.error(e);
@@ -108,7 +109,7 @@ export function CreditsPanel() {
   );
 }
 
-function Card({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: number; hint: string }) {
+function Card({ icon, label, value, hint }: { icon: ReactNode; label: string; value: number; hint: string }) {
   return (
     <div className="rounded-xl border border-border bg-card/30 p-3">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
