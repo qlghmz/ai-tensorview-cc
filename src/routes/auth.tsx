@@ -59,7 +59,22 @@ function AuthPage() {
 
   useEffect(() => {
     if (!authLoading && user) {
-      navigate({ to: "/dashboard", search: search.prompt ? { prompt: search.prompt } : {} });
+      const target = search.prompt
+        ? `/dashboard?prompt=${encodeURIComponent(search.prompt)}`
+        : "/dashboard";
+      // 用 hard navigation 避免预览环境下 dynamic import 失败导致客户端路由卡住
+      try {
+        navigate({ to: "/dashboard", search: search.prompt ? { prompt: search.prompt } : {} });
+      } catch {
+        window.location.href = target;
+      }
+      // 兜底：500ms 后如果还在 /auth，强制跳转
+      const t = setTimeout(() => {
+        if (window.location.pathname.startsWith("/auth")) {
+          window.location.href = target;
+        }
+      }, 500);
+      return () => clearTimeout(t);
     }
   }, [user, authLoading, navigate, search.prompt]);
 
