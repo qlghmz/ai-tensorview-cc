@@ -16,11 +16,17 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
+import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
+import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
+import { Route as AdminAdminProjectsRouteImport } from './routes/_admin.admin.projects'
+import { Route as AdminAdminOrdersRouteImport } from './routes/_admin.admin.orders'
+import { Route as AdminAdminCreditsRouteImport } from './routes/_admin.admin.credits'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -60,6 +66,10 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/_admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -80,10 +90,35 @@ const PProjectIdRoute = PProjectIdRouteImport.update({
   path: '/p/$projectId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => AdminRoute,
+} as any)
 const ApiAiStreamRoute = ApiAiStreamRouteImport.update({
   id: '/api/ai/stream',
   path: '/api/ai/stream',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminProjectsRoute = AdminAdminProjectsRouteImport.update({
+  id: '/admin/projects',
+  path: '/admin/projects',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminOrdersRoute = AdminAdminOrdersRouteImport.update({
+  id: '/admin/orders',
+  path: '/admin/orders',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminAdminCreditsRoute = AdminAdminCreditsRouteImport.update({
+  id: '/admin/credits',
+  path: '/admin/credits',
+  getParentRoute: () => AdminRoute,
 } as any)
 const LovableEmailQueueProcessRoute =
   LovableEmailQueueProcessRouteImport.update({
@@ -114,7 +149,12 @@ export interface FileRoutesByFullPath {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/credits': typeof AdminAdminCreditsRoute
+  '/admin/orders': typeof AdminAdminOrdersRoute
+  '/admin/projects': typeof AdminAdminProjectsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -131,7 +171,12 @@ export interface FileRoutesByTo {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/credits': typeof AdminAdminCreditsRoute
+  '/admin/orders': typeof AdminAdminOrdersRoute
+  '/admin/projects': typeof AdminAdminProjectsRoute
+  '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/admin': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -139,6 +184,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
@@ -149,7 +195,12 @@ export interface FileRoutesById {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/_admin/admin/credits': typeof AdminAdminCreditsRoute
+  '/_admin/admin/orders': typeof AdminAdminOrdersRoute
+  '/_admin/admin/projects': typeof AdminAdminProjectsRoute
+  '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/_admin/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
@@ -168,7 +219,12 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/admin/credits'
+    | '/admin/orders'
+    | '/admin/projects'
+    | '/admin/users'
     | '/api/ai/stream'
+    | '/admin/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -185,13 +241,19 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/admin/credits'
+    | '/admin/orders'
+    | '/admin/projects'
+    | '/admin/users'
     | '/api/ai/stream'
+    | '/admin'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
+    | '/_admin'
     | '/auth'
     | '/dashboard'
     | '/docs'
@@ -202,7 +264,12 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/_admin/admin/credits'
+    | '/_admin/admin/orders'
+    | '/_admin/admin/projects'
+    | '/_admin/admin/users'
     | '/api/ai/stream'
+    | '/_admin/admin/'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/queue/process'
@@ -210,6 +277,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
   DocsRoute: typeof DocsRoute
@@ -277,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_admin': {
+      id: '/_admin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -305,12 +380,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PProjectIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_admin/admin/': {
+      id: '/_admin/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminAdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/api/ai/stream': {
       id: '/api/ai/stream'
       path: '/api/ai/stream'
       fullPath: '/api/ai/stream'
       preLoaderRoute: typeof ApiAiStreamRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_admin/admin/users': {
+      id: '/_admin/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminAdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/projects': {
+      id: '/_admin/admin/projects'
+      path: '/admin/projects'
+      fullPath: '/admin/projects'
+      preLoaderRoute: typeof AdminAdminProjectsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/orders': {
+      id: '/_admin/admin/orders'
+      path: '/admin/orders'
+      fullPath: '/admin/orders'
+      preLoaderRoute: typeof AdminAdminOrdersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/credits': {
+      id: '/_admin/admin/credits'
+      path: '/admin/credits'
+      fullPath: '/admin/credits'
+      preLoaderRoute: typeof AdminAdminCreditsRouteImport
+      parentRoute: typeof AdminRoute
     }
     '/lovable/email/queue/process': {
       id: '/lovable/email/queue/process'
@@ -336,8 +446,27 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AdminRouteChildren {
+  AdminAdminCreditsRoute: typeof AdminAdminCreditsRoute
+  AdminAdminOrdersRoute: typeof AdminAdminOrdersRoute
+  AdminAdminProjectsRoute: typeof AdminAdminProjectsRoute
+  AdminAdminUsersRoute: typeof AdminAdminUsersRoute
+  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminCreditsRoute: AdminAdminCreditsRoute,
+  AdminAdminOrdersRoute: AdminAdminOrdersRoute,
+  AdminAdminProjectsRoute: AdminAdminProjectsRoute,
+  AdminAdminUsersRoute: AdminAdminUsersRoute,
+  AdminAdminIndexRoute: AdminAdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
   DocsRoute: DocsRoute,
@@ -356,3 +485,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
