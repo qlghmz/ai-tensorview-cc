@@ -26,9 +26,12 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const PLANS = [
+type Plan = { name: string; planKey: "free" | "pro" | "team"; price: string; period: string; desc: string; cta: string; features: string[]; highlight: boolean };
+
+const PLANS: Plan[] = [
   {
     name: "免费",
+    planKey: "free",
     price: "¥0",
     period: "永久免费",
     desc: "适合体验和小项目",
@@ -38,6 +41,7 @@ const PLANS = [
   },
   {
     name: "专业",
+    planKey: "pro",
     price: "¥99",
     period: "/月",
     desc: "适合个人创作者",
@@ -47,16 +51,45 @@ const PLANS = [
   },
   {
     name: "团队",
-    price: "¥299",
+    planKey: "team",
+    price: "¥399",
     period: "/月",
     desc: "适合团队协作",
-    cta: "联系销售",
+    cta: "升级团队版",
     features: ["每月 500 Team credits", "每日补到 5 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
     highlight: false,
   },
 ];
 
 function PricingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [order, setOrder] = useState<{ orderNo: string; plan: string; amount: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleUpgrade = async (plan: Plan) => {
+    if (plan.planKey === "free") {
+      navigate({ to: user ? "/dashboard" : "/auth", search: user ? {} : { mode: "signup" } });
+      return;
+    }
+    if (!user) {
+      navigate({ to: "/auth", search: { mode: "signup" } });
+      return;
+    }
+    setBusy(true);
+    try {
+      const row = await createOrder({ data: { plan: plan.planKey } });
+      setOrder({
+        orderNo: row.order_no as string,
+        plan: row.plan as string,
+        amount: row.amount_cny as number,
+      });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="min-h-screen relative" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 bg-grid pointer-events-none" />
