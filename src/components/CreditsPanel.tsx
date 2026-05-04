@@ -109,7 +109,7 @@ export function CreditsPanel() {
   );
 }
 
-function Card({ icon, label, value, hint }: { icon: React.ReactNode; label: string; value: number; hint: string }) {
+function Card({ icon, label, value, hint }: { icon: ReactNode; label: string; value: number; hint: string }) {
   return (
     <div className="rounded-xl border border-border bg-card/30 p-3">
       <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
