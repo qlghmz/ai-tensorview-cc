@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 import {
   extractLovableFence,
+  patchReactImports,
   lovableBundleSchema,
   tryParseLovableBundle,
   type LovableBundle,
@@ -128,59 +129,6 @@ export async function beginWebsiteGeneration(
   messages.push({ role: "user", content: prompt });
 
   return { ok: true, messages, projectId };
-}
-
-/**
- * 自动修补 AI 生成代码中常见的 "React is not defined" 问题：
- * - 文件用了 React.xxx 但没有 import React → 注入 `import * as React from 'react'`
- * - 文件用了 useState / useEffect 等裸钩子但没有 import → 注入命名导入
- */
-function patchReactImports(files: Record<string, string>): Record<string, string> {
-  const HOOKS = [
-    "useState", "useEffect", "useRef", "useMemo", "useCallback",
-    "useContext", "useReducer", "useLayoutEffect", "useId", "useTransition",
-  ];
-  const out: Record<string, string> = {};
-  for (const [path, raw] of Object.entries(files)) {
-    if (!/\.(t|j)sx?$/.test(path)) {
-      out[path] = raw;
-      continue;
-    }
-    let code = raw;
-    const hasReactNamespaceImport =
-      /import\s+\*\s+as\s+React\s+from\s+['"]react['"]/.test(code) ||
-      /import\s+React(\s*,\s*\{[^}]*\})?\s+from\s+['"]react['"]/.test(code);
-
-    // 1) 用了 React.xxx 但没 import React
-    if (/\bReact\.[A-Za-z_]/.test(code) && !hasReactNamespaceImport) {
-      code = `import * as React from 'react';\n` + code;
-    }
-
-    // 2) 用了裸 hook 但既没 import 它，也没 React 命名空间
-    const namedImportMatch = code.match(/import\s+\{([^}]*)\}\s+from\s+['"]react['"]/);
-    const importedNames = new Set(
-      (namedImportMatch?.[1] ?? "")
-        .split(",")
-        .map((s) => s.trim().split(/\s+as\s+/)[0])
-        .filter(Boolean),
-    );
-    const missing = HOOKS.filter(
-      (h) => new RegExp(`\\b${h}\\s*\\(`).test(code) && !importedNames.has(h),
-    );
-    if (missing.length > 0 && !/import\s+\*\s+as\s+React\s+from\s+['"]react['"]/.test(code)) {
-      if (namedImportMatch) {
-        const merged = Array.from(new Set([...importedNames, ...missing])).join(", ");
-        code = code.replace(
-          /import\s+\{[^}]*\}\s+from\s+['"]react['"]/,
-          `import { ${merged} } from 'react'`,
-        );
-      } else {
-        code = `import { ${missing.join(", ")} } from 'react';\n` + code;
-      }
-    }
-    out[path] = code;
-  }
-  return out;
 }
 
 export async function persistGenerationResult(
