@@ -1,7 +1,19 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Check, Sparkles, WalletCards } from "lucide-react";
+import { useState } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { useAuth } from "@/lib/auth-context";
+import { createOrder } from "@/server/orders.functions";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -14,9 +26,12 @@ export const Route = createFileRoute("/pricing")({
   component: PricingPage,
 });
 
-const PLANS = [
+type Plan = { name: string; planKey: "free" | "pro" | "team"; price: string; period: string; desc: string; cta: string; features: string[]; highlight: boolean };
+
+const PLANS: Plan[] = [
   {
     name: "免费",
+    planKey: "free",
     price: "¥0",
     period: "永久免费",
     desc: "适合体验和小项目",
@@ -26,6 +41,7 @@ const PLANS = [
   },
   {
     name: "专业",
+    planKey: "pro",
     price: "¥99",
     period: "/月",
     desc: "适合个人创作者",
@@ -35,16 +51,45 @@ const PLANS = [
   },
   {
     name: "团队",
-    price: "¥299",
+    planKey: "team",
+    price: "¥399",
     period: "/月",
     desc: "适合团队协作",
-    cta: "联系销售",
+    cta: "升级团队版",
     features: ["每月 500 Team credits", "每日补到 5 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
     highlight: false,
   },
 ];
 
 function PricingPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [order, setOrder] = useState<{ orderNo: string; plan: string; amount: number } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handleUpgrade = async (plan: Plan) => {
+    if (plan.planKey === "free") {
+      navigate({ to: user ? "/dashboard" : "/auth", search: user ? {} : { mode: "signup" } });
+      return;
+    }
+    if (!user) {
+      navigate({ to: "/auth", search: { mode: "signup" } });
+      return;
+    }
+    setBusy(true);
+    try {
+      const row = await createOrder({ data: { plan: plan.planKey } });
+      setOrder({
+        orderNo: row.order_no as string,
+        plan: row.plan as string,
+        amount: row.amount_cny as number,
+      });
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
     <div className="min-h-screen relative" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 bg-grid pointer-events-none" />
@@ -86,15 +131,15 @@ function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  className={`mt-6 block text-center rounded-full py-2.5 text-sm font-semibold ${
+                <button
+                  onClick={() => handleUpgrade(p)}
+                  disabled={busy}
+                  className={`mt-6 block w-full text-center rounded-full py-2.5 text-sm font-semibold disabled:opacity-50 ${
                     p.highlight ? "btn-brand" : "border border-border hover:bg-accent/30 transition"
                   }`}
                 >
                   {p.cta}
-                </Link>
+                </button>
               </div>
             ))}
           </div>
@@ -128,6 +173,39 @@ function PricingPage() {
         </main>
         <SiteFooter />
       </div>
+
+      <Dialog open={!!order} onOpenChange={(o) => !o && setOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>订单已创建</DialogTitle>
+            <DialogDescription>
+              请联系管理员完成支付，付款后管理员将手动激活套餐。
+            </DialogDescription>
+          </DialogHeader>
+          {order && (
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">订单号</span>
+                <span className="font-mono">{order.orderNo}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">套餐</span>
+                <span>{order.plan}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">金额</span>
+                <span>¥{order.amount}</span>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
+                请截图此订单号，并联系 1561363371@qq.com 完成付款。激活后积分将自动到账。
+              </div>
+              <Button className="w-full" onClick={() => setOrder(null)}>
+                我知道了
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

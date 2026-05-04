@@ -1,11 +1,24 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Sparkles, Settings as SettingsIcon } from "lucide-react";
+import { Sparkles, Settings as SettingsIcon, Shield } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { CreditBadge } from "@/components/CreditBadge";
+import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const { user } = useAuth();
-  useNavigate(); // keep for future
+  const [isAdmin, setIsAdmin] = useState(false);
+  useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    supabase
+      .rpc("has_role", { _user_id: user.id, _role: "admin" })
+      .then(({ data }) => setIsAdmin(data === true));
+  }, [user]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/40 backdrop-blur-xl bg-background/60">
@@ -35,6 +48,15 @@ export function SiteHeader() {
               >
                 项目
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition text-amber-300"
+                  title="管理员后台"
+                >
+                  <Shield className="h-4 w-4" />
+                </Link>
+              )}
               <Link
                 to="/settings"
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition"

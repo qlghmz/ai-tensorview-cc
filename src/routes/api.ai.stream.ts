@@ -40,15 +40,29 @@ export const Route = createFileRoute("/api/ai/stream")({
           );
         }
 
-        // 扣 1 积分（生成前预扣）
-        const charge = await consumeCredits(userId, 1, "ai_generate", {
-          projectId: parsed.data.projectId,
+        // 管理员跳过扣费
+        const { data: isAdminData } = await supabase.rpc("has_role", {
+          _user_id: userId,
+          _role: "admin",
         });
-        if (!charge.success) {
-          return Response.json(
-            { error: "积分不足，请充值或等待每日补给", balance: charge.balance },
-            { status: 402 },
-          );
+        const isAdmin = isAdminData === true;
+
+        if (!isAdmin) {
+          const charge = await consumeCredits(supabase, userId, 1, "ai_generate", {
+            projectId: parsed.data.projectId,
+          });
+          if (!charge.success) {
+            return Response.json(
+              {
+                error:
+                  charge.error === "insufficient_credits"
+                    ? "积分不足，请充值或等待每日补给"
+                    : `扣费失败: ${charge.error}`,
+                balance: charge.balance,
+              },
+              { status: 402 },
+            );
+          }
         }
 
         const begun = await beginWebsiteGeneration(
@@ -112,6 +126,9 @@ export const Route = createFileRoute("/api/ai/stream")({
                 // ignore malformed SSE JSON lines
               }
             };
+
+            // 立刻发一个 ready 帧，前端就知道连接已建立
+            controller.enqueue(encoder.encode(JSON.stringify({ type: "ready" }) + "\n"));
 
             try {
               while (true) {

@@ -166,6 +166,45 @@ export type Database = {
           },
         ]
       }
+      payment_orders: {
+        Row: {
+          amount_cny: number
+          created_at: string
+          id: string
+          note: string | null
+          order_no: string
+          paid_at: string | null
+          plan: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount_cny: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_no?: string
+          paid_at?: string | null
+          plan: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount_cny?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_no?: string
+          paid_at?: string | null
+          plan?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -395,6 +434,15 @@ export type Database = {
           _reason: string
           _user_id: string
         }
+        Returns: Json
+      }
+      admin_activate_order: { Args: { _order_id: string }; Returns: Json }
+      admin_adjust_credits: {
+        Args: { _amount: number; _reason: string; _target: string }
+        Returns: Json
+      }
+      admin_set_plan: {
+        Args: { _plan: string; _target: string }
         Returns: Json
       }
       consume_credits: {
