@@ -207,6 +207,5 @@ function PricingPage() {
         </DialogContent>
       </Dialog>
     </div>
-    </div>
   );
 }
