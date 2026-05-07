@@ -208,7 +208,7 @@ function PricingPage() {
           <DialogHeader>
             <DialogTitle>订单已创建</DialogTitle>
             <DialogDescription>
-              请联系管理员完成支付，付款后管理员将手动激活套餐。
+              通过爱发电完成支付，付款成功后会员将自动开通。
             </DialogDescription>
           </DialogHeader>
           {order && (
@@ -225,22 +225,43 @@ function PricingPage() {
                 <span className="text-muted-foreground">金额</span>
                 <span>¥{order.amount}</span>
               </div>
-              <div className="grid grid-cols-2 gap-3 pt-2">
-                <div className="rounded-lg overflow-hidden border border-border bg-white">
-                  <div className="text-center text-xs font-semibold py-1.5 bg-[#1677ff] text-white">支付宝</div>
-                  <img src={payAlipay} alt="支付宝收款码" className="w-full h-auto" />
-                </div>
-                <div className="rounded-lg overflow-hidden border border-border bg-white">
-                  <div className="text-center text-xs font-semibold py-1.5 bg-[#07c160] text-white">微信支付</div>
-                  <img src={payWechat} alt="微信收款码" className="w-full h-auto" />
-                </div>
-              </div>
+
+              {order.payUrl ? (
+                <a
+                  href={order.payUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block w-full text-center btn-brand rounded-full py-2.5 font-semibold"
+                >
+                  前往爱发电支付 ¥{order.amount}
+                </a>
+              ) : null}
+
               <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
-                请扫码支付 <strong className="text-foreground">¥{order.amount}</strong>，并在<strong>付款备注中填写订单号</strong>：<span className="font-mono">{order.orderNo}</span>。
-                付款后请将截图发送至 <a className="text-brand" href="mailto:1561363371@qq.com">1561363371@qq.com</a>，管理员核对后激活，积分将自动到账，并向你发送激活邮件。
+                付款成功后会员将<strong className="text-foreground">自动开通</strong>，无需联系管理员。如长时间未到账，可联系
+                <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a>。
               </div>
-              <Button className="w-full" onClick={() => setOrder(null)}>
-                我知道了
+
+              <details className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
+                <summary className="cursor-pointer">不便使用爱发电？查看二维码兜底支付</summary>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <div className="rounded-lg overflow-hidden border border-border bg-white">
+                    <div className="text-center text-xs font-semibold py-1.5 bg-[#1677ff] text-white">支付宝</div>
+                    <img src={payAlipay} alt="支付宝收款码" className="w-full h-auto" />
+                  </div>
+                  <div className="rounded-lg overflow-hidden border border-border bg-white">
+                    <div className="text-center text-xs font-semibold py-1.5 bg-[#07c160] text-white">微信支付</div>
+                    <img src={payWechat} alt="微信收款码" className="w-full h-auto" />
+                  </div>
+                </div>
+                <p className="mt-2 leading-relaxed">
+                  扫码支付 ¥{order.amount}，备注订单号 <span className="font-mono">{order.orderNo}</span>，截图发送至
+                  <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a> 由管理员手动激活。
+                </p>
+              </details>
+
+              <Button variant="outline" className="w-full" onClick={() => setOrder(null)}>
+                关闭
               </Button>
             </div>
           )}
