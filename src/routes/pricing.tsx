@@ -90,10 +90,15 @@ function PricingPage() {
     setBusy(true);
     try {
       const row = await createOrder({ data: { plan: plan.planKey } });
+      const baseUrl = AFDIAN_PLAN_URL[plan.planKey];
+      const payUrl = baseUrl
+        ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}custom_order_id=${encodeURIComponent(row.order_no as string)}`
+        : undefined;
       setOrder({
         orderNo: row.order_no as string,
         plan: row.plan as string,
         amount: row.amount_cny as number,
+        payUrl,
       });
       // Fire-and-forget order confirmation email — failure must not block UI.
       if (user?.email) {
