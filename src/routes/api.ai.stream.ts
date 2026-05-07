@@ -61,7 +61,7 @@ export const Route = createFileRoute("/api/ai/stream")({
             try {
               send({ type: "ready" });
               send({ type: "status", message: "正在分段生成页面结构…" });
-              const generated = await generateSegmentedLovableBundle(cfg, parsed.data.prompt);
+              const generated = await generateSegmentedLovableBundle(cfg, parsed.data.prompt, begun.messages);
 
               let reply = generated.reply;
               let finishReason = generated.finishReason;
