@@ -326,16 +326,30 @@ export async function generateSegmentedLovableBundle(
   cfg: AIProviderConfig,
   prompt: string,
 ): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
-  const routes = [{ path: "/", label: "首页" }];
+  const planRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是产品信息架构规划器。只输出 JSON，不要 Markdown。根据用户的增量需求规划可预览网站路由。" },
+      {
+        role: "user",
+        content:
+          `为这个 AI 生成网站需求规划 3-7 个页面路由。必须覆盖用户明确提到的页面（如登录、注册、管理员界面、订单、个人中心等）。输出格式：{"routes":[{"path":"/","label":"首页","brief":"..."}]}。path 只能用小写英文短路径。需求：${prompt}`,
+      },
+    ],
+    temperature: 0.15,
+  });
+  const planJson = planRes.ok ? await planRes.json().catch(() => null) : null;
+  const planContent = (planJson as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content ?? "";
+  const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt);
 
   const appRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
-      { role: "system", content: "你是 React 代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
+      { role: "system", content: "你是 Lovable 风格 React 多页面代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
       {
         role: "user",
         content:
-          `生成一个完整可预览网站的 /App.tsx。要求：默认导出 App；导入 './styles.css'；只用 react；不要额外依赖；代码控制在 180 行内；用 className: app/topbar/brand/hero/search/quick/grid/card/panel 等；中文真实文案；包含导航、搜索、分类、推荐卡片、服务面板。需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面。\nroutes=${JSON.stringify(routes)}\n需求：${prompt}`,
       },
     ],
     temperature: 0.55,
@@ -350,7 +364,7 @@ export async function generateSegmentedLovableBundle(
   }
 
   const cssCode = defaultPreviewCss();
-  const bundle = lovableBundleSchema.safeParse({ routes, files: { "/App.tsx": appCode, "/styles.css": cssCode } });
+  const bundle = lovableBundleSchema.safeParse({ routes: routes.map(({ path, label }) => ({ path, label })), files: { "/App.tsx": appCode, "/styles.css": cssCode } });
   if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
   return {
     reply: `已生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
