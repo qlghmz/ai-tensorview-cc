@@ -175,7 +175,19 @@ function parseAnyJsonObject(text: string): unknown | null {
 
 function stripCodeFence(text: string): string {
   const m = text.match(/^```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```\s*$/);
-  return (m?.[1] ?? text).trim();
+  if (m?.[1]) return m[1].trim();
+  const inner = text.match(/```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```/);
+  return (inner?.[1] ?? text).trim();
+}
+
+function compactGenerationContext(messages?: Array<{ role: string; content: string }>): string {
+  if (!messages?.length) return "";
+  return messages
+    .filter((m) => m.role !== "system" || m.content.includes("当前 React 项目"))
+    .slice(-8)
+    .map((m) => `${m.role}: ${m.content.slice(0, 1800)}`)
+    .join("\n\n")
+    .slice(0, 9000);
 }
 
 type PlannedRoute = { path: string; label: string; brief: string };
