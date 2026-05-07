@@ -178,6 +178,57 @@ function stripCodeFence(text: string): string {
   return (m?.[1] ?? text).trim();
 }
 
+type PlannedRoute = { path: string; label: string; brief: string };
+
+function normalizeRoutePath(path: string): string | null {
+  const cleaned = path.trim().toLowerCase().replace(/\s+/g, "-");
+  if (cleaned === "/") return "/";
+  if (!/^\/[a-z0-9][a-z0-9-]{0,28}$/.test(cleaned)) return null;
+  return cleaned;
+}
+
+function inferRoutes(prompt: string): PlannedRoute[] {
+  const wanted: PlannedRoute[] = [{ path: "/", label: "首页", brief: "核心首页、导航、搜索、推荐内容与主要转化入口" }];
+  const add = (path: string, label: string, brief: string) => {
+    if (!wanted.some((r) => r.path === path)) wanted.push({ path, label, brief });
+  };
+  if (/登录|登陆|sign\s*in|login/i.test(prompt)) add("/login", "登录", "邮箱/手机号登录、第三方入口、忘记密码提示");
+  if (/注册|signup|sign\s*up/i.test(prompt)) add("/register", "注册", "创建账号、权益说明、表单校验提示");
+  if (/管理员|管理后台|后台|admin|dashboard/i.test(prompt)) add("/admin", "管理后台", "数据总览、用户管理、订单/内容审核与运营入口");
+  if (/订单|预订|购买|order/i.test(prompt)) add("/orders", "订单", "订单列表、状态筛选、详情与售后入口");
+  if (/我的|会员|个人|账户|account|profile/i.test(prompt)) add("/account", "我的", "个人资料、会员权益、常用服务和设置");
+  if (/酒店|机票|产品|商品|资源|课程|服务|列表|分类/i.test(prompt)) add("/explore", "发现", "分类列表、筛选、卡片结果和详情入口");
+  if (wanted.length === 1 && /其他网页|多页面|完善|完整|功能/.test(prompt)) {
+    add("/login", "登录", "用户登录表单与安全提示");
+    add("/register", "注册", "新用户注册与权益展示");
+    add("/admin", "管理后台", "运营数据、内容管理和用户管理");
+  }
+  return wanted.slice(0, 7);
+}
+
+function normalizePlannedRoutes(input: unknown, prompt: string): PlannedRoute[] {
+  const rawRoutes =
+    typeof input === "object" && input !== null && Array.isArray((input as { routes?: unknown }).routes)
+      ? (input as { routes: unknown[] }).routes
+      : [];
+  const routes: PlannedRoute[] = [];
+  const push = (path: string, label: string, brief?: string) => {
+    const normalized = normalizeRoutePath(path);
+    if (!normalized || routes.some((r) => r.path === normalized)) return;
+    routes.push({ path: normalized, label: label.trim().slice(0, 8) || "页面", brief: (brief ?? label).trim().slice(0, 80) });
+  };
+  push("/", "首页", "核心首页");
+  for (const item of rawRoutes) {
+    if (!item || typeof item !== "object") continue;
+    const r = item as { path?: unknown; label?: unknown; brief?: unknown; description?: unknown };
+    if (typeof r.path === "string" && typeof r.label === "string") {
+      push(r.path, r.label, typeof r.brief === "string" ? r.brief : typeof r.description === "string" ? r.description : r.label);
+    }
+  }
+  for (const r of inferRoutes(prompt)) push(r.path, r.label, r.brief);
+  return routes.slice(0, 7);
+}
+
 function defaultPreviewCss(): string {
   return `:root{font-family:Inter,Arial,'Microsoft YaHei',sans-serif;color:#111827;background:#f6f7fb}*{box-sizing:border-box}body{margin:0;background:#f6f7fb}a{color:inherit;text-decoration:none}button,input{font:inherit}.app,.page{min-height:100vh}.topbar,.nav,header{display:flex;align-items:center;justify-content:space-between;gap:16px}.topbar{position:sticky;top:0;z-index:10;padding:16px 7vw;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);box-shadow:0 10px 32px rgba(15,23,42,.08)}.brand,.logo{font-size:24px;font-weight:900;color:#ff5a1f}.links,nav{display:flex;gap:10px;flex-wrap:wrap}.links a,nav a,nav button,.tab{border:0;border-radius:999px;padding:10px 16px;background:#eef2f7;color:#334155;cursor:pointer}.active,.primary,.links a.active,nav a.active,nav button.active{background:linear-gradient(135deg,#ff7a00,#ff3d71);color:white}.hero{padding:60px 7vw 42px;background:radial-gradient(circle at 78% 12%,#ffe1a8,transparent 34%),linear-gradient(135deg,#fff7ed,#eef6ff)}.hero h1{font-size:clamp(34px,6vw,68px);line-height:1.05;margin:10px 0 14px}.hero p{max-width:760px;color:#526071;line-height:1.75}.eyebrow{font-weight:800;color:#ff6a00}.search,.searchbar{max-width:820px;background:white;border-radius:24px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 22px 60px rgba(255,106,0,.16)}.search input,.searchbar input{flex:1;border:0;outline:0;min-width:140px}.search button,.searchbar button,.card button,.primary{border:0;border-radius:999px;padding:11px 18px;cursor:pointer}.quick,.categories{padding:24px 7vw 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:12px}.quick button,.category{border:0;background:white;border-radius:18px;padding:18px 8px;display:flex;flex-direction:column;gap:8px;align-items:center;box-shadow:0 10px 28px rgba(15,23,42,.07)}.grid,.cards,.products{padding:30px 7vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}.card,article{background:white;border-radius:22px;padding:22px;box-shadow:0 14px 38px rgba(15,23,42,.08)}.card .icon,article .icon,article span:first-child{font-size:34px}.card p,article p{color:#64748b;line-height:1.6}.panel,.service-panel{margin:0 7vw 50px;background:#111827;color:white;border-radius:24px;padding:24px}.panel-grid,.service-panel div{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.panel-grid>* ,.service-panel b{background:rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center}@media(max-width:640px){.topbar{align-items:flex-start;flex-direction:column;padding:14px 18px}.hero{padding:34px 18px}.search,.searchbar{flex-wrap:wrap}.quick,.categories,.grid,.cards,.products{padding-left:18px;padding-right:18px}.panel,.service-panel{margin:0 18px 32px}.hero h1{font-size:38px}}`;
 }
