@@ -267,6 +267,78 @@ export async function repairLovableReplyToBundle(
   return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
 }
 
+export async function generateSegmentedLovableBundle(
+  cfg: AIProviderConfig,
+  prompt: string,
+): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
+  const planRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是网页产品架构师。只输出 JSON 对象，不要 Markdown。" },
+      {
+        role: "user",
+        content:
+          `为需求规划一个可预览 React 单页/多区块网站：${prompt}\n输出 JSON：{\"title\":string,\"routes\":[{\"path\":\"/\",\"label\":\"首页\"}],\"sections\":[string],\"visualStyle\":string}。routes 1-4 条，内容真实中文。`,
+      },
+    ],
+    temperature: 0.4,
+  });
+  if (!planRes.ok) return { reply: "", bundle: null, finishReason: "plan_failed" };
+  const planJson = (await planRes.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string } }> }
+    | null;
+  const planText = planJson?.choices?.[0]?.message?.content ?? "";
+  const parsedPlan = parseAnyJsonObject(planText) as { title?: string; routes?: Array<{ path?: string; label?: string }>; sections?: string[]; visualStyle?: string } | null;
+  const routes = (parsedPlan?.routes ?? [{ path: "/", label: "首页" }])
+    .filter((r) => typeof r.path === "string" && r.path.startsWith("/") && typeof r.label === "string")
+    .slice(0, 4)
+    .map((r) => ({ path: r.path!, label: r.label! }));
+  if (routes.length === 0) routes.push({ path: "/", label: "首页" });
+  const plan = { title: parsedPlan?.title ?? "生成站点", routes, sections: (parsedPlan?.sections ?? []).slice(0, 8), visualStyle: parsedPlan?.visualStyle ?? "现代响应式" };
+
+  const appRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是 React 代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
+      {
+        role: "user",
+        content:
+          `根据规划生成 /App.tsx。要求：默认导出 App；使用 Routes/Route/Link；不要 BrowserRouter；导入 './styles.css'；代码自包含 mock 数据；中文真实文案；响应式结构。\n需求：${prompt}\n规划：${JSON.stringify(plan)}`,
+      },
+    ],
+    temperature: 0.55,
+  });
+  if (!appRes.ok) return { reply: planText, bundle: null, finishReason: "app_failed" };
+  const appJson = (await appRes.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
+    | null;
+  const appCode = stripCodeFence(appJson?.choices?.[0]?.message?.content ?? "");
+  if (!appCode.includes("export default") || !appCode.includes("./styles.css")) {
+    return { reply: appCode, bundle: null, finishReason: "app_invalid" };
+  }
+
+  const cssRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是 CSS 视觉设计师。只输出 /styles.css 的完整源码，不要 Markdown，不要解释。" },
+      { role: "user", content: `为这个 App.tsx 写完整现代响应式 CSS，适配 360px 到桌面，不要外部资源。视觉规划：${JSON.stringify(plan)}\n\n${appCode}` },
+    ],
+    temperature: 0.55,
+  });
+  if (!cssRes.ok) return { reply: appCode, bundle: null, finishReason: "css_failed" };
+  const cssJson = (await cssRes.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
+    | null;
+  const cssCode = stripCodeFence(cssJson?.choices?.[0]?.message?.content ?? "");
+  const bundle = lovableBundleSchema.safeParse({ routes, files: { "/App.tsx": appCode, "/styles.css": cssCode } });
+  if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
+  return {
+    reply: `已生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
+    bundle: { ...bundle.data, files: patchReactImports(bundle.data.files) },
+    finishReason: "segmented",
+  };
+}
+
 export async function persistGenerationResult(
   supabase: SupabaseClient<Database>,
   userId: string,
