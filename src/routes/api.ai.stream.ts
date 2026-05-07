@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getAIConfig, chatCompletionStream } from "@/lib/ai-config";
 import { getAuthedSupabaseFromRequest } from "@/integrations/supabase/request-auth";
-import { beginWebsiteGeneration, completeTruncatedLovableReply, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, completeTruncatedLovableReply, parseLovableBundleFromReply, persistGenerationResult, repairLovableReplyToBundle } from "@/lib/ai-generate-shared";
 import { extractLovableFence, tryParseLovableBundle } from "@/lib/lovable-bundle";
 import { consumeCredits } from "@/lib/credits-server";
 
@@ -178,6 +178,17 @@ export const Route = createFileRoute("/api/ai/stream")({
                 finalFinishReason = completed.finishReason ?? finalFinishReason;
                 if (completed.reply.length > fullReply.length) {
                   safeEnqueue({ type: "delta", content: completed.reply.slice(fullReply.length) });
+                }
+              }
+
+              if (!parseLovableBundleFromReply(finalReply)) {
+                safeEnqueue({ type: "status", message: "正在修复模型返回格式并生成可预览代码…" });
+                const repaired = await repairLovableReplyToBundle(cfg, parsed.data.prompt, finalReply);
+                if (repaired.bundle) {
+                  finalReply = repaired.reply;
+                  finalFinishReason = "repaired";
+                } else {
+                  finalFinishReason = "force_fallback";
                 }
               }
 
