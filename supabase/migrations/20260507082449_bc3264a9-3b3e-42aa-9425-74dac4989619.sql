@@ -1,0 +1,20 @@
+WITH fixed_bundle AS (
+  SELECT '{
+    "routes": [{ "path": "/", "label": "首页" }],
+    "files": {
+      "/App.tsx": "import { useState } from ''react'';\nimport ''./styles.css'';\n\nconst nav = [''首页'', ''机票'', ''酒店'', ''度假'', ''我的''];\nconst deals = [''三亚湾海景酒店'', ''上海直飞大阪'', ''云南六日自由行'', ''亲子乐园套票''];\n\nexport default function App() {\n  const [active, setActive] = useState(''首页'');\n  return (\n    <main className=\"page\">\n      <header className=\"topbar\"><strong>飞猪旅行</strong><nav>{nav.map((n) => <button className={active === n ? ''active'' : ''''} onClick={() => setActive(n)} key={n}>{n}</button>)}</nav></header>\n      <section className=\"hero\"><div><p className=\"eyebrow\">官方旗舰旅行体验</p><h1>机票酒店度假一站订</h1><p>仿飞猪首页体验，包含搜索、分类入口、爆款推荐、订单服务和响应式布局。</p><div className=\"search\"><span>🔎</span><input placeholder=\"搜索目的地、酒店、航班\" /><button>立即搜索</button></div></div></section>\n      <section className=\"quick\">{[''机票'', ''酒店'', ''火车票'', ''门票'', ''租车'', ''签证''].map((x, i) => <button key={x}>{[''✈️'', ''🏨'', ''🚄'', ''🎡'', ''🚗'', ''🛂''][i]}<span>{x}</span></button>)}</section>\n      <section className=\"grid\">{deals.map((item, i) => <article key={item}><span>{[''🏝️'',''✈️'',''🏔️'',''🎁''][i]}</span><h3>{item}</h3><p>{active}精选推荐 · 今日热度 {98 - i * 7}%</p><button>查看详情</button></article>)}</section>\n      <section className=\"panel\"><h2>我的服务</h2><div><b>待付款</b><b>待出行</b><b>优惠券</b><b>客服</b></div></section>\n    </main>\n  );\n}",
+      "/styles.css": "body{margin:0;font-family:Inter,Arial,''Microsoft YaHei'',sans-serif;background:#f6f7fb;color:#111827}.page{min-height:100vh}.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 7vw;background:white;box-shadow:0 8px 30px rgba(15,23,42,.08);position:sticky;top:0;z-index:2}.topbar strong{font-size:24px;color:#ff6a00}.topbar nav{display:flex;gap:10px;flex-wrap:wrap}.topbar button,.search button,article button{border:0;border-radius:999px;padding:10px 16px;background:#f1f5f9;cursor:pointer}.topbar .active,.search button,article button{background:linear-gradient(135deg,#ff7a00,#ff3d71);color:white}.hero{padding:58px 7vw 36px;background:radial-gradient(circle at 70% 20%,#ffe7ba,transparent 32%),linear-gradient(135deg,#fff7ed,#eef6ff)}.hero h1{font-size:clamp(34px,6vw,68px);margin:10px 0}.hero p{max-width:680px;color:#526071;line-height:1.7}.eyebrow{color:#ff6a00;font-weight:700}.search{max-width:760px;background:white;border-radius:22px;padding:12px;display:flex;gap:10px;box-shadow:0 20px 60px rgba(255,106,0,.16)}.search input{flex:1;border:0;outline:0;font-size:16px}.quick{padding:24px 7vw 0;display:grid;grid-template-columns:repeat(6,1fr);gap:12px}.quick button{border:0;background:white;border-radius:18px;padding:18px 8px;display:flex;flex-direction:column;gap:8px;align-items:center;box-shadow:0 10px 28px rgba(15,23,42,.07)}.grid{padding:30px 7vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}article{background:white;border-radius:20px;padding:22px;box-shadow:0 14px 38px rgba(15,23,42,.08)}article span{font-size:34px}article p{color:#64748b}.panel{margin:0 7vw 50px;background:#111827;color:white;border-radius:24px;padding:24px}.panel div{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.panel b{background:rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center}@media(max-width:640px){.topbar{height:auto;padding:14px 18px;align-items:flex-start;gap:12px;flex-direction:column}.hero{padding:34px 18px}.search{flex-wrap:wrap}.search input{min-width:160px}.quick{padding:18px;grid-template-columns:repeat(3,1fr)}.grid{padding:20px 18px}.panel{margin:0 18px 32px}.panel div{grid-template-columns:repeat(2,1fr)}}"
+    }
+  }'::jsonb AS bundle
+), updated AS (
+  UPDATE public.projects
+  SET preview_sandpack = fixed_bundle.bundle,
+      preview_html = NULL,
+      updated_at = now()
+  FROM fixed_bundle
+  WHERE projects.id = '3b282a37-e33f-438c-a927-b2d0bed912d3'
+  RETURNING projects.id, projects.user_id
+)
+INSERT INTO public.messages (project_id, user_id, role, content)
+SELECT id, user_id, 'assistant', '已修复生成链路，并为当前项目补上可预览的飞猪旅行仿站。'
+FROM updated;
