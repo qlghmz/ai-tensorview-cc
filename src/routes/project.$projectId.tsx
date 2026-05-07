@@ -179,6 +179,15 @@ function ProjectEditor() {
     }
   };
 
+  useEffect(() => {
+    if (!project || sending || project.preview_sandpack || project.preview_html) return;
+    const timer = window.setInterval(() => {
+      void reloadThread();
+    }, 3000);
+    return () => window.clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [project?.preview_sandpack, project?.preview_html, sending]);
+
   const send = async (text?: string) => {
     const prompt = (text ?? input).trim();
     if (!prompt || sending || !session) return;
