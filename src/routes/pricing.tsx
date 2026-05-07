@@ -67,8 +67,16 @@ const PLANS: Plan[] = [
 function PricingPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [order, setOrder] = useState<{ orderNo: string; plan: string; amount: number } | null>(null);
+  const [order, setOrder] = useState<{ orderNo: string; plan: string; amount: number; payUrl?: string } | null>(null);
   const [busy, setBusy] = useState(false);
+
+  // 爱发电赞助页：每个套餐对应一个赞助方案的 plan_id
+  // 配置完爱发电后，把对应的链接替换进来即可
+  const AFDIAN_USER = "tensorview"; // 你的爱发电主页用户名
+  const AFDIAN_PLAN_URL: Record<string, string> = {
+    pro: `https://afdian.com/a/${AFDIAN_USER}?plan_id=PRO_PLAN_ID`,
+    team: `https://afdian.com/a/${AFDIAN_USER}?plan_id=TEAM_PLAN_ID`,
+  };
 
   const handleUpgrade = async (plan: Plan) => {
     if (plan.planKey === "free") {
