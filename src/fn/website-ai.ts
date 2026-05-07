@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getAIConfig, chatCompletionNonStream } from "@/lib/ai-config";
-import { beginWebsiteGeneration, completeTruncatedLovableReply, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, completeTruncatedLovableReply, parseLovableBundleFromReply, persistGenerationResult, repairLovableReplyToBundle } from "@/lib/ai-generate-shared";
 
 const inputSchema = z.object({
   projectId: z.string().uuid(),
@@ -57,6 +57,16 @@ export const generateWebsite = createServerFn({ method: "POST" })
       const completed = await completeTruncatedLovableReply(cfg, begun.messages, replyContent);
       replyContent = completed.reply;
       finishReason = completed.finishReason ?? finishReason;
+    }
+
+    if (!parseLovableBundleFromReply(replyContent)) {
+      const repaired = await repairLovableReplyToBundle(cfg, data.prompt, replyContent);
+      if (repaired.bundle) {
+        replyContent = repaired.reply;
+        finishReason = "repaired";
+      } else {
+        finishReason = "force_fallback";
+      }
     }
 
     const { sandpack } = await persistGenerationResult(
