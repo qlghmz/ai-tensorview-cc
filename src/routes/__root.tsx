@@ -66,6 +66,7 @@ function RootComponent() {
   return (
     <AuthProvider>
       <Outlet />
+      <FeedbackButton />
       <Toaster />
     </AuthProvider>
   );
