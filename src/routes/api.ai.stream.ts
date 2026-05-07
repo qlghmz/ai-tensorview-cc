@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getAIConfig, chatCompletionStream } from "@/lib/ai-config";
 import { getAuthedSupabaseFromRequest } from "@/integrations/supabase/request-auth";
-import { beginWebsiteGeneration, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, completeTruncatedLovableReply, persistGenerationResult } from "@/lib/ai-generate-shared";
 import { extractLovableFence, tryParseLovableBundle } from "@/lib/lovable-bundle";
 import { consumeCredits } from "@/lib/credits-server";
 
@@ -169,15 +169,27 @@ export const Route = createFileRoute("/api/ai/stream")({
               }
               if (lineBuf.trim()) flushLine(lineBuf);
 
+              let finalReply = fullReply;
+              let finalFinishReason = lastFinishReason;
+              if (lastFinishReason === "length") {
+                safeEnqueue({ type: "status", message: "模型输出达到单次上限，正在自动续写补全代码…" });
+                const completed = await completeTruncatedLovableReply(cfg, begun.messages, fullReply);
+                finalReply = completed.reply;
+                finalFinishReason = completed.finishReason ?? finalFinishReason;
+                if (completed.reply.length > fullReply.length) {
+                  safeEnqueue({ type: "delta", content: completed.reply.slice(fullReply.length) });
+                }
+              }
+
               const { reply, sandpack } = await persistGenerationResult(
                 supabase,
                 userId,
                 begun.projectId,
-                fullReply,
+                finalReply,
                 parsed.data.prompt,
-                lastFinishReason,
+                finalFinishReason,
               );
-              safeEnqueue({ type: "final", reply, sandpack, finishReason: lastFinishReason });
+              safeEnqueue({ type: "final", reply, sandpack, finishReason: finalFinishReason });
               safeClose();
             } catch (e) {
               if (!closed) {
