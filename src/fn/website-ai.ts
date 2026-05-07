@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getAIConfig, chatCompletionNonStream } from "@/lib/ai-config";
-import { beginWebsiteGeneration, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, completeTruncatedLovableReply, persistGenerationResult } from "@/lib/ai-generate-shared";
 
 const inputSchema = z.object({
   projectId: z.string().uuid(),
@@ -48,9 +48,16 @@ export const generateWebsite = createServerFn({ method: "POST" })
     }
 
     const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string } }>;
+      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
     };
-    const replyContent = json.choices?.[0]?.message?.content ?? "（无内容）";
+    const choice = json.choices?.[0];
+    let replyContent = choice?.message?.content ?? "（无内容）";
+    let finishReason = choice?.finish_reason;
+    if (finishReason === "length") {
+      const completed = await completeTruncatedLovableReply(cfg, begun.messages, replyContent);
+      replyContent = completed.reply;
+      finishReason = completed.finishReason ?? finishReason;
+    }
 
     const { sandpack } = await persistGenerationResult(
       supabase,
@@ -58,6 +65,7 @@ export const generateWebsite = createServerFn({ method: "POST" })
       data.projectId,
       replyContent,
       data.prompt,
+      finishReason,
     );
 
     return { reply: replyContent, sandpack };
