@@ -175,7 +175,70 @@ function parseAnyJsonObject(text: string): unknown | null {
 
 function stripCodeFence(text: string): string {
   const m = text.match(/^```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```\s*$/);
-  return (m?.[1] ?? text).trim();
+  if (m?.[1]) return m[1].trim();
+  const inner = text.match(/```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```/);
+  return (inner?.[1] ?? text).trim();
+}
+
+function compactGenerationContext(messages?: Array<{ role: string; content: string }>): string {
+  if (!messages?.length) return "";
+  return messages
+    .filter((m) => m.role !== "system" || m.content.includes("当前 React 项目"))
+    .slice(-8)
+    .map((m) => `${m.role}: ${m.content.slice(0, 1800)}`)
+    .join("\n\n")
+    .slice(0, 9000);
+}
+
+type PlannedRoute = { path: string; label: string; brief: string };
+
+function normalizeRoutePath(path: string): string | null {
+  const cleaned = path.trim().toLowerCase().replace(/\s+/g, "-");
+  if (cleaned === "/") return "/";
+  if (!/^\/[a-z0-9][a-z0-9-]{0,28}$/.test(cleaned)) return null;
+  return cleaned;
+}
+
+function inferRoutes(prompt: string): PlannedRoute[] {
+  const wanted: PlannedRoute[] = [{ path: "/", label: "首页", brief: "核心首页、导航、搜索、推荐内容与主要转化入口" }];
+  const add = (path: string, label: string, brief: string) => {
+    if (!wanted.some((r) => r.path === path)) wanted.push({ path, label, brief });
+  };
+  if (/登录|登陆|sign\s*in|login/i.test(prompt)) add("/login", "登录", "邮箱/手机号登录、第三方入口、忘记密码提示");
+  if (/注册|signup|sign\s*up/i.test(prompt)) add("/register", "注册", "创建账号、权益说明、表单校验提示");
+  if (/管理员|管理后台|后台|admin|dashboard/i.test(prompt)) add("/admin", "管理后台", "数据总览、用户管理、订单/内容审核与运营入口");
+  if (/订单|预订|购买|order/i.test(prompt)) add("/orders", "订单", "订单列表、状态筛选、详情与售后入口");
+  if (/我的|会员|个人|账户|account|profile/i.test(prompt)) add("/account", "我的", "个人资料、会员权益、常用服务和设置");
+  if (/酒店|机票|产品|商品|资源|课程|服务|列表|分类/i.test(prompt)) add("/explore", "发现", "分类列表、筛选、卡片结果和详情入口");
+  if (wanted.length === 1 && /其他网页|多页面|完善|完整|功能/.test(prompt)) {
+    add("/login", "登录", "用户登录表单与安全提示");
+    add("/register", "注册", "新用户注册与权益展示");
+    add("/admin", "管理后台", "运营数据、内容管理和用户管理");
+  }
+  return wanted.slice(0, 7);
+}
+
+function normalizePlannedRoutes(input: unknown, prompt: string): PlannedRoute[] {
+  const rawRoutes =
+    typeof input === "object" && input !== null && Array.isArray((input as { routes?: unknown }).routes)
+      ? (input as { routes: unknown[] }).routes
+      : [];
+  const routes: PlannedRoute[] = [];
+  const push = (path: string, label: string, brief?: string) => {
+    const normalized = normalizeRoutePath(path);
+    if (!normalized || routes.some((r) => r.path === normalized)) return;
+    routes.push({ path: normalized, label: label.trim().slice(0, 8) || "页面", brief: (brief ?? label).trim().slice(0, 80) });
+  };
+  push("/", "首页", "核心首页");
+  for (const item of rawRoutes) {
+    if (!item || typeof item !== "object") continue;
+    const r = item as { path?: unknown; label?: unknown; brief?: unknown; description?: unknown };
+    if (typeof r.path === "string" && typeof r.label === "string") {
+      push(r.path, r.label, typeof r.brief === "string" ? r.brief : typeof r.description === "string" ? r.description : r.label);
+    }
+  }
+  for (const r of inferRoutes(prompt)) push(r.path, r.label, r.brief);
+  return routes.slice(0, 7);
 }
 
 function defaultPreviewCss(): string {
@@ -186,20 +249,16 @@ function deterministicBundle(prompt: string): LovableBundle {
   const isTravel = /飞猪|旅行|旅游|酒店|机票/.test(prompt);
   const isShop = /淘宝|电商|商城|购物/.test(prompt);
   const title = isTravel ? "飞猪旅行" : isShop ? "淘宝精选" : "智能生成站点";
-  const nav = isTravel
-    ? ["首页", "机票", "酒店", "度假"]
-    : isShop
-      ? ["首页", "天猫", "聚划算", "我的淘宝"]
-      : ["首页", "产品", "服务", "我的"];
+  const routes = inferRoutes(prompt);
   const items = isTravel
     ? ["三亚湾海景酒店", "上海直飞大阪", "云南六日自由行", "亲子乐园套票"]
     : isShop
       ? ["无线降噪耳机", "轻薄通勤双肩包", "智能扫地机器人", "春夏透气运动鞋"]
       : ["核心功能", "数据看板", "协作空间", "增长工具"];
   return {
-    routes: [{ path: "/", label: "首页" }],
+    routes: routes.map(({ path, label }) => ({ path, label })),
     files: {
-      "/App.tsx": `import { useState } from 'react';\nimport './styles.css';\n\nconst nav = ${JSON.stringify(nav)};\nconst items = ${JSON.stringify(items)};\n\nexport default function App() {\n  const [active, setActive] = useState(nav[0]);\n  return (\n    <main className=\"page\">\n      <header className=\"topbar\"><strong>${title}</strong><nav>{nav.map((n) => <button className={active === n ? 'active' : ''} onClick={() => setActive(n)} key={n}>{n}</button>)}</nav></header>\n      <section className=\"hero\"><div><p className=\"eyebrow\">${prompt.slice(0, 30)}</p><h1>${title}一站式体验</h1><p>完整首页、分类入口、搜索区、推荐卡片和订单入口，适配手机与桌面预览。</p><div className=\"search\"><span>🔎</span><input placeholder=\"搜索目的地、商品或服务\" /><button>立即搜索</button></div></div></section>\n      <section className=\"grid\">{items.map((item, i) => <article key={item}><span>{['🏝️','✈️','🏨','🎁'][i]}</span><h3>{item}</h3><p>{active}精选推荐 · 今日热度 {98 - i * 7}%</p><button>查看详情</button></article>)}</section>\n      <section className=\"panel\"><h2>我的服务</h2><div><b>待付款</b><b>待出行</b><b>优惠券</b><b>客服</b></div></section>\n    </main>\n  );\n}`,
+      "/App.tsx": `import { Link, Route, Routes, useLocation } from 'react-router-dom';\nimport './styles.css';\n\nconst routes = ${JSON.stringify(routes.map(({ path, label }) => ({ path, label })))};\nconst items = ${JSON.stringify(items)};\nconst icons = ['🏝️','✈️','🏨','🎁'];\n\nfunction Layout({ children }: { children: React.ReactNode }) {\n  const location = useLocation();\n  return <main className=\"page\"><header className=\"topbar\"><strong className=\"brand\">${title}</strong><nav>{routes.map((r) => <Link className={location.pathname === r.path ? 'active' : ''} to={r.path} key={r.path}>{r.label}</Link>)}</nav></header>{children}</main>;\n}\n\nfunction Home() {\n  return <Layout><section className=\"hero\"><p className=\"eyebrow\">${prompt.slice(0, 30)}</p><h1>${title}一站式体验</h1><p>完整首页、搜索、分类、推荐卡片和服务入口，适配手机与桌面预览。</p><div className=\"search\"><span>🔎</span><input placeholder=\"搜索目的地、商品或服务\" /><button>立即搜索</button></div></section><section className=\"grid\">{items.map((item, i) => <article key={item}><span>{icons[i]}</span><h3>{item}</h3><p>精选推荐 · 今日热度 {98 - i * 7}%</p><button>查看详情</button></article>)}</section></Layout>;\n}\n\nfunction GenericPage({ title, text }: { title: string; text: string }) {\n  return <Layout><section className=\"hero\"><p className=\"eyebrow\">{title}</p><h1>{title}</h1><p>{text}</p><div className=\"search\"><input placeholder={title + ' 关键词'} /><button>查询</button></div></section><section className=\"grid\">{['数据概览','快捷操作','最新记录','智能推荐'].map((x, i) => <article key={x}><span>{['📊','⚡','🧾','✨'][i]}</span><h3>{x}</h3><p>{title}模块已独立成页，可继续让 AI 深化真实业务细节。</p><button>进入</button></article>)}</section></Layout>;\n}\n\nfunction Login() { return <Layout><section className=\"hero\"><p className=\"eyebrow\">账号登录</p><h1>欢迎回来</h1><p>支持账号密码、验证码和第三方入口的登录页面。</p><div className=\"card\"><input placeholder=\"手机号 / 邮箱\" /><input placeholder=\"密码\" type=\"password\" /><button>登录</button></div></section></Layout>; }\nfunction Register() { return <Layout><section className=\"hero\"><p className=\"eyebrow\">创建账号</p><h1>注册新用户</h1><p>展示权益说明、账号信息采集和安全协议确认。</p><div className=\"card\"><input placeholder=\"手机号 / 邮箱\" /><input placeholder=\"设置密码\" type=\"password\" /><button>立即注册</button></div></section></Layout>; }\nfunction Admin() { return <Layout><section className=\"hero\"><p className=\"eyebrow\">管理后台</p><h1>运营控制台</h1><p>集中查看用户、订单、内容和数据指标。</p></section><section className=\"grid\">{['今日访问','新增用户','待处理订单','内容审核'].map((x, i) => <article key={x}><span>{['📈','👥','🧾','🛡️'][i]}</span><h3>{x}</h3><p>后台核心指标与管理入口。</p><button>管理</button></article>)}</section></Layout>; }\n\nexport default function App() {\n  return <Routes>${routes.map((r) => `<Route path=\"${r.path}\" element={${r.path === "/" ? "<Home />" : r.path === "/login" ? "<Login />" : r.path === "/register" ? "<Register />" : r.path === "/admin" ? "<Admin />" : `<GenericPage title=\"${r.label}\" text=\"${r.brief}\" />`}} />`).join("")}<Route path=\"*\" element={<Home />} /></Routes>;\n}`,
       "/styles.css": `body{margin:0;font-family:Inter,Arial,'Microsoft YaHei',sans-serif;background:#f6f7fb;color:#111827}.page{min-height:100vh}.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 7vw;background:white;box-shadow:0 8px 30px rgba(15,23,42,.08);position:sticky;top:0;z-index:2}.topbar strong{font-size:24px;color:#ff6a00}.topbar nav{display:flex;gap:10px;flex-wrap:wrap}.topbar button,.search button,article button{border:0;border-radius:999px;padding:10px 16px;background:#f1f5f9;cursor:pointer}.topbar .active,.search button,article button{background:linear-gradient(135deg,#ff7a00,#ff3d71);color:white}.hero{padding:58px 7vw 36px;background:radial-gradient(circle at 70% 20%,#ffe7ba,transparent 32%),linear-gradient(135deg,#fff7ed,#eef6ff)}.hero h1{font-size:clamp(34px,6vw,68px);margin:10px 0}.hero p{max-width:680px;color:#526071;line-height:1.7}.eyebrow{color:#ff6a00;font-weight:700}.search{max-width:760px;background:white;border-radius:22px;padding:12px;display:flex;gap:10px;box-shadow:0 20px 60px rgba(255,106,0,.16)}.search input{flex:1;border:0;outline:0;font-size:16px}.grid{padding:30px 7vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}article{background:white;border-radius:20px;padding:22px;box-shadow:0 14px 38px rgba(15,23,42,.08)}article span{font-size:34px}article p{color:#64748b}.panel{margin:0 7vw 50px;background:#111827;color:white;border-radius:24px;padding:24px}.panel div{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.panel b{background:rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center}@media(max-width:640px){.topbar{height:auto;padding:14px 18px;align-items:flex-start;gap:12px;flex-direction:column}.hero{padding:34px 18px}.search{flex-wrap:wrap}.search input{min-width:160px}.grid{padding:20px 18px}.panel{margin:0 18px 32px}.panel div{grid-template-columns:repeat(2,1fr)}}`,
     },
   };
@@ -274,17 +333,33 @@ export async function repairLovableReplyToBundle(
 export async function generateSegmentedLovableBundle(
   cfg: AIProviderConfig,
   prompt: string,
+  messages?: Array<{ role: string; content: string }>,
 ): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
-  const routes = [{ path: "/", label: "首页" }];
+  const context = compactGenerationContext(messages);
+  const planRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是产品信息架构规划器。只输出 JSON，不要 Markdown。根据用户的增量需求规划可预览网站路由。" },
+      {
+        role: "user",
+        content:
+          `为这个 AI 生成网站需求规划 3-7 个页面路由。必须结合历史上下文做增量修改，保留已有页面，并覆盖用户明确提到的页面（如登录、注册、管理员界面、订单、个人中心等）。输出格式：{"routes":[{"path":"/","label":"首页","brief":"..."}]}。path 只能用小写英文短路径。\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+      },
+    ],
+    temperature: 0.15,
+  });
+  const planJson = planRes.ok ? await planRes.json().catch(() => null) : null;
+  const planContent = (planJson as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content ?? "";
+  const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt);
 
   const appRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
-      { role: "system", content: "你是 React 代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
+      { role: "system", content: "你是 Lovable 风格 React 多页面代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
       {
         role: "user",
         content:
-          `生成一个完整可预览网站的 /App.tsx。要求：默认导出 App；导入 './styles.css'；只用 react；不要额外依赖；代码控制在 180 行内；用 className: app/topbar/brand/hero/search/quick/grid/card/panel 等；中文真实文案；包含导航、搜索、分类、推荐卡片、服务面板。需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
     temperature: 0.55,
@@ -294,12 +369,13 @@ export async function generateSegmentedLovableBundle(
     | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
     | null;
   const appCode = stripCodeFence(appJson?.choices?.[0]?.message?.content ?? "");
-  if (!appCode.includes("export default") || !appCode.includes("./styles.css")) {
+  const missingRoute = routes.find((r) => !appCode.includes(`path=\"${r.path}\"`) && !appCode.includes(`path='${r.path}'`));
+  if (!appCode.includes("export default") || !appCode.includes("./styles.css") || missingRoute) {
     return { reply: appCode, bundle: null, finishReason: "app_invalid" };
   }
 
   const cssCode = defaultPreviewCss();
-  const bundle = lovableBundleSchema.safeParse({ routes, files: { "/App.tsx": appCode, "/styles.css": cssCode } });
+  const bundle = lovableBundleSchema.safeParse({ routes: routes.map(({ path, label }) => ({ path, label })), files: { "/App.tsx": appCode, "/styles.css": cssCode } });
   if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
   return {
     reply: `已生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
