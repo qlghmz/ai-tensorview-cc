@@ -61,7 +61,16 @@ export const Route = createFileRoute("/api/public/afdian")({
           });
         }
 
-        // 校验签名 — 爱发电会对 params 进行签名
+        const order = data?.order;
+        // 测试 ping 无 order，直接返回成功（爱发电后台"发送测试"会走这里）
+        if (!order) {
+          return new Response(JSON.stringify({ ec: 200, em: "ok" }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+
+        // 真实订单：校验签名
         const sign: string | undefined = body?.sign;
         if (sign) {
           const params = body?.params ?? data;
@@ -73,24 +82,6 @@ export const Route = createFileRoute("/api/public/afdian")({
               headers: { "Content-Type": "application/json" },
             });
           }
-        } else {
-          // 无签名兜底：要求请求 URL query 带 ?token=xxx 与 secret 一致
-          const url = new URL(request.url);
-          if (url.searchParams.get("token") !== token) {
-            return new Response(JSON.stringify({ ec: 403, em: "auth failed" }), {
-              status: 403,
-              headers: { "Content-Type": "application/json" },
-            });
-          }
-        }
-
-        const order = data?.order;
-        if (!order) {
-          // ping / 非订单事件，直接返回成功
-          return new Response(JSON.stringify({ ec: 200, em: "ok" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json" },
-          });
         }
 
         // 关键字段
