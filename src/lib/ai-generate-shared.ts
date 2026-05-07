@@ -7,6 +7,7 @@ import {
   tryParseLovableBundle,
   type LovableBundle,
 } from "@/lib/lovable-bundle";
+import { buildFallbackLovableBundle } from "@/lib/lovable-fallback";
 
 export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
@@ -136,19 +137,26 @@ export async function persistGenerationResult(
   userId: string,
   projectId: string,
   reply: string,
+  fallbackPrompt?: string,
 ) {
   const fence = extractLovableFence(reply);
   let bundle = fence ? tryParseLovableBundle(fence) : null;
+  let usedFallback = false;
 
   if (bundle) {
     bundle = { ...bundle, files: patchReactImports(bundle.files) };
+  } else if (fallbackPrompt) {
+    bundle = buildFallbackLovableBundle(fallbackPrompt);
+    usedFallback = true;
   }
 
   await supabase.from("messages").insert({
     project_id: projectId,
     user_id: userId,
     role: "assistant",
-    content: reply,
+    content: usedFallback
+      ? "✨ 已生成网页 — 见预览面板（模型输出不完整，已自动补全为可运行代码）"
+      : reply,
   });
 
   if (bundle) {
