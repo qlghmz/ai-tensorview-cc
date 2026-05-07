@@ -74,9 +74,11 @@ export function getAIConfigChain(): AIProviderConfig[] {
   return chain;
 }
 
-/** 多页面 React 项目 JSON 通常需要较大输出窗口；默认拉到 8192 避免被截断。 */
-const DEFAULT_MAX_TOKENS = 8192;
-
+/**
+ * 不强行设置 max_tokens——阿里 qwen-plus 等模型默认上限远高于固定 8192，
+ * 强制 8192 反而会在多页面项目里把 ```lovable JSON 截断成无法解析。
+ * 调用方需要时可在 body 里显式传入 max_tokens 覆盖。
+ */
 export async function chatCompletionNonStream(
   cfg: AIProviderConfig,
   body: Record<string, unknown>,
@@ -89,7 +91,6 @@ export async function chatCompletionNonStream(
       ...cfg.headers,
     },
     body: JSON.stringify({
-      max_tokens: DEFAULT_MAX_TOKENS,
       ...body,
       model: body.model ?? cfg.model,
     }),
@@ -108,7 +109,6 @@ export async function chatCompletionStream(
       ...cfg.headers,
     },
     body: JSON.stringify({
-      max_tokens: DEFAULT_MAX_TOKENS,
       ...body,
       model: body.model ?? cfg.model,
       stream: true,

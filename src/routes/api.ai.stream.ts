@@ -96,6 +96,7 @@ export const Route = createFileRoute("/api/ai/stream")({
           async start(controller) {
             let lineBuf = "";
             let fullReply = "";
+            let lastFinishReason: string | undefined;
             let closed = false;
 
             const safeEnqueue = (payload: unknown) => {
@@ -127,9 +128,11 @@ export const Route = createFileRoute("/api/ai/stream")({
               if (!data || data === "[DONE]") return;
               try {
                 const json = JSON.parse(data) as {
-                  choices?: Array<{ delta?: { content?: string } }>;
+                  choices?: Array<{ delta?: { content?: string }; finish_reason?: string }>;
                 };
-                const piece = json.choices?.[0]?.delta?.content ?? "";
+                const choice = json.choices?.[0];
+                const piece = choice?.delta?.content ?? "";
+                if (choice?.finish_reason) lastFinishReason = choice.finish_reason;
                 if (piece) {
                   fullReply += piece;
                   safeEnqueue({ type: "delta", content: piece });
@@ -172,8 +175,9 @@ export const Route = createFileRoute("/api/ai/stream")({
                 begun.projectId,
                 fullReply,
                 parsed.data.prompt,
+                lastFinishReason,
               );
-              safeEnqueue({ type: "final", reply, sandpack });
+              safeEnqueue({ type: "final", reply, sandpack, finishReason: lastFinishReason });
               safeClose();
             } catch (e) {
               if (!closed) {
