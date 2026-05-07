@@ -24,6 +24,7 @@ import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpac
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { PublishDialog } from "@/components/PublishDialog";
+import { CreditBadge } from "@/components/CreditBadge";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
