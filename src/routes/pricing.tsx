@@ -195,7 +195,7 @@ function PricingPage() {
             还有疑问？查看
             <Link to="/docs" className="text-brand hover:underline mx-1">使用文档</Link>
             或
-            <a href="mailto:hello@example.com" className="text-brand hover:underline mx-1">联系我们</a>
+            <a href="mailto:support@tensorview.cc" className="text-brand hover:underline mx-1">联系我们</a>
           </div>
         </main>
         <SiteFooter />
