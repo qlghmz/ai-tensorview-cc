@@ -43,7 +43,13 @@ function Landing() {
         </div>
 
         <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight leading-[1.05]">
-          用一句话<br />
+          <span className="inline-flex items-center gap-3">
+            用一句话
+            <span className="inline-flex items-center rounded-full bg-brand/15 text-brand border border-brand/30 px-2.5 py-0.5 text-xs font-semibold tracking-wider align-middle">
+              BETA
+            </span>
+          </span>
+          <br />
           <span className="text-gradient">生成你的网站</span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
