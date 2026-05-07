@@ -52,7 +52,13 @@ export const generateWebsite = createServerFn({ method: "POST" })
     };
     const replyContent = json.choices?.[0]?.message?.content ?? "（无内容）";
 
-    const { sandpack } = await persistGenerationResult(supabase, userId, data.projectId, replyContent);
+    const { sandpack } = await persistGenerationResult(
+      supabase,
+      userId,
+      data.projectId,
+      replyContent,
+      data.prompt,
+    );
 
     return { reply: replyContent, sandpack };
   });
