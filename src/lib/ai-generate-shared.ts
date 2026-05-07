@@ -161,6 +161,23 @@ export function parseLovableBundleFromReply(reply: string): LovableBundle | null
   return (fenced ? parseBundleFromText(fenced) : null) ?? parseBundleFromText(reply);
 }
 
+function parseAnyJsonObject(text: string): unknown | null {
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first < 0 || last <= first) return null;
+  try {
+    return JSON.parse(trimmed.slice(first, last + 1)) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function stripCodeFence(text: string): string {
+  const m = text.match(/^```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```\s*$/);
+  return (m?.[1] ?? text).trim();
+}
+
 function deterministicBundle(prompt: string): LovableBundle {
   const isTravel = /飞猪|旅行|旅游|酒店|机票/.test(prompt);
   const isShop = /淘宝|电商|商城|购物/.test(prompt);
