@@ -403,7 +403,7 @@ export async function generateSegmentedLovableBundle(
       {
         role: "user",
         content:
-          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格强制要求（参考 Lovable / Linear / Vercel 的极简现代风）：白底深色文字、大量留白、字号字重对比清晰、圆角 10-16px、细边框 1px solid #e7e5e4、轻量阴影、不要花哨的彩色渐变背景、不要把每个按钮都做成胶囊渐变；主色用黑色 (#0a0a0a) 作为主按钮和强调，辅色用橙色 (#f97316) 作为 eyebrow 标签；卡片用 .card 或 article 类、网格用 .grid、英雄区用 .hero、导航用 header+nav、主按钮用 .primary 类。请尽量复用 styles.css 已经定义的语义类名，避免大量内联样式。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
     temperature: 0.55,
