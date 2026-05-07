@@ -37,8 +37,26 @@ export function tryParseLovableBundle(raw: string): LovableBundle | null {
 
 /** Extract ```lovable ... ``` fenced JSON (trimmed inner text). */
 export function extractLovableFence(full: string): string | null {
-  const m = full.match(/```lovable\s*\n([\s\S]*?)```/i);
-  return m?.[1]?.trim() ?? null;
+  const openRe = /```lovable\s*\n/gi;
+  let fallback: string | null = null;
+  let open: RegExpExecArray | null;
+
+  while ((open = openRe.exec(full))) {
+    const bodyStart = open.index + open[0].length;
+    let searchFrom = bodyStart;
+    while (true) {
+      const close = full.indexOf("```", searchFrom);
+      if (close === -1) break;
+      const body = full.slice(bodyStart, close).trim();
+      if (body.startsWith("{")) {
+        fallback ??= body;
+        if (tryParseLovableBundle(body)) return body;
+      }
+      searchFrom = close + 3;
+    }
+  }
+
+  return fallback;
 }
 
 export function bundleSignature(b: LovableBundle): string {
