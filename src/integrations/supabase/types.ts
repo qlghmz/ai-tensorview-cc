@@ -175,6 +175,8 @@ export type Database = {
           order_no: string
           paid_at: string | null
           plan: string
+          provider: string | null
+          provider_trade_no: string | null
           status: string
           updated_at: string
           user_id: string
@@ -187,6 +189,8 @@ export type Database = {
           order_no?: string
           paid_at?: string | null
           plan: string
+          provider?: string | null
+          provider_trade_no?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -199,6 +203,8 @@ export type Database = {
           order_no?: string
           paid_at?: string | null
           plan?: string
+          provider?: string | null
+          provider_trade_no?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -426,6 +432,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_paid_order: {
+        Args: {
+          _amount_cny: number
+          _order_no: string
+          _provider: string
+          _provider_trade_no: string
+        }
+        Returns: Json
+      }
       add_credits: {
         Args: {
           _amount: number

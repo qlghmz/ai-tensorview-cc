@@ -25,6 +25,7 @@ import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicAfdianRouteImport } from './routes/api/public/afdian'
 import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
 import { Route as AdminAdminProjectsRouteImport } from './routes/_admin.admin.projects'
@@ -115,6 +116,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAfdianRoute = ApiPublicAfdianRouteImport.update({
+  id: '/api/public/afdian',
+  path: '/api/public/afdian',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAiStreamRoute = ApiAiStreamRouteImport.update({
   id: '/api/ai/stream',
   path: '/api/ai/stream',
@@ -188,6 +194,7 @@ export interface FileRoutesByFullPath {
   '/admin/projects': typeof AdminAdminProjectsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -215,6 +222,7 @@ export interface FileRoutesByTo {
   '/admin/projects': typeof AdminAdminProjectsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/_admin/admin/projects': typeof AdminAdminProjectsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -273,6 +282,7 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/users'
     | '/api/ai/stream'
+    | '/api/public/afdian'
     | '/lovable/email/suppression'
     | '/admin/'
     | '/lovable/email/auth/preview'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/users'
     | '/api/ai/stream'
+    | '/api/public/afdian'
     | '/lovable/email/suppression'
     | '/admin'
     | '/lovable/email/auth/preview'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/projects'
     | '/_admin/admin/users'
     | '/api/ai/stream'
+    | '/api/public/afdian'
     | '/lovable/email/suppression'
     | '/_admin/admin/'
     | '/lovable/email/auth/preview'
@@ -353,6 +365,7 @@ export interface RootRouteChildren {
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
   SSlugRoute: typeof SSlugRoute
   ApiAiStreamRoute: typeof ApiAiStreamRoute
+  ApiPublicAfdianRoute: typeof ApiPublicAfdianRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -475,6 +488,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/afdian': {
+      id: '/api/public/afdian'
+      path: '/api/public/afdian'
+      fullPath: '/api/public/afdian'
+      preLoaderRoute: typeof ApiPublicAfdianRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/ai/stream': {
       id: '/api/ai/stream'
       path: '/api/ai/stream'
@@ -582,6 +602,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectProjectIdRoute: ProjectProjectIdRoute,
   SSlugRoute: SSlugRoute,
   ApiAiStreamRoute: ApiAiStreamRoute,
+  ApiPublicAfdianRoute: ApiPublicAfdianRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -592,12 +613,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
