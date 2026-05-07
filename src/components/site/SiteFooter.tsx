@@ -26,7 +26,7 @@ export function SiteFooter() {
       t: "公司",
       items: [
         { t: "关于我们", href: "#" },
-        { t: "联系", href: "mailto:hello@example.com" },
+        { t: "联系", href: "mailto:support@tensorview.cc" },
         { t: "条款", href: "#" },
         { t: "隐私", href: "#" },
       ],

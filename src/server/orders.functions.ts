@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
-const PRICE_CNY: Record<string, number> = { pro: 99, team: 399 };
+const PRICE_CNY: Record<string, number> = { pro: 69, team: 299 };
 
 export const createOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -24,6 +24,7 @@ import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpac
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { PublishDialog } from "@/components/PublishDialog";
+import { CreditBadge } from "@/components/CreditBadge";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -569,6 +570,7 @@ function ProjectEditor() {
         </div>
 
         <div className="hidden lg:flex items-center gap-2 ml-auto flex-wrap justify-end">
+          <CreditBadge />
           {previewCodeToggle}
           <button
             type="button"

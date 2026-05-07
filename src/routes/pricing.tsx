@@ -39,27 +39,27 @@ const PLANS: Plan[] = [
     period: "永久免费",
     desc: "适合体验和小项目",
     cta: "开始使用",
-    features: ["注册赠送 30 credits", "每日补到 5 credits", "1 个项目", "公开预览链接"],
+    features: ["注册赠送 100 credits", "每日补到 10 credits", "无限项目", "公开预览链接"],
     highlight: false,
   },
   {
     name: "专业",
     planKey: "pro",
-    price: "¥99",
+    price: "¥69",
     period: "/月",
     desc: "适合个人创作者",
     cta: "升级专业版",
-    features: ["每月 100 Pro credits", "每日补到 5 credits", "无限项目", "自定义域名", "优先邮件支持"],
+    features: ["每月 200 Pro credits", "每日补到 10 credits", "无限项目", "自定义域名", "优先邮件支持"],
     highlight: true,
   },
   {
     name: "团队",
     planKey: "team",
-    price: "¥399",
+    price: "¥299",
     period: "/月",
     desc: "适合团队协作",
     cta: "升级团队版",
-    features: ["每月 500 Team credits", "每日补到 5 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
+    features: ["每月 1000 Team credits", "每日补到 10 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
     highlight: false,
   },
 ];
@@ -195,7 +195,7 @@ function PricingPage() {
             还有疑问？查看
             <Link to="/docs" className="text-brand hover:underline mx-1">使用文档</Link>
             或
-            <a href="mailto:hello@example.com" className="text-brand hover:underline mx-1">联系我们</a>
+            <a href="mailto:support@tensorview.cc" className="text-brand hover:underline mx-1">联系我们</a>
           </div>
         </main>
         <SiteFooter />
@@ -237,7 +237,7 @@ function PricingPage() {
 
               <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
                 付款成功后会员将<strong className="text-foreground">自动开通</strong>，无需联系管理员。如长时间未到账，可联系
-                <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a>。
+                <a className="text-brand mx-1" href="mailto:support@tensorview.cc">support@tensorview.cc</a>。
               </div>
 
               <details className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -254,7 +254,7 @@ function PricingPage() {
                 </div>
                 <p className="mt-2 leading-relaxed">
                   扫码支付 ¥{order.amount}，备注订单号 <span className="font-mono">{order.orderNo}</span>，截图发送至
-                  <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a> 由管理员手动激活。
+                  <a className="text-brand mx-1" href="mailto:support@tensorview.cc">support@tensorview.cc</a> 由管理员手动激活。
                 </p>
               </details>
 
