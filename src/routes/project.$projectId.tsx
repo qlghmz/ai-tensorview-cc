@@ -570,6 +570,7 @@ function ProjectEditor() {
         </div>
 
         <div className="hidden lg:flex items-center gap-2 ml-auto flex-wrap justify-end">
+          <CreditBadge />
           {previewCodeToggle}
           <button
             type="button"
