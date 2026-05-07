@@ -32,10 +32,10 @@ export function CreditBadge() {
         if (!cancelled) {
           setBal({
             plan: data?.plan ?? "free",
-            daily: data?.daily_credits ?? 5,
+            daily: data?.daily_credits ?? 10,
             monthly: data?.monthly_credits ?? 0,
             bonus: data?.bonus_credits ?? 0,
-            total: (data?.daily_credits ?? 5) + (data?.monthly_credits ?? 0) + (data?.bonus_credits ?? 0),
+            total: (data?.daily_credits ?? 10) + (data?.monthly_credits ?? 0) + (data?.bonus_credits ?? 0),
           });
         }
       } catch (e) {
