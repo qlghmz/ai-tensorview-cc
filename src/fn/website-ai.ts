@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { getAIConfig, chatCompletionNonStream } from "@/lib/ai-config";
-import { beginWebsiteGeneration, completeTruncatedLovableReply, parseLovableBundleFromReply, persistGenerationResult, repairLovableReplyToBundle } from "@/lib/ai-generate-shared";
+import { getAIConfig } from "@/lib/ai-config";
+import { beginWebsiteGeneration, generateSegmentedLovableBundle, persistGenerationResult } from "@/lib/ai-generate-shared";
 
 const inputSchema = z.object({
   projectId: z.string().uuid(),
@@ -26,59 +26,24 @@ export const generateWebsite = createServerFn({ method: "POST" })
     const begun = await beginWebsiteGeneration(supabase, userId, data.projectId, data.prompt);
     if (!begun.ok) throw new Error("项目未找到");
 
-    let res: Response;
+    let generated: Awaited<ReturnType<typeof generateSegmentedLovableBundle>>;
     try {
-      res = await chatCompletionNonStream(cfg, {
-        model: cfg.model,
-        messages: begun.messages,
-        temperature: 0.7,
-      });
+      generated = await generateSegmentedLovableBundle(cfg, data.prompt);
     } catch (err) {
       console.error("AI fetch failed", err);
       throw new Error("无法连接 AI 服务，请稍后再试");
-    }
-
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      console.error("AI gateway error", res.status, text);
-      if (res.status === 429) throw new Error("AI 请求过于频繁，请稍后再试");
-      if (res.status === 402) throw new Error("AI 额度已用完，请前往工作区添加额度");
-      if (res.status === 401) throw new Error("AI Key 无效，请检查后端配置");
-      throw new Error(`AI 调用失败（${res.status}）`);
-    }
-
-    const json = (await res.json()) as {
-      choices?: Array<{ message?: { content?: string }; finish_reason?: string }>;
-    };
-    const choice = json.choices?.[0];
-    let replyContent = choice?.message?.content ?? "（无内容）";
-    let finishReason = choice?.finish_reason;
-    if (finishReason === "length") {
-      const completed = await completeTruncatedLovableReply(cfg, begun.messages, replyContent);
-      replyContent = completed.reply;
-      finishReason = completed.finishReason ?? finishReason;
-    }
-
-    if (!parseLovableBundleFromReply(replyContent)) {
-      const repaired = await repairLovableReplyToBundle(cfg, data.prompt, replyContent);
-      if (repaired.bundle) {
-        replyContent = repaired.reply;
-        finishReason = "repaired";
-      } else {
-        finishReason = "force_fallback";
-      }
     }
 
     const { sandpack } = await persistGenerationResult(
       supabase,
       userId,
       data.projectId,
-      replyContent,
+      generated.reply,
       data.prompt,
-      finishReason,
+      generated.bundle ? generated.finishReason : "force_fallback",
     );
 
-    return { reply: replyContent, sandpack };
+    return { reply: generated.reply, sandpack };
   });
 
 export const toggleProjectPublic = createServerFn({ method: "POST" })
