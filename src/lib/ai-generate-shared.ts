@@ -355,7 +355,8 @@ export async function generateSegmentedLovableBundle(
     | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
     | null;
   const appCode = stripCodeFence(appJson?.choices?.[0]?.message?.content ?? "");
-  if (!appCode.includes("export default") || !appCode.includes("./styles.css")) {
+  const missingRoute = routes.find((r) => !appCode.includes(`path=\"${r.path}\"`) && !appCode.includes(`path='${r.path}'`));
+  if (!appCode.includes("export default") || !appCode.includes("./styles.css") || missingRoute) {
     return { reply: appCode, bundle: null, finishReason: "app_invalid" };
   }
 
