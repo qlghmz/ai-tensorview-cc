@@ -146,6 +146,44 @@ export function isReplyTruncated(reply: string): boolean {
   return false;
 }
 
+function parseBundleFromText(text: string): LovableBundle | null {
+  const trimmed = text.trim();
+  const direct = tryParseLovableBundle(trimmed);
+  if (direct) return direct;
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first >= 0 && last > first) return tryParseLovableBundle(trimmed.slice(first, last + 1));
+  return null;
+}
+
+export function parseLovableBundleFromReply(reply: string): LovableBundle | null {
+  const fenced = extractLovableFence(reply);
+  return (fenced ? parseBundleFromText(fenced) : null) ?? parseBundleFromText(reply);
+}
+
+function deterministicBundle(prompt: string): LovableBundle {
+  const isTravel = /飞猪|旅行|旅游|酒店|机票/.test(prompt);
+  const isShop = /淘宝|电商|商城|购物/.test(prompt);
+  const title = isTravel ? "飞猪旅行" : isShop ? "淘宝精选" : "智能生成站点";
+  const nav = isTravel
+    ? ["首页", "机票", "酒店", "度假"]
+    : isShop
+      ? ["首页", "天猫", "聚划算", "我的淘宝"]
+      : ["首页", "产品", "服务", "我的"];
+  const items = isTravel
+    ? ["三亚湾海景酒店", "上海直飞大阪", "云南六日自由行", "亲子乐园套票"]
+    : isShop
+      ? ["无线降噪耳机", "轻薄通勤双肩包", "智能扫地机器人", "春夏透气运动鞋"]
+      : ["核心功能", "数据看板", "协作空间", "增长工具"];
+  return {
+    routes: [{ path: "/", label: "首页" }],
+    files: {
+      "/App.tsx": `import { useState } from 'react';\nimport './styles.css';\n\nconst nav = ${JSON.stringify(nav)};\nconst items = ${JSON.stringify(items)};\n\nexport default function App() {\n  const [active, setActive] = useState(nav[0]);\n  return (\n    <main className=\"page\">\n      <header className=\"topbar\"><strong>${title}</strong><nav>{nav.map((n) => <button className={active === n ? 'active' : ''} onClick={() => setActive(n)} key={n}>{n}</button>)}</nav></header>\n      <section className=\"hero\"><div><p className=\"eyebrow\">${prompt.slice(0, 30)}</p><h1>${title}一站式体验</h1><p>完整首页、分类入口、搜索区、推荐卡片和订单入口，适配手机与桌面预览。</p><div className=\"search\"><span>🔎</span><input placeholder=\"搜索目的地、商品或服务\" /><button>立即搜索</button></div></div></section>\n      <section className=\"grid\">{items.map((item, i) => <article key={item}><span>{['🏝️','✈️','🏨','🎁'][i]}</span><h3>{item}</h3><p>{active}精选推荐 · 今日热度 {98 - i * 7}%</p><button>查看详情</button></article>)}</section>\n      <section className=\"panel\"><h2>我的服务</h2><div><b>待付款</b><b>待出行</b><b>优惠券</b><b>客服</b></div></section>\n    </main>\n  );\n}`,
+      "/styles.css": `body{margin:0;font-family:Inter,Arial,'Microsoft YaHei',sans-serif;background:#f6f7fb;color:#111827}.page{min-height:100vh}.topbar{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 7vw;background:white;box-shadow:0 8px 30px rgba(15,23,42,.08);position:sticky;top:0;z-index:2}.topbar strong{font-size:24px;color:#ff6a00}.topbar nav{display:flex;gap:10px;flex-wrap:wrap}.topbar button,.search button,article button{border:0;border-radius:999px;padding:10px 16px;background:#f1f5f9;cursor:pointer}.topbar .active,.search button,article button{background:linear-gradient(135deg,#ff7a00,#ff3d71);color:white}.hero{padding:58px 7vw 36px;background:radial-gradient(circle at 70% 20%,#ffe7ba,transparent 32%),linear-gradient(135deg,#fff7ed,#eef6ff)}.hero h1{font-size:clamp(34px,6vw,68px);margin:10px 0}.hero p{max-width:680px;color:#526071;line-height:1.7}.eyebrow{color:#ff6a00;font-weight:700}.search{max-width:760px;background:white;border-radius:22px;padding:12px;display:flex;gap:10px;box-shadow:0 20px 60px rgba(255,106,0,.16)}.search input{flex:1;border:0;outline:0;font-size:16px}.grid{padding:30px 7vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}article{background:white;border-radius:20px;padding:22px;box-shadow:0 14px 38px rgba(15,23,42,.08)}article span{font-size:34px}article p{color:#64748b}.panel{margin:0 7vw 50px;background:#111827;color:white;border-radius:24px;padding:24px}.panel div{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.panel b{background:rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center}@media(max-width:640px){.topbar{height:auto;padding:14px 18px;align-items:flex-start;gap:12px;flex-direction:column}.hero{padding:34px 18px}.search{flex-wrap:wrap}.search input{min-width:160px}.grid{padding:20px 18px}.panel{margin:0 18px 32px}.panel div{grid-template-columns:repeat(2,1fr)}}`,
+    },
+  };
+}
+
 export async function completeTruncatedLovableReply(
   cfg: AIProviderConfig,
   messages: Array<{ role: string; content: string }>,
