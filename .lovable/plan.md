@@ -1,87 +1,147 @@
-# 总体规划
+# 综合优化方案：定价、获客、产品完善
 
-分三个阶段，先修 bug 再补齐功能，最后做发布/国内访问优化。
-
----
-
-## 阶段 1：修复 AI 流式生成（先做，立刻生效）
-
-**根因**：`api.ai.stream.ts` 里 `consumeCredits` 用了 `supabaseAdmin`（service role key），Worker 运行时该 env 缺失 → 函数抛错 → 流没产生 → 前端 90s 超时。同时管理员账号没有 `user_credits` 行。
-
-**改动**：
-1. 把扣费逻辑从 `client.server.ts` 改为走数据库函数 `consume_credits`（已存在，SECURITY DEFINER），用**已认证的用户 supabase 客户端** RPC 调用，无需 service role。
-2. `api.ai.stream.ts` 里：管理员（`has_role admin`）跳过扣费；普通用户走 RPC 扣 1 积分。
-3. 数据库迁移：补给所有现有 `auth.users` 缺失的 `user_credits` 记录（30 bonus）；管理员账号确保有记录。
-4. 在流开头先发一个 `{type:"ready"}` 心跳，前端立刻知道连接已建立，避免误判超时。
+先放结论性的"创业者视角"建议，然后才是要改的代码。
 
 ---
 
-## 阶段 2：补齐 Lovable 风格功能
+## 一、定价 & 免费额度（建议）
 
-### 2.1 用户剩余点数（前端展示完善）
-- `CreditBadge` / `CreditsPanel` 已经存在，确认绑定 `getMyCredits` server fn，在 header 和 dashboard 都显示。
-- 项目编辑器顶栏显示「剩余 X 点」，每次生成后自动刷新。
-- 余额不足时弹窗提示去充值（链接到 `/pricing`）。
+**现状**
 
-### 2.2 管理员后台 `/admin`
-新建受 `has_role(admin)` 保护的路由组，包含：
-- **概览**：总用户数、今日生成数、积分消耗、活跃项目数。
-- **用户管理**：列表（邮箱、注册时间、套餐、剩余积分、角色）；可手动加减积分、改套餐、授予/撤销 admin、封禁。
-- **项目管理**：所有项目列表，可强制下线公开项目。
-- **积分流水**：全局 `credit_transactions` 查询。
-- **邮件日志**：`email_send_log` 查询，便于排查邮件问题。
+- 注册赠送 30，每日补到 5（即每天最多用 5 次再生成）
+- 专业版 ¥99/月 100 credits、团队版 ¥399/月 500 credits
+- 后端用 Lovable AI / Dashscope，token 成本相对低
 
-技术：新增 `src/routes/_admin.tsx` layout（`beforeLoad` 校验 admin 角色），子路由 `_admin/index.tsx`、`_admin/users.tsx`、`_admin/projects.tsx`、`_admin/credits.tsx`、`_admin/emails.tsx`。所有数据通过 `createServerFn + requireSupabaseAuth` + 二次校验 admin 角色后用 `supabaseAdmin` 查询。
+**问题**
 
-### 2.3 支付（仅预留，不接入真实支付）
-按你之前的指示，**只预留接口**：
-- `/pricing` 页面三档（Free / Pro 100点/月 / Team 500点/月），点「升级」走占位流程。
-- 新建 `payment_orders` 表（user_id, plan, amount, status, created_at），状态 `pending/paid/failed`。
-- 新建 server fn `createOrder(plan)`：插入 pending 订单，返回订单号；前端展示「请联系管理员付款，付款后管理员手动激活」的提示页（含订单号、二维码占位图）。
-- 管理员后台「订单管理」页：可手动把订单标记为 `paid`，触发：升级 `user_credits.plan`、补发对应月度积分。
-- 后续真接 Stripe/Paddle 时，只要替换 `createOrder` 的实现，前端无需改动。
+1. 30 个新人 credits + 每天 5 个，对一个 AI 建站类产品太紧。用户还没体验出价值就用完了，留存会很差。
+2. ¥99 100 credits 对个人用户有点贵且看起来"不值"（一次复杂修改可能就 3–5 credits）。
+3. 团队版 ¥399 / 500 credits 也偏贵，对小团队不友好。
 
-### 2.4 项目编辑器内的「我的项目」「设置」完善
-- Dashboard 已有，确认列表分页、搜索、删除项目功能正常。
-- Settings 页加「修改密码」「修改昵称头像」「查看积分流水」三个 tab。
+**我的建议**（参考 Lovable / v0 / Bolt 的做法）
 
----
 
-## 阶段 3：发布与国内访问优化
+| 项    | 现在         | 建议                                 |
+| ---- | ---------- | ---------------------------------- |
+| 注册赠送 | 30         | **100**（一次性体验额度，让用户能完整跑出 1 个 demo） |
+| 每日补到 | 5          | **10**（养成日活，回访才有可能转化）              |
+| 专业版  | ¥99 / 100  | **¥69 / 200**（你提到 ¥69 很合理，量再加一倍）   |
+| 团队版  | ¥399 / 500 | **¥299 / 1000，5 席位**               |
+| 年付   | —          | **8 折**（锁定年费用户）                    |
 
-延续之前 `.lovable/plan.md` 已规划的方案：
 
-### 3.1 短链 publish
-- `projects.public_slug` 字段已有 + `generate_project_slug()` 函数已有 ✅
-- 路由 `src/routes/s.$slug.tsx` 已存在 ✅，确认 `PublishDialog` 显示 `/s/{slug}` 短链 + 复制按钮 + 改 slug。
-
-### 3.2 Sandpack 国内可访问
-- A 方案：`<SandpackProvider>` 读 `VITE_SANDPACK_BUNDLER_URL`，留空走默认。先加这个开关，未来你部署自托管 bundler 时填进去即可。
-- B 方案（默认 publish 行为）：发布时调用 `src/lib/publish-snapshot.ts`（已存在）用 esbuild-wasm 在浏览器里把 sandpack files 打成单文件 HTML，写入 `projects.preview_html`；公开页 `/s/:slug` 优先 iframe srcDoc 渲染快照，没快照才 fallback 到 sandpack。
-
-### 3.3 自定义域名 `ai.tensorview.cc`
-不在代码里做，由你在 Lovable 项目设置 → 自定义域名里绑定，然后在你的 DNS 服务商加 CNAME。我会在交付时给你具体步骤。
+理由：你后端跑 Dashscope（阿里云额度大），前期成本不是瓶颈；**获客和留存是瓶颈**。"免费看起来够用 + 付费看起来超值"是 PLG 的核心。
 
 ---
 
-## 设计上需要你拍板的 1 件事
+## 二、客服 / 反馈通道
 
-**支付占位流程的用户文案**：用户点「升级到 Pro」后看到什么？
-- 选项 A：弹窗显示订单号 + 你的微信/支付宝收款码（你提供图）+「付款后联系管理员激活」。
-- 选项 B：跳转到一个表单，让用户留邮箱/微信号，管理员后台审核后激活。
-- 选项 C：暂时直接禁用按钮，显示「即将开放」。
+现在页面只有一个 `mailto:1561363371@qq.com`，比较散且不专业。建议：
 
-如果你不指定，我**默认选 C**（最稳，不引入未验证的资金流），管理员后台仍保留手动加额度的能力，你想给谁开 Pro 直接后台点。
+1. **统一品牌邮箱**：用 `support@tensorview.cc`（你已经有域名），转发到 QQ 邮箱即可。
+2. **页面内反馈组件**：右下角浮动"反馈"按钮 → 弹窗（标题/描述/截图可选/当前 URL/用户邮箱）→ 写入新建的 `feedback` 表 + 同时发邮件给你（用项目已经接好的 transactional email 通道）。
+3. **微信客服**：放一张二维码图（站点底部 + 反馈弹窗里），中国用户更习惯加微信。
+4. **响应承诺**：在 footer/反馈框里写"工作日 24h 内回复"。
 
 ---
 
-## 实施顺序（确认后我会按这个走）
+## 三、"一键发布"失败
 
-1. **修 AI 生成** + 补 user_credits + admin bypass（一次提交，立刻可用）
-2. **管理员后台**（`/admin` 全套页面）
-3. **积分展示完善** + Settings 完善
-4. **支付占位**（按你选的方案）
-5. **publish 快照** + sandpack bundler 开关
-6. 给你自定义域名绑定步骤说明
+你提到截图但本轮没附上。从代码看，发布走 `edgeone-deploy.functions.ts`。这个我先列为待排查项 — 我需要：
 
-确认后回复"开始"或指出要调整的地方，我就按这个顺序开干。
+- 失败时浏览器的 console / network 截图
+- 或者直接复现一次，由我抓 server 日志
+
+**计划**：实施时我先检查 `edgeone-deploy.functions.ts` 的报错路径，加上失败的明确 toast + 自动写一条诊断日志，方便后续排错。
+
+---
+
+## 四、对话中显示剩余 credits
+
+现在 `CreditBadge` / `CreditsPanel` 组件已经有，但项目编辑页（`/project/$projectId`）顶部没显示。
+
+**计划**：在项目编辑页头部插入 `CreditBadge`（小气泡：余额 + 点击跳 `/pricing`），并在每次 AI 生成后实时刷新。Lovable 自己也是这种交互。
+
+---
+
+## 五、参考 Lovable 的产品完善清单（这一版要做）
+
+1. ✅ 顶部显示余额（上面 #4）
+2. ✅ 反馈入口（上面 #2）
+3. **空额度提示**：用户余额 < 1 时，AI 输入框置灰 + 提示"额度不足，升级 / 明天再来"
+4. **欢迎引导**：新用户首次进 dashboard 弹一次引导（"试试输入：做一个待办应用"）
+5. **分享卡片**：发布后弹"复制链接 / 微信分享 / 截图保存"
+6. **价格页 CTA 加"年付 8 折"开关**
+
+---
+
+## 六、宣发节奏（我的建议，不写代码）
+
+**Week 0（这周）**：把上面 1–6 改完，确保发布稳定、定价合理、有反馈通道。
+
+**Week 1 — 冷启动种子用户（目标 50 个真实试用）**
+
+- 即刻：朋友圈/微信群发"我做了个国产 Lovable，免费送 100 credits，求体验" + demo 视频 30s
+- 即刻：v2ex「分享创造」节点发帖（标题：「做了个 AI 一句话建站工具，求拍砖」+ 预览 GIF + 邀请码）
+- 即刻：少数派 Matrix 写一篇「我用 3 周 clone 了 Lovable」长文
+
+**Week 2 — 内容获客**
+
+- 小红书：3 条短视频（"老板让我 1 天做完官网，我用了 AI"风格）
+- 知乎：回答「lovable 国内有平替吗」「v0 收费吗」这类长尾问题，植入
+- B 站：录一个 5 分钟实操（从空到上线一个个人页）
+
+**Week 3 — 渠道**
+
+- Product Hunt 中文榜（造点）/ 即刻 / 即刻"AI 探索"圈
+- 找 2–3 个 AI 工具号谈互推（公众号/小红书）
+- 联系高校创业类社群送会员码（5 个团队版换内容产出）
+
+**Week 4 — 数据复盘**
+
+- 看转化漏斗：注册→首条生成→第二天回访→付费。瓶颈在哪修哪。
+- 决定是否上"邀请奖励"：邀请 1 人双方各 +30 credits。
+
+---
+
+## 七、本轮要改的代码（实施时的具体动作）
+
+A. 数据库迁移
+
+- 新增 `feedback` 表（id, user_id 可空, email, subject, message, url, screenshot_url 可空, status, created_at）+ 用户可 INSERT 自己的，admin 可 SELECT。
+- 调整 `refill_user_credits` / 新用户函数：新人 100 bonus、daily 补到 10。
+- `admin_set_plan` / `activate_paid_order` 里 pro=200、team=1000 的月度额度。
+
+B. 前端
+
+- `pricing.tsx`：pro ¥69 / 200、team ¥299 / 1000，加"年付 8 折"提示（暂不接年付订单，只展示 → 减少决策摩擦）。
+- 项目编辑页 header 加 `CreditBadge`（点击跳 `/pricing`）。
+- 新建 `FeedbackButton` 浮动组件（右下角），全站挂在 `__root.tsx`。
+- AI 输入框：余额 < 1 禁用 + 跳升级。
+- footer 把 `mailto` 换成 `support@tensorview.cc`，加微信客服二维码占位（你提供图我替换）。
+
+C. 邮件
+
+- 新建 `feedback-received` 模板：用户提交反馈后给你发一份，附用户邮箱 + 内容 + 当前 URL。
+
+D. 发布失败排查
+
+- 复现 `edgeone-deploy`，增加错误 toast + server 日志，找到根因再修。
+
+E. 安全
+
+- 提醒你 rotate 已泄漏的 `DASHSCOPE_API_KEY`（你确认后我用 update_secret 流程走）。
+
+---
+
+## 需要你确认的几点
+
+1. **定价是否就用 ¥69 / ¥299？** 或者你想 pro ¥69 + team 维持 ¥399？
+2. **每日补到 10 OK 吗？** 太多怕被薅，太少留存差。10 是平衡点。
+3. **客服邮箱用 `support@tensorview.cc` 吗？** 你有微信客服二维码可以发我，我直接放上去。
+4. **发布失败**：方便的话发一下浏览器 Console 里的报错截图，或者告诉我点哪个按钮失败的。
+5. **Dashscope API key 已泄漏**：要不要我现在就走 rotate 流程？
+
+确认后我进 Build 模式按这个计划做。
+
+我补充一下，我给你的那个gemini的spikey，不是让你只用gemini，而是多给点，然后你看哪个有，用哪个，不要用超额，不然成本不可控。sk-55f40e942e1645c4850b6c1d2893db9f就是这个apikey，记住，千万别超额，不行一个模型用完了换一个模型，阿里云的那个是可以换模型的，优先用阿里云的记住了，保证之前的不出问题。
