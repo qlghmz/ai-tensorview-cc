@@ -150,13 +150,15 @@ export async function persistGenerationResult(
     usedFallback = true;
   }
 
+  const savedReply = usedFallback
+    ? "✨ 已生成网页 — 见预览面板（模型输出不完整，已自动补全为可运行代码）"
+    : reply;
+
   await supabase.from("messages").insert({
     project_id: projectId,
     user_id: userId,
     role: "assistant",
-    content: usedFallback
-      ? "✨ 已生成网页 — 见预览面板（模型输出不完整，已自动补全为可运行代码）"
-      : reply,
+    content: savedReply,
   });
 
   if (bundle) {
@@ -170,5 +172,5 @@ export async function persistGenerationResult(
       .eq("id", projectId);
   }
 
-  return { reply, sandpack: bundle };
+  return { reply: savedReply, sandpack: bundle };
 }
