@@ -166,7 +166,13 @@ export const Route = createFileRoute("/api/ai/stream")({
               }
               if (lineBuf.trim()) flushLine(lineBuf);
 
-              const { sandpack } = await persistGenerationResult(supabase, userId, begun.projectId, fullReply);
+              const { sandpack } = await persistGenerationResult(
+                supabase,
+                userId,
+                begun.projectId,
+                fullReply,
+                parsed.data.prompt,
+              );
               safeEnqueue({ type: "final", reply: fullReply, sandpack });
               safeClose();
             } catch (e) {
