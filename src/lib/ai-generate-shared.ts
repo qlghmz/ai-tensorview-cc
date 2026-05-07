@@ -161,6 +161,27 @@ export function parseLovableBundleFromReply(reply: string): LovableBundle | null
   return (fenced ? parseBundleFromText(fenced) : null) ?? parseBundleFromText(reply);
 }
 
+function parseAnyJsonObject(text: string): unknown | null {
+  const trimmed = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```$/i, "").trim();
+  const first = trimmed.indexOf("{");
+  const last = trimmed.lastIndexOf("}");
+  if (first < 0 || last <= first) return null;
+  try {
+    return JSON.parse(trimmed.slice(first, last + 1)) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function stripCodeFence(text: string): string {
+  const m = text.match(/^```[a-zA-Z0-9_-]*\s*\n([\s\S]*?)\n?```\s*$/);
+  return (m?.[1] ?? text).trim();
+}
+
+function defaultPreviewCss(): string {
+  return `:root{font-family:Inter,Arial,'Microsoft YaHei',sans-serif;color:#111827;background:#f6f7fb}*{box-sizing:border-box}body{margin:0;background:#f6f7fb}a{color:inherit;text-decoration:none}button,input{font:inherit}.app,.page{min-height:100vh}.topbar,.nav,header{display:flex;align-items:center;justify-content:space-between;gap:16px}.topbar{position:sticky;top:0;z-index:10;padding:16px 7vw;background:rgba(255,255,255,.9);backdrop-filter:blur(16px);box-shadow:0 10px 32px rgba(15,23,42,.08)}.brand,.logo{font-size:24px;font-weight:900;color:#ff5a1f}.links,nav{display:flex;gap:10px;flex-wrap:wrap}.links a,nav a,nav button,.tab{border:0;border-radius:999px;padding:10px 16px;background:#eef2f7;color:#334155;cursor:pointer}.active,.primary,.links a.active,nav a.active,nav button.active{background:linear-gradient(135deg,#ff7a00,#ff3d71);color:white}.hero{padding:60px 7vw 42px;background:radial-gradient(circle at 78% 12%,#ffe1a8,transparent 34%),linear-gradient(135deg,#fff7ed,#eef6ff)}.hero h1{font-size:clamp(34px,6vw,68px);line-height:1.05;margin:10px 0 14px}.hero p{max-width:760px;color:#526071;line-height:1.75}.eyebrow{font-weight:800;color:#ff6a00}.search,.searchbar{max-width:820px;background:white;border-radius:24px;padding:12px;display:flex;align-items:center;gap:10px;box-shadow:0 22px 60px rgba(255,106,0,.16)}.search input,.searchbar input{flex:1;border:0;outline:0;min-width:140px}.search button,.searchbar button,.card button,.primary{border:0;border-radius:999px;padding:11px 18px;cursor:pointer}.quick,.categories{padding:24px 7vw 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:12px}.quick button,.category{border:0;background:white;border-radius:18px;padding:18px 8px;display:flex;flex-direction:column;gap:8px;align-items:center;box-shadow:0 10px 28px rgba(15,23,42,.07)}.grid,.cards,.products{padding:30px 7vw;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}.card,article{background:white;border-radius:22px;padding:22px;box-shadow:0 14px 38px rgba(15,23,42,.08)}.card .icon,article .icon,article span:first-child{font-size:34px}.card p,article p{color:#64748b;line-height:1.6}.panel,.service-panel{margin:0 7vw 50px;background:#111827;color:white;border-radius:24px;padding:24px}.panel-grid,.service-panel div{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:12px}.panel-grid>* ,.service-panel b{background:rgba(255,255,255,.12);border-radius:16px;padding:18px;text-align:center}@media(max-width:640px){.topbar{align-items:flex-start;flex-direction:column;padding:14px 18px}.hero{padding:34px 18px}.search,.searchbar{flex-wrap:wrap}.quick,.categories,.grid,.cards,.products{padding-left:18px;padding-right:18px}.panel,.service-panel{margin:0 18px 32px}.hero h1{font-size:38px}}`;
+}
+
 function deterministicBundle(prompt: string): LovableBundle {
   const isTravel = /飞猪|旅行|旅游|酒店|机票/.test(prompt);
   const isShop = /淘宝|电商|商城|购物/.test(prompt);
@@ -248,6 +269,43 @@ export async function repairLovableReplyToBundle(
   const content = json?.choices?.[0]?.message?.content ?? "";
   const bundle = parseLovableBundleFromReply(content);
   return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
+}
+
+export async function generateSegmentedLovableBundle(
+  cfg: AIProviderConfig,
+  prompt: string,
+): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
+  const routes = [{ path: "/", label: "首页" }];
+
+  const appRes = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: "你是 React 代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
+      {
+        role: "user",
+        content:
+          `生成一个完整可预览网站的 /App.tsx。要求：默认导出 App；导入 './styles.css'；只用 react；不要额外依赖；代码控制在 180 行内；用 className: app/topbar/brand/hero/search/quick/grid/card/panel 等；中文真实文案；包含导航、搜索、分类、推荐卡片、服务面板。需求：${prompt}`,
+      },
+    ],
+    temperature: 0.55,
+  });
+  if (!appRes.ok) return { reply: "", bundle: null, finishReason: "app_failed" };
+  const appJson = (await appRes.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
+    | null;
+  const appCode = stripCodeFence(appJson?.choices?.[0]?.message?.content ?? "");
+  if (!appCode.includes("export default") || !appCode.includes("./styles.css")) {
+    return { reply: appCode, bundle: null, finishReason: "app_invalid" };
+  }
+
+  const cssCode = defaultPreviewCss();
+  const bundle = lovableBundleSchema.safeParse({ routes, files: { "/App.tsx": appCode, "/styles.css": cssCode } });
+  if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
+  return {
+    reply: `已生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
+    bundle: { ...bundle.data, files: patchReactImports(bundle.data.files) },
+    finishReason: "segmented",
+  };
 }
 
 export async function persistGenerationResult(
