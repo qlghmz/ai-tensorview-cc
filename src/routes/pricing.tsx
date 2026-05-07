@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import payAlipay from "@/assets/pay-alipay.jpg";
+import payWechat from "@/assets/pay-wechat.png";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -210,8 +212,19 @@ function PricingPage() {
                 <span className="text-muted-foreground">金额</span>
                 <span>¥{order.amount}</span>
               </div>
-              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground">
-                请截图此订单号，并联系 1561363371@qq.com 完成付款。激活后积分将自动到账。
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="rounded-lg overflow-hidden border border-border bg-white">
+                  <div className="text-center text-xs font-semibold py-1.5 bg-[#1677ff] text-white">支付宝</div>
+                  <img src={payAlipay} alt="支付宝收款码" className="w-full h-auto" />
+                </div>
+                <div className="rounded-lg overflow-hidden border border-border bg-white">
+                  <div className="text-center text-xs font-semibold py-1.5 bg-[#07c160] text-white">微信支付</div>
+                  <img src={payWechat} alt="微信收款码" className="w-full h-auto" />
+                </div>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+                请扫码支付 <strong className="text-foreground">¥{order.amount}</strong>，并在<strong>付款备注中填写订单号</strong>：<span className="font-mono">{order.orderNo}</span>。
+                付款后请将截图发送至 <a className="text-brand" href="mailto:1561363371@qq.com">1561363371@qq.com</a>，管理员核对后激活，积分将自动到账，并向你发送激活邮件。
               </div>
               <Button className="w-full" onClick={() => setOrder(null)}>
                 我知道了
