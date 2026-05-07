@@ -289,7 +289,7 @@ export async function generateSegmentedLovableBundle(
     ],
     temperature: 0.55,
   });
-  if (!appRes.ok) return { reply: planText, bundle: null, finishReason: "app_failed" };
+  if (!appRes.ok) return { reply: "", bundle: null, finishReason: "app_failed" };
   const appJson = (await appRes.json().catch(() => null)) as
     | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
     | null;
