@@ -28,7 +28,7 @@ export const generateWebsite = createServerFn({ method: "POST" })
 
     let generated: Awaited<ReturnType<typeof generateSegmentedLovableBundle>>;
     try {
-      generated = await generateSegmentedLovableBundle(cfg, data.prompt);
+      generated = await generateSegmentedLovableBundle(cfg, data.prompt, begun.messages);
     } catch (err) {
       console.error("AI fetch failed", err);
       throw new Error("无法连接 AI 服务，请稍后再试");
