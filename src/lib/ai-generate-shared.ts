@@ -194,8 +194,7 @@ export async function completeTruncatedLovableReply(
   let finishReason: string | undefined = "length";
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    const fence = extractLovableFence(reply);
-    if (fence && tryParseLovableBundle(fence)) {
+    if (parseLovableBundleFromReply(reply)) {
       return { reply, finishReason: "stop", attempts: attempt - 1 };
     }
     if (finishReason !== "length" && !isReplyTruncated(reply)) break;
@@ -228,6 +227,29 @@ export async function completeTruncatedLovableReply(
   return { reply, finishReason, attempts: maxAttempts };
 }
 
+export async function repairLovableReplyToBundle(
+  cfg: AIProviderConfig,
+  originalPrompt: string,
+  brokenReply: string,
+): Promise<{ reply: string; bundle: LovableBundle | null }> {
+  const repairPrompt = `把下面被截断/格式错误的网页生成结果修复成一个可运行的 Lovable JSON。只输出 JSON，不要 Markdown，不要解释。用户需求：${originalPrompt}\n\n坏结果：\n${brokenReply.slice(0, 24000)}`;
+  const res = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: SYSTEM_PROMPT + "\n修复模式：最终只返回 JSON 对象本身，不要代码围栏。" },
+      { role: "user", content: repairPrompt },
+    ],
+    temperature: 0.1,
+  });
+  if (!res.ok) return { reply: brokenReply, bundle: null };
+  const json = (await res.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string } }> }
+    | null;
+  const content = json?.choices?.[0]?.message?.content ?? "";
+  const bundle = parseLovableBundleFromReply(content);
+  return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
+}
+
 export async function persistGenerationResult(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -236,15 +258,15 @@ export async function persistGenerationResult(
   _fallbackPrompt?: string,
   finishReason?: string,
 ) {
-  const fence = extractLovableFence(reply);
-  let bundle = fence ? tryParseLovableBundle(fence) : null;
+  let bundle = parseLovableBundleFromReply(reply);
+  if (!bundle && _fallbackPrompt && finishReason === "force_fallback") bundle = deterministicBundle(_fallbackPrompt);
   if (bundle) bundle = { ...bundle, files: patchReactImports(bundle.files) };
 
   let savedReply = reply;
   if (!bundle) {
     if (finishReason === "length" || isReplyTruncated(reply)) {
       savedReply =
-        "⚠️ 生成失败：模型一次输出已达上限，代码被截断。请简化需求（比如先做 1–2 个核心页面），或再发一次让我重试。";
+        "⚠️ 生成失败：模型多次续写后仍未返回完整代码，已记录失败原因。";
     } else {
       savedReply =
         "⚠️ 生成失败：未能从模型回复中解析到合法的项目 JSON。请重试或换一种描述。";
