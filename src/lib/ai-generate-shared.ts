@@ -7,6 +7,7 @@ import {
   tryParseLovableBundle,
   type LovableBundle,
 } from "@/lib/lovable-bundle";
+import { chatCompletionNonStream, type AIProviderConfig } from "@/lib/ai-config";
 
 export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
@@ -143,6 +144,50 @@ export function isReplyTruncated(reply: string): boolean {
   const after = reply.slice((open.index ?? 0) + open[0].length);
   if (!/```/.test(after)) return true; // 没有闭合
   return false;
+}
+
+export async function completeTruncatedLovableReply(
+  cfg: AIProviderConfig,
+  messages: Array<{ role: string; content: string }>,
+  partialReply: string,
+  maxAttempts = 3,
+): Promise<{ reply: string; finishReason?: string; attempts: number }> {
+  let reply = partialReply;
+  let finishReason: string | undefined = "length";
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const fence = extractLovableFence(reply);
+    if (fence && tryParseLovableBundle(fence)) {
+      return { reply, finishReason: "stop", attempts: attempt - 1 };
+    }
+    if (finishReason !== "length" && !isReplyTruncated(reply)) break;
+
+    const res = await chatCompletionNonStream(cfg, {
+      model: cfg.model,
+      messages: [
+        ...messages,
+        { role: "assistant", content: reply },
+        {
+          role: "user",
+          content:
+            "继续上一次输出：不要重写、不要解释、不要从头开始，只从被截断的位置继续补完同一个 ```lovable JSON 代码块，直到 JSON 和代码块都闭合。",
+        },
+      ],
+      temperature: 0.2,
+    });
+
+    if (!res.ok) break;
+    const json = (await res.json().catch(() => null)) as
+      | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
+      | null;
+    const choice = json?.choices?.[0];
+    const next = choice?.message?.content ?? "";
+    finishReason = choice?.finish_reason;
+    if (!next.trim()) break;
+    reply += next;
+  }
+
+  return { reply, finishReason, attempts: maxAttempts };
 }
 
 export async function persistGenerationResult(
