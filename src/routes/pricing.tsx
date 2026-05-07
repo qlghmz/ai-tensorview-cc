@@ -237,7 +237,7 @@ function PricingPage() {
 
               <div className="rounded-lg bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
                 付款成功后会员将<strong className="text-foreground">自动开通</strong>，无需联系管理员。如长时间未到账，可联系
-                <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a>。
+                <a className="text-brand mx-1" href="mailto:support@tensorview.cc">support@tensorview.cc</a>。
               </div>
 
               <details className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -254,7 +254,7 @@ function PricingPage() {
                 </div>
                 <p className="mt-2 leading-relaxed">
                   扫码支付 ¥{order.amount}，备注订单号 <span className="font-mono">{order.orderNo}</span>，截图发送至
-                  <a className="text-brand mx-1" href="mailto:1561363371@qq.com">1561363371@qq.com</a> 由管理员手动激活。
+                  <a className="text-brand mx-1" href="mailto:support@tensorview.cc">support@tensorview.cc</a> 由管理员手动激活。
                 </p>
               </details>
 
