@@ -32,6 +32,7 @@ export const Route = createFileRoute("/api/ai/stream")({
         const cfg = getAIConfig();
         if (!cfg) return Response.json({ error: "AI 未配置：请设置后端 AI 环境变量" }, { status: 503 });
 
+        await supabase.rpc("refill_user_credits", { _user_id: userId });
         const { data: balance } = await supabase.rpc("get_credit_balance", { _user_id: userId });
         if ((balance ?? 0) < 1) {
           return Response.json({ error: "积分不足，请充值或等待每日补给", balance: balance ?? 0 }, { status: 402 });
