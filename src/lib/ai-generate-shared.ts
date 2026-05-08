@@ -451,15 +451,18 @@ export async function persistGenerationResult(
     }
   }
 
-  await supabase.from("messages").insert({
+  const { error: messageError } = await supabase.from("messages").insert({
     project_id: projectId,
     user_id: userId,
     role: "assistant",
     content: savedReply,
   });
+  if (messageError) {
+    throw new Error(`保存对话失败：${messageError.message}`);
+  }
 
   if (bundle) {
-    await supabase
+    const { error: projectError } = await supabase
       .from("projects")
       .update({
         preview_sandpack: bundle as unknown as Json,
@@ -467,6 +470,9 @@ export async function persistGenerationResult(
         updated_at: new Date().toISOString(),
       })
       .eq("id", projectId);
+    if (projectError) {
+      throw new Error(`保存预览失败：${projectError.message}`);
+    }
   }
 
   return { reply: savedReply, sandpack: bundle };
