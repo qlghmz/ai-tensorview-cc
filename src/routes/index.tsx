@@ -7,6 +7,23 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/")({
+  head: () => ({
+    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/" }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "TensorView",
+          applicationCategory: "DeveloperApplication",
+          operatingSystem: "Web",
+          description: "AI 网页生成平台，用自然语言一句话生成可运行的网站。",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "CNY" },
+        }),
+      },
+    ],
+  }),
   component: Landing,
 });
 
