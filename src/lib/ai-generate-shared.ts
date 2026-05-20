@@ -241,30 +241,85 @@ function normalizePlannedRoutes(input: unknown, prompt: string): PlannedRoute[] 
   return routes.slice(0, 7);
 }
 
-function defaultPreviewCss(): string {
-  return `:root{--bg:#fafaf9;--ink:#0a0a0a;--muted:#71717a;--line:#e7e5e4;--card:#ffffff;--brand:#000000;--brand2:#525252;--accent:#f97316;--radius:14px;--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.08);font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+type PreviewTheme = {
+  label: string;
+  bg: string;
+  ink: string;
+  muted: string;
+  line: string;
+  card: string;
+  brand: string;
+  brand2: string;
+  accent: string;
+  radius: string;
+  font: string;
+  bodyBgExtra?: string;
+};
+
+const DEFAULT_THEME: PreviewTheme = {
+  label: "中性极简",
+  bg: "#fafaf9", ink: "#0a0a0a", muted: "#71717a", line: "#e7e5e4", card: "#ffffff",
+  brand: "#0a0a0a", brand2: "#525252", accent: "#f97316", radius: "14px",
+  font: "ui-sans-serif,system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif",
+};
+
+function inferTheme(prompt: string, context: string): PreviewTheme {
+  const text = `${context}\n${prompt}`;
+  const PRESETS: Array<{ test: RegExp; theme: Partial<PreviewTheme> & { label: string; brand: string } }> = [
+    { test: /飞猪|fliggy/i, theme: { label: "飞猪旅行", brand: "#ff6a00", brand2: "#ff3d71", accent: "#ff9500", bg: "#fff7ed", bodyBgExtra: "radial-gradient(circle at 80% 0%,#ffe7ba,transparent 35%)" } },
+    { test: /淘宝|taobao/i, theme: { label: "淘宝", brand: "#ff5000", brand2: "#ff7800", accent: "#ff0036", bg: "#fff4e6" } },
+    { test: /天猫|tmall/i, theme: { label: "天猫", brand: "#ff0036", brand2: "#ff4081", accent: "#ff5000", bg: "#fff0f3" } },
+    { test: /京东|jd\.com/i, theme: { label: "京东", brand: "#e1251b", brand2: "#c81623", accent: "#ff8800", bg: "#fff" } },
+    { test: /拼多多|pdd/i, theme: { label: "拼多多", brand: "#e02e24", brand2: "#ff5b50", accent: "#ffa940", bg: "#fff5f4" } },
+    { test: /美团|meituan|大众点评/i, theme: { label: "美团", brand: "#ffc300", brand2: "#ffae00", accent: "#ff6900", ink: "#222", bg: "#fffbe6" } },
+    { test: /饿了么|ele/i, theme: { label: "饿了么", brand: "#0099ff", brand2: "#00b4ff", accent: "#ffd400", bg: "#f0faff" } },
+    { test: /抖音|tiktok|douyin/i, theme: { label: "抖音", brand: "#fe2c55", brand2: "#25f4ee", accent: "#fe2c55", ink: "#ffffff", muted: "#a1a1aa", line: "#262626", card: "#161616", bg: "#0a0a0a" } },
+    { test: /小红书|xiaohongshu|redbook/i, theme: { label: "小红书", brand: "#ff2442", brand2: "#ff4d6d", accent: "#ff7a90", bg: "#fff5f6" } },
+    { test: /b站|bilibili|哔哩/i, theme: { label: "Bilibili", brand: "#fb7299", brand2: "#00a1d6", accent: "#23ade5", bg: "#f4f4f5" } },
+    { test: /微信|wechat|腾讯/i, theme: { label: "微信", brand: "#07c160", brand2: "#10b981", accent: "#576b95", bg: "#ededed" } },
+    { test: /支付宝|alipay/i, theme: { label: "支付宝", brand: "#1677ff", brand2: "#0e63d6", accent: "#00a6fb", bg: "#f5faff" } },
+    { test: /苹果|apple|iphone|mac/i, theme: { label: "Apple", brand: "#0a0a0a", brand2: "#1d1d1f", accent: "#0071e3", bg: "#ffffff", font: "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif" } },
+    { test: /notion/i, theme: { label: "Notion", brand: "#0a0a0a", brand2: "#37352f", accent: "#2383e2", bg: "#ffffff" } },
+    { test: /github/i, theme: { label: "GitHub", brand: "#24292f", brand2: "#0969da", accent: "#2da44e", bg: "#f6f8fa" } },
+    { test: /星巴克|starbucks/i, theme: { label: "Starbucks", brand: "#006241", brand2: "#1e3932", accent: "#cba258", bg: "#f9f6f1" } },
+    { test: /麦当劳|mcdonald/i, theme: { label: "麦当劳", brand: "#ffc72c", brand2: "#da291c", accent: "#27251f", ink: "#27251f", bg: "#fffbea" } },
+    { test: /暗黑|赛博|cyber|科技|geek|dark mode|深色/i, theme: { label: "暗黑科技", brand: "#7c3aed", brand2: "#06b6d4", accent: "#22d3ee", ink: "#f5f5f5", muted: "#a3a3a3", line: "#262626", card: "#171717", bg: "#0a0a0a" } },
+    { test: /复古|文艺|杂志|magazine|retro/i, theme: { label: "复古文艺", brand: "#1c1917", brand2: "#78350f", accent: "#c2410c", bg: "#fdf6e3", font: "'Noto Serif SC',Georgia,serif" } },
+    { test: /儿童|早教|kid|child/i, theme: { label: "儿童", brand: "#fb7185", brand2: "#fbbf24", accent: "#34d399", bg: "#fff1f2", radius: "22px" } },
+    { test: /金融|银行|bank|证券|理财/i, theme: { label: "金融", brand: "#1e3a8a", brand2: "#1e40af", accent: "#dc2626", bg: "#f8fafc" } },
+    { test: /奢侈|luxury|高端|轻奢/i, theme: { label: "奢华", brand: "#0a0a0a", brand2: "#525252", accent: "#a8783e", bg: "#fafaf9", font: "'Cormorant Garamond',Georgia,serif" } },
+  ];
+  for (const p of PRESETS) {
+    if (p.test.test(text)) return { ...DEFAULT_THEME, ...p.theme };
+  }
+  return DEFAULT_THEME;
+}
+
+function themedPreviewCss(t: PreviewTheme = DEFAULT_THEME): string {
+  const bodyBg = t.bodyBgExtra ? `${t.bodyBgExtra},${t.bg}` : t.bg;
+  return `:root{--bg:${t.bg};--ink:${t.ink};--muted:${t.muted};--line:${t.line};--card:${t.card};--brand:${t.brand};--brand2:${t.brand2};--accent:${t.accent};--radius:${t.radius};--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.1);font-family:${t.font};color:var(--ink);background:var(--bg);line-height:1.55}
+*{box-sizing:border-box}body{margin:0;background:${bodyBg};color:var(--ink);-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit;color:inherit}
 img{max-width:100%;display:block}
 .page,.app{min-height:100vh}
-.topbar,header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:14px max(20px,5vw);background:rgba(250,250,249,.85);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
+.topbar,header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:14px max(20px,5vw);background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
 .brand,.logo{font-size:18px;font-weight:700;letter-spacing:-.01em;color:var(--ink);display:flex;align-items:center;gap:8px;margin-right:auto;white-space:nowrap}
-.brand::before,.logo::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--ink),var(--brand2))}
+.brand::before,.logo::before{content:"";width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--brand),var(--brand2))}
 nav,.links{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
 nav::-webkit-scrollbar,.links::-webkit-scrollbar{display:none}
 nav a,nav button,.links a,.tab{flex:0 0 auto;border:0;background:transparent;color:var(--muted);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:500;transition:all .15s ease;white-space:nowrap}
-nav a:hover,nav button:hover,.links a:hover{color:var(--ink);background:rgba(0,0,0,.04)}
-nav a.active,nav button.active,.links a.active,.tab.active{color:var(--ink);background:rgba(0,0,0,.06);font-weight:600}
-.primary,button.primary,.cta{background:var(--ink);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;transition:all .15s ease;font-size:14px}
+nav a:hover,nav button:hover,.links a:hover{color:var(--ink);background:color-mix(in srgb,var(--brand) 10%,transparent)}
+nav a.active,nav button.active,.links a.active,.tab.active{color:var(--brand);background:color-mix(in srgb,var(--brand) 12%,transparent);font-weight:600}
+.primary,button.primary,.cta{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;transition:all .15s ease;font-size:14px}
 .primary:hover,button.primary:hover,.cta:hover{background:var(--brand2);transform:translateY(-1px)}
 .hero{padding:80px max(20px,5vw) 56px;max-width:1200px;margin:0 auto}
 .hero h1{font-size:clamp(36px,6vw,68px);line-height:1.05;letter-spacing:-.03em;margin:14px 0 20px;font-weight:700}
 .hero p{max-width:640px;color:var(--muted);font-size:clamp(15px,1.6vw,18px);margin:0 0 28px}
-.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent);background:rgba(249,115,22,.1);padding:6px 12px;border-radius:999px}
+.eyebrow{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);padding:6px 12px;border-radius:999px}
 .search,.searchbar{max-width:560px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 6px 6px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
 .search input,.searchbar input{flex:1;border:0;outline:0;background:transparent;padding:10px 0;min-width:120px;font-size:15px}
 .search input::placeholder,.searchbar input::placeholder{color:var(--muted)}
-.search button,.searchbar button{border:0;border-radius:8px;padding:9px 16px;background:var(--ink);color:#fff;font-weight:600;cursor:pointer;font-size:14px}
+.search button,.searchbar button{border:0;border-radius:8px;padding:9px 16px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer;font-size:14px}
 .quick,.categories{padding:8px max(20px,5vw) 0;max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px}
 .quick button,.category{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:18px 10px;display:flex;flex-direction:column;gap:8px;align-items:center;cursor:pointer;transition:all .15s ease;font-size:13px;color:var(--ink)}
 .quick button:hover,.category:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:var(--shadow)}
@@ -396,6 +451,7 @@ export async function generateSegmentedLovableBundle(
   const planContent = (planJson as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content ?? "";
   const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt);
 
+  const theme = inferTheme(prompt, context);
   const appRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
@@ -403,7 +459,7 @@ export async function generateSegmentedLovableBundle(
       {
         role: "user",
         content:
-          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格强制要求（参考 Lovable / Linear / Vercel 的极简现代风）：白底深色文字、大量留白、字号字重对比清晰、圆角 10-16px、细边框 1px solid #e7e5e4、轻量阴影、不要花哨的彩色渐变背景、不要把每个按钮都做成胶囊渐变；主色用黑色 (#0a0a0a) 作为主按钮和强调，辅色用橙色 (#f97316) 作为 eyebrow 标签；卡片用 .card 或 article 类、网格用 .grid、英雄区用 .hero、导航用 header+nav、主按钮用 .primary 类。请尽量复用 styles.css 已经定义的语义类名，避免大量内联样式。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格指引（不要固定一种风格，按需求自适应）：\n- 如果用户要求"仿站/克隆/复刻"某个真实产品（如飞猪、淘宝、京东、抖音、小红书、Notion、Apple 等），必须模仿该品牌的真实视觉：标志性主色、Logo 色、典型布局（如电商首页用卡片瀑布流 + 促销 Banner，旅游站点用大图轮播 + 搜索框）、文案语气。\n- 否则按用户描述里的关键词推断（"暗黑/科技/极客"用深色背景，"复古/文艺"用米黄+衬线字，"儿童/教育"用糖果色，"金融/政务"用稳重蓝/灰）。\n- 不要默认套用黑白极简；只在用户明确要求时才用。\n- styles.css 已经按品牌注入了 CSS 变量 --bg/--ink/--brand/--accent，App.tsx 里尽量用语义类（.hero/.card/.grid/.primary/.eyebrow）和 CSS 变量，可以用少量内联样式做差异化。\n当前推断主题：${theme.label}（主色 ${theme.brand}，背景 ${theme.bg}）。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
     temperature: 0.55,
@@ -418,7 +474,7 @@ export async function generateSegmentedLovableBundle(
     return { reply: appCode, bundle: null, finishReason: "app_invalid" };
   }
 
-  const cssCode = defaultPreviewCss();
+  const cssCode = themedPreviewCss(theme);
   const bundle = lovableBundleSchema.safeParse({ routes: routes.map(({ path, label }) => ({ path, label })), files: { "/App.tsx": appCode, "/styles.css": cssCode } });
   if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
   return {
