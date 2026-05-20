@@ -396,6 +396,7 @@ export async function generateSegmentedLovableBundle(
   const planContent = (planJson as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content ?? "";
   const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt);
 
+  const theme = inferTheme(prompt, context);
   const appRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
@@ -403,7 +404,7 @@ export async function generateSegmentedLovableBundle(
       {
         role: "user",
         content:
-          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格强制要求（参考 Lovable / Linear / Vercel 的极简现代风）：白底深色文字、大量留白、字号字重对比清晰、圆角 10-16px、细边框 1px solid #e7e5e4、轻量阴影、不要花哨的彩色渐变背景、不要把每个按钮都做成胶囊渐变；主色用黑色 (#0a0a0a) 作为主按钮和强调，辅色用橙色 (#f97316) 作为 eyebrow 标签；卡片用 .card 或 article 类、网格用 .grid、英雄区用 .hero、导航用 header+nav、主按钮用 .primary 类。请尽量复用 styles.css 已经定义的语义类名，避免大量内联样式。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格指引（不要固定一种风格，按需求自适应）：\n- 如果用户要求"仿站/克隆/复刻"某个真实产品（如飞猪、淘宝、京东、抖音、小红书、Notion、Apple 等），必须模仿该品牌的真实视觉：标志性主色、Logo 色、典型布局（如电商首页用卡片瀑布流 + 促销 Banner，旅游站点用大图轮播 + 搜索框）、文案语气。\n- 否则按用户描述里的关键词推断（"暗黑/科技/极客"用深色背景，"复古/文艺"用米黄+衬线字，"儿童/教育"用糖果色，"金融/政务"用稳重蓝/灰）。\n- 不要默认套用黑白极简；只在用户明确要求时才用。\n- styles.css 已经按品牌注入了 CSS 变量 --bg/--ink/--brand/--accent，App.tsx 里尽量用语义类（.hero/.card/.grid/.primary/.eyebrow）和 CSS 变量，可以用少量内联样式做差异化。\n当前推断主题：${theme.label}（主色 ${theme.brand}，背景 ${theme.bg}）。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
     temperature: 0.55,
@@ -418,7 +419,7 @@ export async function generateSegmentedLovableBundle(
     return { reply: appCode, bundle: null, finishReason: "app_invalid" };
   }
 
-  const cssCode = defaultPreviewCss();
+  const cssCode = themedPreviewCss(theme);
   const bundle = lovableBundleSchema.safeParse({ routes: routes.map(({ path, label }) => ({ path, label })), files: { "/App.tsx": appCode, "/styles.css": cssCode } });
   if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
   return {
