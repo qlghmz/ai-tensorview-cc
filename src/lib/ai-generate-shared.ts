@@ -241,8 +241,63 @@ function normalizePlannedRoutes(input: unknown, prompt: string): PlannedRoute[] 
   return routes.slice(0, 7);
 }
 
-function defaultPreviewCss(): string {
-  return `:root{--bg:#fafaf9;--ink:#0a0a0a;--muted:#71717a;--line:#e7e5e4;--card:#ffffff;--brand:#000000;--brand2:#525252;--accent:#f97316;--radius:14px;--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.08);font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;color:var(--ink);background:var(--bg);line-height:1.55}
+type PreviewTheme = {
+  label: string;
+  bg: string;
+  ink: string;
+  muted: string;
+  line: string;
+  card: string;
+  brand: string;
+  brand2: string;
+  accent: string;
+  radius: string;
+  font: string;
+  bodyBgExtra?: string;
+};
+
+const DEFAULT_THEME: PreviewTheme = {
+  label: "中性极简",
+  bg: "#fafaf9", ink: "#0a0a0a", muted: "#71717a", line: "#e7e5e4", card: "#ffffff",
+  brand: "#0a0a0a", brand2: "#525252", accent: "#f97316", radius: "14px",
+  font: "ui-sans-serif,system-ui,-apple-system,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif",
+};
+
+function inferTheme(prompt: string, context: string): PreviewTheme {
+  const text = `${context}\n${prompt}`;
+  const PRESETS: Array<{ test: RegExp; theme: Partial<PreviewTheme> & { label: string; brand: string } }> = [
+    { test: /飞猪|fliggy/i, theme: { label: "飞猪旅行", brand: "#ff6a00", brand2: "#ff3d71", accent: "#ff9500", bg: "#fff7ed", bodyBgExtra: "radial-gradient(circle at 80% 0%,#ffe7ba,transparent 35%)" } },
+    { test: /淘宝|taobao/i, theme: { label: "淘宝", brand: "#ff5000", brand2: "#ff7800", accent: "#ff0036", bg: "#fff4e6" } },
+    { test: /天猫|tmall/i, theme: { label: "天猫", brand: "#ff0036", brand2: "#ff4081", accent: "#ff5000", bg: "#fff0f3" } },
+    { test: /京东|jd\.com/i, theme: { label: "京东", brand: "#e1251b", brand2: "#c81623", accent: "#ff8800", bg: "#fff" } },
+    { test: /拼多多|pdd/i, theme: { label: "拼多多", brand: "#e02e24", brand2: "#ff5b50", accent: "#ffa940", bg: "#fff5f4" } },
+    { test: /美团|meituan|大众点评/i, theme: { label: "美团", brand: "#ffc300", brand2: "#ffae00", accent: "#ff6900", ink: "#222", bg: "#fffbe6" } },
+    { test: /饿了么|ele/i, theme: { label: "饿了么", brand: "#0099ff", brand2: "#00b4ff", accent: "#ffd400", bg: "#f0faff" } },
+    { test: /抖音|tiktok|douyin/i, theme: { label: "抖音", brand: "#fe2c55", brand2: "#25f4ee", accent: "#fe2c55", ink: "#ffffff", muted: "#a1a1aa", line: "#262626", card: "#161616", bg: "#0a0a0a" } },
+    { test: /小红书|xiaohongshu|redbook/i, theme: { label: "小红书", brand: "#ff2442", brand2: "#ff4d6d", accent: "#ff7a90", bg: "#fff5f6" } },
+    { test: /b站|bilibili|哔哩/i, theme: { label: "Bilibili", brand: "#fb7299", brand2: "#00a1d6", accent: "#23ade5", bg: "#f4f4f5" } },
+    { test: /微信|wechat|腾讯/i, theme: { label: "微信", brand: "#07c160", brand2: "#10b981", accent: "#576b95", bg: "#ededed" } },
+    { test: /支付宝|alipay/i, theme: { label: "支付宝", brand: "#1677ff", brand2: "#0e63d6", accent: "#00a6fb", bg: "#f5faff" } },
+    { test: /苹果|apple|iphone|mac/i, theme: { label: "Apple", brand: "#0a0a0a", brand2: "#1d1d1f", accent: "#0071e3", bg: "#ffffff", font: "-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',Arial,sans-serif" } },
+    { test: /notion/i, theme: { label: "Notion", brand: "#0a0a0a", brand2: "#37352f", accent: "#2383e2", bg: "#ffffff" } },
+    { test: /github/i, theme: { label: "GitHub", brand: "#24292f", brand2: "#0969da", accent: "#2da44e", bg: "#f6f8fa" } },
+    { test: /星巴克|starbucks/i, theme: { label: "Starbucks", brand: "#006241", brand2: "#1e3932", accent: "#cba258", bg: "#f9f6f1" } },
+    { test: /麦当劳|mcdonald/i, theme: { label: "麦当劳", brand: "#ffc72c", brand2: "#da291c", accent: "#27251f", ink: "#27251f", bg: "#fffbea" } },
+    { test: /暗黑|赛博|cyber|科技|geek|dark mode|深色/i, theme: { label: "暗黑科技", brand: "#7c3aed", brand2: "#06b6d4", accent: "#22d3ee", ink: "#f5f5f5", muted: "#a3a3a3", line: "#262626", card: "#171717", bg: "#0a0a0a" } },
+    { test: /复古|文艺|杂志|magazine|retro/i, theme: { label: "复古文艺", brand: "#1c1917", brand2: "#78350f", accent: "#c2410c", bg: "#fdf6e3", font: "'Noto Serif SC',Georgia,serif" } },
+    { test: /儿童|早教|kid|child/i, theme: { label: "儿童", brand: "#fb7185", brand2: "#fbbf24", accent: "#34d399", bg: "#fff1f2", radius: "22px" } },
+    { test: /金融|银行|bank|证券|理财/i, theme: { label: "金融", brand: "#1e3a8a", brand2: "#1e40af", accent: "#dc2626", bg: "#f8fafc" } },
+    { test: /奢侈|luxury|高端|轻奢/i, theme: { label: "奢华", brand: "#0a0a0a", brand2: "#525252", accent: "#a8783e", bg: "#fafaf9", font: "'Cormorant Garamond',Georgia,serif" } },
+  ];
+  for (const p of PRESETS) {
+    if (p.test.test(text)) return { ...DEFAULT_THEME, ...p.theme };
+  }
+  return DEFAULT_THEME;
+}
+
+function themedPreviewCss(t: PreviewTheme = DEFAULT_THEME): string {
+  const bodyBg = t.bodyBgExtra ? `${t.bodyBgExtra},${t.bg}` : t.bg;
+  return `:root{--bg:${t.bg};--ink:${t.ink};--muted:${t.muted};--line:${t.line};--card:${t.card};--brand:${t.brand};--brand2:${t.brand2};--accent:${t.accent};--radius:${t.radius};--shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px -12px rgba(0,0,0,.1);font-family:${t.font};color:var(--ink);background:var(--bg);line-height:1.55}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}button,input,textarea,select{font:inherit;color:inherit}
 img{max-width:100%;display:block}
