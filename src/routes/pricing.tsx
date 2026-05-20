@@ -22,9 +22,12 @@ export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
       { title: "价格 — TensorView" },
-      { name: "description", content: "TensorView的简单透明定价。从免费开始，按需扩展。" },
+      { name: "description", content: "TensorView 简单透明定价。从免费开始，按需扩展，支持微信和支付宝。" },
       { property: "og:title", content: "价格 — TensorView" },
+      { property: "og:description", content: "TensorView 简单透明定价，从免费开始，按需扩展。" },
+      { property: "og:url", content: "https://ai.tensorview.cc/pricing" },
     ],
+    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/pricing" }],
   }),
   component: PricingPage,
 });

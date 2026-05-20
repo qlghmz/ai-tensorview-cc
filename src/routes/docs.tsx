@@ -7,9 +7,12 @@ export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
       { title: "使用文档 — TensorView" },
-      { name: "description", content: "了解如何使用TensorView用一句话生成、编辑、发布你的网页。" },
+      { name: "description", content: "了解如何使用 TensorView 用一句话生成、编辑、发布你的网页。" },
       { property: "og:title", content: "使用文档 — TensorView" },
+      { property: "og:description", content: "TensorView 上手指南：生成、编辑、发布你的第一个 AI 网页。" },
+      { property: "og:url", content: "https://ai.tensorview.cc/docs" },
     ],
+    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/docs" }],
   }),
   component: DocsPage,
 });

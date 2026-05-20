@@ -70,18 +70,27 @@ export const Route = createFileRoute("/api/public/afdian")({
           });
         }
 
-        // 真实订单：校验签名
+        // 真实订单：强制校验签名（缺失/不匹配一律拒绝）
         const sign: string | undefined = body?.sign;
-        if (sign) {
-          const params = body?.params ?? data;
-          const expected = buildExpectedSign(params, token);
-          if (sign !== expected) {
-            console.warn("[afdian] sign mismatch");
-            return new Response(JSON.stringify({ ec: 403, em: "sign invalid" }), {
-              status: 403,
-              headers: { "Content-Type": "application/json" },
-            });
-          }
+        if (!sign) {
+          console.warn("[afdian] missing sign");
+          return new Response(JSON.stringify({ ec: 401, em: "missing sign" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+        const params = body?.params ?? data;
+        const expected = buildExpectedSign(params, token);
+        // 常数时间比较，避免 timing attack
+        const a = Buffer.from(sign, "utf8");
+        const b = Buffer.from(expected, "utf8");
+        const equal = a.length === b.length && (await import("crypto")).timingSafeEqual(a, b);
+        if (!equal) {
+          console.warn("[afdian] sign mismatch");
+          return new Response(JSON.stringify({ ec: 403, em: "sign invalid" }), {
+            status: 403,
+            headers: { "Content-Type": "application/json" },
+          });
         }
 
         // 关键字段

@@ -14,6 +14,14 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s) => searchSchema.parse(s),
+  head: () => ({
+    meta: [
+      { title: "登录 / 注册 — TensorView" },
+      { name: "description", content: "登录或注册 TensorView，开始用 AI 一句话生成你的网页。" },
+      { name: "robots", content: "noindex, follow" },
+    ],
+    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/auth" }],
+  }),
   component: AuthPage,
 });
 

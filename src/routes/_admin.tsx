@@ -7,6 +7,11 @@ export const Route = createFileRoute("/_admin")({
   beforeLoad: async () => {
     const { data: sess } = await supabase.auth.getSession();
     if (!sess.session) throw redirect({ to: "/auth" });
+    const { data: isAdmin } = await supabase.rpc("has_role", {
+      _user_id: sess.session.user.id,
+      _role: "admin",
+    });
+    if (isAdmin !== true) throw redirect({ to: "/" });
   },
   component: AdminLayout,
 });
