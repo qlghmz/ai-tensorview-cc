@@ -21,10 +21,17 @@ import payWechat from "@/assets/pay-wechat.png";
 export const Route = createFileRoute("/pricing")({
   head: () => ({
     meta: [
-      { title: "价格 — TensorView" },
-      { name: "description", content: "TensorView 简单透明定价。从免费开始，按需扩展，支持微信和支付宝。" },
-      { property: "og:title", content: "价格 — TensorView" },
-      { property: "og:description", content: "TensorView 简单透明定价，从免费开始，按需扩展。" },
+      { title: "TensorView AI 定价 — 灵活套餐，免费开始 | Pricing" },
+      {
+        name: "description",
+        content:
+          "TensorView AI 定价方案：免费开始构建 AI 网页应用，按需升级享受高级托管、自定义域名与更多 AI 生成额度。支持微信、支付宝。",
+      },
+      { property: "og:title", content: "TensorView AI 定价 — 灵活套餐，免费开始" },
+      {
+        property: "og:description",
+        content: "查看 TensorView AI 价格方案，从免费版开始，升级解锁高级托管、自定义域名与高额 AI 生成。",
+      },
       { property: "og:url", content: "https://ai.tensorview.cc/pricing" },
     ],
     links: [{ rel: "canonical", href: "https://ai.tensorview.cc/pricing" }],
