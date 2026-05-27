@@ -8,6 +8,25 @@ import { useAuth } from "@/lib/auth-context";
 
 export const Route = createFileRoute("/")({
   head: () => ({
+    meta: [
+      { title: "TensorView AI — AI 建站平台 | 一句话生成并部署网页应用" },
+      {
+        name: "description",
+        content:
+          "TensorView AI 是面向开发者与创作者的 AI 建站平台。用自然语言一句话生成、编辑并一键部署现代网页应用，无需写代码。Build, customize, and deploy modern web apps in seconds.",
+      },
+      { property: "og:title", content: "TensorView AI — AI 建站平台 | 一句话生成网页应用" },
+      {
+        property: "og:description",
+        content: "用 AI 一句话生成可运行的网站与应用，几秒钟内构建、定制并部署。开发者与创作者的 AI 建站首选。",
+      },
+      { property: "og:url", content: "https://ai.tensorview.cc/" },
+      { name: "twitter:title", content: "TensorView AI — AI Web Builder" },
+      {
+        name: "twitter:description",
+        content: "Build, customize, and deploy modern web applications in seconds with TensorView AI.",
+      },
+    ],
     links: [{ rel: "canonical", href: "https://ai.tensorview.cc/" }],
     scripts: [
       {
@@ -15,11 +34,13 @@ export const Route = createFileRoute("/")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "SoftwareApplication",
-          name: "TensorView",
+          name: "TensorView AI",
+          operatingSystem: "All",
           applicationCategory: "DeveloperApplication",
-          operatingSystem: "Web",
-          description: "AI 网页生成平台，用自然语言一句话生成可运行的网站。",
-          offers: { "@type": "Offer", price: "0", priceCurrency: "CNY" },
+          url: "https://ai.tensorview.cc/",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+          description:
+            "An AI-driven web building platform that allows users to create and deploy beautiful websites instantly using generative AI.",
         }),
       },
     ],
