@@ -131,9 +131,32 @@ export function patchReactImports(files: Record<string, string>): Record<string,
   return out;
 }
 
+/**
+ * 修复 AI 偶尔在 JSX 文本里直接写 `<2分钟` / `<10` 这种「裸 `<` 后紧跟数字」的写法
+ * （Babel 会把它解析成新 JSX 标签起点，报 "Identifier directly after number"）。
+ * 只替换 `>...<数字` 这种明显是文本内容的位置，不动真实标签。
+ */
+function escapeStrayLtInJsxText(files: Record<string, string>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [path, code] of Object.entries(files)) {
+    if (!/\.(t|j)sx$/.test(path)) {
+      out[path] = code;
+      continue;
+    }
+    let prev = code;
+    let next = code.replace(/>([^<>{}]*?)<(\d)/g, (_m, text: string, digit: string) => `>${text}&lt;${digit}`);
+    while (next !== prev) {
+      prev = next;
+      next = next.replace(/>([^<>{}]*?)<(\d)/g, (_m, text: string, digit: string) => `>${text}&lt;${digit}`);
+    }
+    out[path] = next;
+  }
+  return out;
+}
+
 export function sanitizeLovableBundle(bundle: LovableBundle): LovableBundle {
   const normalized = normalizeBundlePaths(bundle);
-  return { ...normalized, files: patchReactImports(normalized.files) };
+  return { ...normalized, files: escapeStrayLtInJsxText(patchReactImports(normalized.files)) };
 }
 
 /**
