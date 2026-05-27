@@ -6,10 +6,17 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
-      { title: "使用文档 — TensorView" },
-      { name: "description", content: "了解如何使用 TensorView 用一句话生成、编辑、发布你的网页。" },
-      { property: "og:title", content: "使用文档 — TensorView" },
-      { property: "og:description", content: "TensorView 上手指南：生成、编辑、发布你的第一个 AI 网页。" },
+      { title: "TensorView AI 使用文档与教程 | Documentation" },
+      {
+        name: "description",
+        content:
+          "学习如何使用 TensorView AI 构建、部署与管理你的网站：分步指南、最佳实践与常见问题。Step-by-step guides for building AI web apps.",
+      },
+      { property: "og:title", content: "TensorView AI 使用文档与教程" },
+      {
+        property: "og:description",
+        content: "TensorView AI 上手指南：生成、编辑、部署你的第一个 AI 网页，含最佳实践与教程。",
+      },
       { property: "og:url", content: "https://ai.tensorview.cc/docs" },
     ],
     links: [{ rel: "canonical", href: "https://ai.tensorview.cc/docs" }],
