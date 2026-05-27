@@ -27,6 +27,7 @@ import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
+import { Route as ApiPublicIndexnowRouteImport } from './routes/api/public/indexnow'
 import { Route as ApiPublicAfdianRouteImport } from './routes/api/public/afdian'
 import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
@@ -128,6 +129,11 @@ const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   path: '/lovable/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicIndexnowRoute = ApiPublicIndexnowRouteImport.update({
+  id: '/api/public/indexnow',
+  path: '/api/public/indexnow',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAfdianRoute = ApiPublicAfdianRouteImport.update({
   id: '/api/public/afdian',
   path: '/api/public/afdian',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
+  '/api/public/indexnow': typeof ApiPublicIndexnowRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -239,6 +246,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
+  '/api/public/indexnow': typeof ApiPublicIndexnowRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -271,6 +279,7 @@ export interface FileRoutesById {
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
+  '/api/public/indexnow': typeof ApiPublicIndexnowRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/ai/stream'
     | '/api/public/afdian'
+    | '/api/public/indexnow'
     | '/lovable/email/suppression'
     | '/admin/'
     | '/lovable/email/auth/preview'
@@ -333,6 +343,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/api/ai/stream'
     | '/api/public/afdian'
+    | '/api/public/indexnow'
     | '/lovable/email/suppression'
     | '/admin'
     | '/lovable/email/auth/preview'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/users'
     | '/api/ai/stream'
     | '/api/public/afdian'
+    | '/api/public/indexnow'
     | '/lovable/email/suppression'
     | '/_admin/admin/'
     | '/lovable/email/auth/preview'
@@ -391,6 +403,7 @@ export interface RootRouteChildren {
   SSlugRoute: typeof SSlugRoute
   ApiAiStreamRoute: typeof ApiAiStreamRoute
   ApiPublicAfdianRoute: typeof ApiPublicAfdianRoute
+  ApiPublicIndexnowRoute: typeof ApiPublicIndexnowRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -527,6 +540,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/indexnow': {
+      id: '/api/public/indexnow'
+      path: '/api/public/indexnow'
+      fullPath: '/api/public/indexnow'
+      preLoaderRoute: typeof ApiPublicIndexnowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/afdian': {
       id: '/api/public/afdian'
       path: '/api/public/afdian'
@@ -653,6 +673,7 @@ const rootRouteChildren: RootRouteChildren = {
   SSlugRoute: SSlugRoute,
   ApiAiStreamRoute: ApiAiStreamRoute,
   ApiPublicAfdianRoute: ApiPublicAfdianRoute,
+  ApiPublicIndexnowRoute: ApiPublicIndexnowRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
