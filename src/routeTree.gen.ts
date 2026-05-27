@@ -24,6 +24,7 @@ import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
+import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicAfdianRouteImport } from './routes/api/public/afdian'
@@ -112,6 +113,11 @@ const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsSlugRoute = DocsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
+  getParentRoute: () => DocsRoute,
+} as any)
 const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
@@ -185,13 +191,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
@@ -214,13 +221,14 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
@@ -245,13 +253,14 @@ export interface FileRoutesById {
   '/_admin': typeof AdminRouteWithChildren
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
-  '/docs': typeof DocsRoute
+  '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/unsubscribe': typeof UnsubscribeRoute
+  '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
@@ -283,6 +292,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/unsubscribe'
+    | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
@@ -312,6 +322,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/unsubscribe'
+    | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/sitemap.xml'
     | '/unsubscribe'
+    | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
@@ -366,7 +378,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
-  DocsRoute: typeof DocsRoute
+  DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
@@ -494,6 +506,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/$slug': {
+      id: '/docs/$slug'
+      path: '/$slug'
+      fullPath: '/docs/$slug'
+      preLoaderRoute: typeof DocsSlugRouteImport
+      parentRoute: typeof DocsRoute
+    }
     '/_admin/admin/': {
       id: '/_admin/admin/'
       path: '/admin'
@@ -606,12 +625,22 @@ const AdminRouteChildren: AdminRouteChildren = {
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
+interface DocsRouteChildren {
+  DocsSlugRoute: typeof DocsSlugRoute
+}
+
+const DocsRouteChildren: DocsRouteChildren = {
+  DocsSlugRoute: DocsSlugRoute,
+}
+
+const DocsRouteWithChildren = DocsRoute._addFileChildren(DocsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
-  DocsRoute: DocsRoute,
+  DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,

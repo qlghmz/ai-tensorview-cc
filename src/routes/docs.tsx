@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Sparkles, Wand2, Edit3, Share2, Code2, Database } from "lucide-react";
+import { Sparkles, Wand2, Edit3, Share2, Code2, Database, BookOpen, ArrowRight, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { DOC_ARTICLES } from "@/content/docs-articles";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
@@ -82,6 +83,35 @@ function DocsPage() {
               </div>
             ))}
           </div>
+
+          <section className="mt-16">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4 text-brand" />
+              <h2 className="text-lg font-semibold">教程文章</h2>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              更深入的实战教程：从生成到部署再到自定义域名。
+            </p>
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              {DOC_ARTICLES.map((a) => (
+                <Link
+                  key={a.slug}
+                  to="/docs/$slug"
+                  params={{ slug: a.slug }}
+                  className="glass rounded-2xl p-6 group hover:border-brand/40 transition flex flex-col"
+                >
+                  <h3 className="font-semibold leading-snug group-hover:text-brand transition">{a.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.description}</p>
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3.5 w-3.5" /> {a.readMinutes} 分钟
+                    </span>
+                    <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
 
           <div className="mt-12 rounded-3xl glass p-8 text-center">
             <h2 className="text-xl font-bold">准备好开始了吗？</h2>
