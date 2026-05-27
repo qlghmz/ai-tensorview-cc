@@ -93,6 +93,18 @@ export function PublishDialog({
         hasSnapshot: true,
       });
       toast.success("发布成功，国内可直接访问");
+
+      // 异步通知 IndexNow（必应/Yandex 等），失败不影响发布结果
+      void fetch("/api/public/indexnow", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          urls: [
+            `https://ai.tensorview.cc/p/${projectId}`,
+            ...(nextSlug ? [`https://ai.tensorview.cc/s/${nextSlug}`] : []),
+          ],
+        }),
+      }).catch(() => {});
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "发布失败");
     } finally {
