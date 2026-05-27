@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Sparkles, Wand2, Edit3, Share2, Code2, Database } from "lucide-react";
+import { Sparkles, Wand2, Edit3, Share2, Code2, Database, BookOpen, ArrowRight, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { DOC_ARTICLES } from "@/content/docs-articles";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
