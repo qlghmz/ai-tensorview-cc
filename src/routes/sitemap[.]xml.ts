@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { DOC_ARTICLES } from "@/content/docs-articles";
 
 const BASE_URL = "https://ai.tensorview.cc";
 
@@ -18,6 +19,12 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/pricing", changefreq: "monthly", priority: "0.8" },
           { path: "/docs", changefreq: "monthly", priority: "0.6" },
+          ...DOC_ARTICLES.map((a) => ({
+            path: `/docs/${a.slug}`,
+            lastmod: new Date(a.dateModified).toISOString(),
+            changefreq: "monthly" as const,
+            priority: "0.7",
+          })),
         ];
 
         // 公开的项目快照页（/p/:projectId）
