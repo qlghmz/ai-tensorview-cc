@@ -1,10 +1,11 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Loader2, User, LogOut, Sparkles, Mail, Save, Lock, X } from "lucide-react";
+import { Loader2, User, LogOut, Sparkles, Mail, Save, Lock, Languages } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { CreditsPanel } from "@/components/CreditsPanel";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
@@ -116,6 +117,8 @@ function SettingsPage() {
             </button>
           </section>
           <CreditsPanel />
+          <LanguageSection />
+
 
           <PasswordSection />
           <section className="glass rounded-3xl p-6 mt-5">
