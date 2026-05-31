@@ -154,7 +154,35 @@ function SettingsPage() {
   );
 }
 
+function LanguageSection() {
+  const { lang, setLang, t } = useI18n();
+  return (
+    <section className="glass rounded-3xl p-6 mt-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Languages className="h-4 w-4 text-brand" />
+        <div className="font-semibold">{t("settings.language.title")}</div>
+      </div>
+      <p className="text-sm text-muted-foreground mb-4">{t("settings.language.desc")}</p>
+      <div className="inline-flex rounded-xl border border-border bg-input p-1">
+        {(["zh", "en"] as const).map((code) => (
+          <button
+            key={code}
+            type="button"
+            onClick={() => setLang(code)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition ${
+              lang === code ? "btn-brand" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {code === "zh" ? "中文" : "English"}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function PasswordSection() {
+
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
