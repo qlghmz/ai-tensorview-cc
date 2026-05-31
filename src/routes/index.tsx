@@ -5,7 +5,7 @@ import { Sparkles, ArrowRight, Wand2, Code2, Database, Rocket, Zap, Shield, Glob
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
-import { useT } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -59,7 +59,7 @@ const SUGGESTIONS = [
 function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const t = useT();
+  const { t, lang } = useI18n();
   const [prompt, setPrompt] = useState("");
 
   const SUGGESTIONS = [
@@ -208,26 +208,33 @@ function Landing() {
       {/* Pricing */}
       <section id="pricing" className="relative mx-auto max-w-[1200px] px-6 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-bold">简单直接的价格</h2>
-          <p className="mt-3 text-muted-foreground">从免费开始，按需扩展。</p>
+          <h2 className="text-4xl md:text-5xl font-bold">{t("pricing.title")}</h2>
+          <p className="mt-3 text-muted-foreground">{t("pricing.subtitle")}</p>
         </div>
         <div className="grid gap-5 md:grid-cols-3 max-w-4xl mx-auto">
-          {[
-            { name: "免费", price: "¥0", desc: "适合体验和小项目", cta: "开始使用", features: ["每月 5 次 AI 生成", "1 个项目", "社区支持"], highlight: false },
-            { name: "专业", price: "¥99", desc: "适合个人创作者", cta: "升级专业版", features: ["每月 200 次 AI 生成", "无限项目", "自定义域名", "优先支持"], highlight: true },
-            { name: "团队", price: "¥299", desc: "适合团队协作", cta: "联系销售", features: ["无限 AI 生成", "团队协作", "私有部署", "专属客服"], highlight: false },
-          ].map((p) => (
+          {(lang === "zh"
+            ? [
+                { name: "免费", price: "¥0", desc: "适合体验和小项目", cta: "开始使用", features: ["每月 5 次 AI 生成", "1 个项目", "社区支持"], highlight: false },
+                { name: "专业", price: "¥99", desc: "适合个人创作者", cta: "升级专业版", features: ["每月 200 次 AI 生成", "无限项目", "自定义域名", "优先支持"], highlight: true },
+                { name: "团队", price: "¥299", desc: "适合团队协作", cta: "联系销售", features: ["无限 AI 生成", "团队协作", "私有部署", "专属客服"], highlight: false },
+              ]
+            : [
+                { name: "Free", price: "$0", desc: "Great for trying things out", cta: "Get started", features: ["5 AI generations / mo", "1 project", "Community support"], highlight: false },
+                { name: "Pro", price: "$14", desc: "For individual creators", cta: "Upgrade to Pro", features: ["200 AI generations / mo", "Unlimited projects", "Custom domain", "Priority support"], highlight: true },
+                { name: "Team", price: "$39", desc: "For collaborating teams", cta: "Contact sales", features: ["Unlimited generations", "Team collaboration", "Private deploy", "Dedicated support"], highlight: false },
+              ]
+          ).map((p) => (
             <div
               key={p.name}
               className={`relative rounded-3xl p-7 ${p.highlight ? "glass border-brand/60 shadow-[var(--shadow-glow)]" : "glass"}`}
             >
               {p.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full btn-brand px-3 py-1 text-xs font-semibold">最受欢迎</div>
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full btn-brand px-3 py-1 text-xs font-semibold">{t("pricing.popular")}</div>
               )}
               <div className="text-sm text-muted-foreground">{p.name}</div>
               <div className="mt-2 flex items-baseline gap-1">
                 <span className="text-4xl font-bold">{p.price}</span>
-                <span className="text-sm text-muted-foreground">/月</span>
+                <span className="text-sm text-muted-foreground">{t("pricing.month")}</span>
               </div>
               <p className="mt-1 text-sm text-muted-foreground">{p.desc}</p>
               <ul className="mt-5 space-y-2 text-sm">
@@ -255,16 +262,25 @@ function Landing() {
       {/* FAQ */}
       <section id="faq" className="relative mx-auto max-w-[800px] px-6 py-20">
         <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold">常见问题</h2>
+          <h2 className="text-4xl md:text-5xl font-bold">{t("faq.title")}</h2>
         </div>
         <div className="space-y-3">
-          {[
-            { q: "我需要会编程吗？", a: "完全不需要。用中文描述你想要的网站，AI 会帮你生成全部代码。" },
-            { q: "生成的网页可以发布吗？", a: "可以。每个项目都有专属预览和发布链接，支持绑定自定义域名。" },
-            { q: "能修改生成的内容吗？", a: "当然。你可以在聊天里继续描述修改，AI 会增量更新页面。" },
-            { q: "免费额度够用吗？", a: "免费版每月有 5 次生成额度，适合体验。深度使用建议升级专业版。" },
-            { q: "数据安全吗？", a: "全部数据加密存储，启用了行级权限控制，只有你能访问自己的项目。" },
-          ].map((f) => (
+          {(lang === "zh"
+            ? [
+                { q: "我需要会编程吗？", a: "完全不需要。用中文描述你想要的网站，AI 会帮你生成全部代码。" },
+                { q: "生成的网页可以发布吗？", a: "可以。每个项目都有专属预览和发布链接，支持绑定自定义域名。" },
+                { q: "能修改生成的内容吗？", a: "当然。你可以在聊天里继续描述修改，AI 会增量更新页面。" },
+                { q: "免费额度够用吗？", a: "免费版每月有 5 次生成额度，适合体验。深度使用建议升级专业版。" },
+                { q: "数据安全吗？", a: "全部数据加密存储，启用了行级权限控制，只有你能访问自己的项目。" },
+              ]
+            : [
+                { q: "Do I need to code?", a: "No. Describe the website you want in plain language and the AI writes all the code for you." },
+                { q: "Can I publish what I generate?", a: "Yes. Every project gets a preview and a publish link, and supports custom domains." },
+                { q: "Can I edit the generated site?", a: "Of course. Just keep chatting with the AI and it will update the pages incrementally." },
+                { q: "Is the free quota enough?", a: "Free includes 5 generations per month — great for trying things out. Upgrade for heavy use." },
+                { q: "Is my data secure?", a: "All data is encrypted at rest with row-level security, so only you can access your projects." },
+              ]
+          ).map((f) => (
             <details key={f.q} className="glass rounded-2xl px-5 py-4 group">
               <summary className="cursor-pointer font-medium flex items-center justify-between">
                 {f.q}
@@ -282,17 +298,18 @@ function Landing() {
           <div className="absolute inset-0" style={{ background: "var(--gradient-glow)" }} />
           <div className="relative">
             <Globe className="h-12 w-12 mx-auto text-brand" />
-            <h2 className="mt-4 text-3xl md:text-5xl font-bold">现在就开始创造</h2>
-            <p className="mt-3 text-muted-foreground">免费注册，几秒钟就能生成你的第一个网页。</p>
+            <h2 className="mt-4 text-3xl md:text-5xl font-bold">{t("cta.title")}</h2>
+            <p className="mt-3 text-muted-foreground">{t("cta.subtitle")}</p>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
               className="mt-7 inline-flex items-center gap-2 rounded-full btn-brand px-7 py-3 text-base font-semibold"
             >
-              免费开始 <ArrowRight className="h-4 w-4" />
+              {t("cta.button")} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
+
       </section>
 
       <SiteFooter />
