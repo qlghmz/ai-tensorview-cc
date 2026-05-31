@@ -1,95 +1,134 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth-context";
-import { LanguageProvider } from "@/lib/i18n";
+import { LanguageProvider, useT } from "@/lib/i18n";
 import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { MobileWarningBanner } from "@/components/MobileWarningBanner";
+import { detectLangClient } from "@/lib/lang";
+import type { Lang } from "@/lib/i18n-dict";
+import { dict } from "@/lib/i18n-dict";
 
 import appCss from "../styles.css?url";
 
+const BASE_URL = "https://ai.tensorview.cc";
+
 function NotFoundComponent() {
+  const t = useT();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-gradient">404</h1>
-        <h2 className="mt-4 text-xl font-semibold">页面不存在</h2>
-        <p className="mt-2 text-sm text-muted-foreground">你要找的页面已被移除或地址错了。</p>
+        <h2 className="mt-4 text-xl font-semibold">{t("nf.title")}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{t("nf.sub")}</p>
         <Link
           to="/"
           className="mt-6 inline-flex items-center rounded-full btn-brand px-5 py-2 text-sm font-medium"
         >
-          回到首页
+          {t("nf.home")}
         </Link>
       </div>
     </div>
   );
 }
 
+/**
+ * Detect the visitor's language on every request. On the server we read the
+ * Cloudflare `cf-ipcountry` header (CN → zh, everything else → en). On the
+ * client we read pinned cookie/localStorage. Returned `lang` flows into the
+ * router context and is read by per-route `head()` functions for SEO meta.
+ */
+async function detectLang(): Promise<Lang> {
+  if (typeof window === "undefined") {
+    try {
+      const mod = await import("@/lib/lang.server");
+      return mod.detectLangServer();
+    } catch {
+      return "en";
+    }
+  }
+  return detectLangClient();
+}
+
 export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "TensorView — 用一句话生成网页应用" },
-      {
-        name: "description",
-        content: "TensorView 是 AI 网页生成平台，用自然语言描述即可生成可运行的网站和应用，无需写代码。",
-      },
-      { name: "keywords", content: "AI 建站, AI 网页生成, AI 网站生成器, lovable 替代, no-code, vibe coding, TensorView" },
-      { name: "robots", content: "index, follow" },
-      { property: "og:title", content: "TensorView — 用一句话生成网页应用" },
-      { property: "og:description", content: "TensorView 是 AI 网页生成平台，用自然语言描述即可生成可运行的网站与应用。" },
-      { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "TensorView" },
-      { property: "og:url", content: "https://ai.tensorview.cc" },
-      { property: "og:locale", content: "zh_CN" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "TensorView — 用一句话生成网页应用" },
-      { name: "twitter:description", content: "用自然语言描述，立即生成可运行的网站和应用。" },
-    ],
-    links: [{ rel: "stylesheet", href: appCss }],
-    scripts: [
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "TensorView",
-          url: "https://ai.tensorview.cc",
-          inLanguage: "zh-CN",
-          description: "AI 网页生成平台，用一句话生成可运行的网站和应用。",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: "https://ai.tensorview.cc/?q={search_term_string}",
-            "query-input": "required name=search_term_string",
-          },
-        }),
-      },
-      {
-        type: "application/ld+json",
-        children: JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "TensorView",
-          url: "https://ai.tensorview.cc",
-          logo: "https://ai.tensorview.cc/favicon.ico",
-        }),
-      },
-      {
-        // Microsoft Clarity
-        children:
-          '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wxlbx0gwbn");',
-      },
-    ],
-  }),
+  beforeLoad: async () => ({ lang: await detectLang() }),
+  loader: ({ context }) => ({ lang: context.lang }),
+  head: ({ loaderData }) => {
+    const lang: Lang = (loaderData as { lang?: Lang } | undefined)?.lang ?? "en";
+    const isZh = lang === "zh";
+    const tr = (k: keyof typeof dict.zh) =>
+      (dict[lang] as Record<string, string>)[k] ?? (dict.zh as Record<string, string>)[k] ?? "";
+    return {
+      meta: [
+        { charSet: "utf-8" },
+        { name: "viewport", content: "width=device-width, initial-scale=1" },
+        { title: tr("seo.site.title") },
+        { name: "description", content: tr("seo.site.desc") },
+        { name: "keywords", content: tr("seo.site.keywords") },
+        { name: "robots", content: "index, follow" },
+        { property: "og:title", content: tr("seo.site.title") },
+        { property: "og:description", content: tr("seo.site.desc") },
+        { property: "og:type", content: "website" },
+        { property: "og:site_name", content: "TensorView" },
+        { property: "og:url", content: BASE_URL },
+        { property: "og:locale", content: isZh ? "zh_CN" : "en_US" },
+        { property: "og:locale:alternate", content: isZh ? "en_US" : "zh_CN" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: tr("seo.site.title") },
+        { name: "twitter:description", content: tr("seo.site.desc") },
+      ],
+      links: [
+        { rel: "stylesheet", href: appCss },
+        // hreflang alternates so Google indexes both language versions.
+        { rel: "alternate", hrefLang: "zh-CN", href: BASE_URL + "/" },
+        { rel: "alternate", hrefLang: "en", href: BASE_URL + "/" },
+        { rel: "alternate", hrefLang: "x-default", href: BASE_URL + "/" },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            name: "TensorView",
+            url: BASE_URL,
+            inLanguage: isZh ? "zh-CN" : "en",
+            description: tr("seo.site.desc"),
+            potentialAction: {
+              "@type": "SearchAction",
+              target: BASE_URL + "/?q={search_term_string}",
+              "query-input": "required name=search_term_string",
+            },
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "TensorView",
+            url: BASE_URL,
+            logo: BASE_URL + "/favicon.ico",
+          }),
+        },
+        {
+          // Microsoft Clarity
+          children:
+            '(function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i+"?ref=bwt";y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,"clarity","script","wxlbx0gwbn");',
+        },
+      ],
+    };
+  },
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // We can't synchronously access loader data here during SSR, but the html
+  // lang attribute is also written by LanguageProvider after hydration. Use
+  // a neutral default that's quickly overwritten.
   return (
-    <html lang="zh-CN" className="dark">
+    <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
@@ -102,8 +141,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
+  const data = Route.useLoaderData();
+  const initialLang = (data as { lang?: Lang } | undefined)?.lang;
   return (
-    <LanguageProvider>
+    <LanguageProvider initialLang={initialLang}>
       <AuthProvider>
         <MobileWarningBanner />
         <Outlet />
