@@ -544,7 +544,9 @@ function ProjectEditor() {
             <Send className="h-4 w-4" />
           </button>
         </div>
+        <MobileGenerationHint />
       </form>
+
     </aside>
   );
 
