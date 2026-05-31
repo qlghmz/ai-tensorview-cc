@@ -3,10 +3,13 @@ import { Sparkles, Settings as SettingsIcon, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { CreditBadge } from "@/components/CreditBadge";
+import { LanguageToggle } from "@/components/LanguageToggle";
+import { useT } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const { user } = useAuth();
+  const t = useT();
   const [isAdmin, setIsAdmin] = useState(false);
   useNavigate();
 
@@ -31,13 +34,14 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
-          <a href="/#features" className="hover:text-foreground transition">功能</a>
-          <a href="/#showcase" className="hover:text-foreground transition">案例</a>
-          <Link to="/pricing" className="hover:text-foreground transition">价格</Link>
-          <Link to="/docs" className="hover:text-foreground transition">文档</Link>
+          <a href="/#features" className="hover:text-foreground transition">{t("nav.features")}</a>
+          <a href="/#showcase" className="hover:text-foreground transition">{t("nav.showcase")}</a>
+          <Link to="/pricing" className="hover:text-foreground transition">{t("nav.pricing")}</Link>
+          <Link to="/docs" className="hover:text-foreground transition">{t("nav.docs")}</Link>
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           {user ? (
             <>
               <CreditBadge />
@@ -46,13 +50,13 @@ export function SiteHeader() {
                 search={{}}
                 className="rounded-full px-4 py-1.5 text-sm hover:bg-accent/50 transition"
               >
-                项目
+                {t("nav.projects")}
               </Link>
               {isAdmin && (
                 <Link
                   to="/admin"
                   className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition text-amber-300"
-                  title="管理员后台"
+                  title={t("nav.admin")}
                 >
                   <Shield className="h-4 w-4" />
                 </Link>
@@ -60,7 +64,7 @@ export function SiteHeader() {
               <Link
                 to="/settings"
                 className="grid h-9 w-9 place-items-center rounded-full hover:bg-accent/50 transition"
-                title="设置"
+                title={t("nav.settings")}
               >
                 <SettingsIcon className="h-4 w-4" />
               </Link>
@@ -71,14 +75,14 @@ export function SiteHeader() {
                 to="/auth"
                 className="rounded-full px-4 py-1.5 text-sm hover:bg-accent/50 transition"
               >
-                登录
+                {t("nav.login")}
               </Link>
               <Link
                 to="/auth"
                 search={{ mode: "signup" }}
                 className="rounded-full btn-brand px-4 py-1.5 text-sm font-medium"
               >
-                免费开始
+                {t("nav.signup")}
               </Link>
             </>
           )}
