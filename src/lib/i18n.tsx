@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { dict, type Lang, type DictKey } from "./i18n-dict";
+import { detectLangClient } from "./lang";
 
 type Ctx = {
   lang: Lang;
@@ -10,30 +11,43 @@ type Ctx = {
 const I18nContext = createContext<Ctx | null>(null);
 const STORAGE_KEY = "tv.lang";
 
-function detectInitial(): Lang {
-  if (typeof window === "undefined") return "zh";
-  const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === "zh" || stored === "en") return stored;
-  const nav = window.navigator.language?.toLowerCase() ?? "";
-  if (nav.startsWith("zh")) return "zh";
-  return "en";
-}
-
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("zh");
+/**
+ * `initialLang` should come from the SSR loader so the first paint matches
+ * the IP-detected language and there's no client-side flicker.
+ */
+export function LanguageProvider({
+  children,
+  initialLang,
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
+  const [lang, setLangState] = useState<Lang>(initialLang ?? "zh");
 
   useEffect(() => {
-    const initial = detectInitial();
-    setLangState(initial);
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = initial === "zh" ? "zh-CN" : "en";
+    // After hydration, prefer a user-pinned choice from localStorage.
+    let pinned: Lang | null = null;
+    try {
+      const stored = window.localStorage.getItem(STORAGE_KEY);
+      if (stored === "zh" || stored === "en") pinned = stored as Lang;
+    } catch {
+      /* ignore */
     }
-  }, []);
+    const next = pinned ?? initialLang ?? detectLangClient();
+    setLangState(next);
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = next === "zh" ? "zh-CN" : "en";
+    }
+  }, [initialLang]);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") {
+    try {
       window.localStorage.setItem(STORAGE_KEY, l);
+      // Persist as a cookie too so SSR honors the user's choice on next visit.
+      document.cookie = `tv.lang=${l}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
+    } catch {
+      /* ignore */
     }
     if (typeof document !== "undefined") {
       document.documentElement.lang = l === "zh" ? "zh-CN" : "en";
@@ -61,7 +75,6 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useI18n(): Ctx {
   const ctx = useContext(I18nContext);
   if (!ctx) {
-    // SSR-safe fallback so components don't crash before provider mounts.
     return {
       lang: "zh",
       setLang: () => {},
