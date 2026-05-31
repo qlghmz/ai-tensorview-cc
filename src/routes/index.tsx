@@ -69,12 +69,15 @@ function Landing() {
     t("landing.suggest.4"),
   ];
 
+  const start = () => {
     if (!user) {
       navigate({ to: "/auth", search: { mode: "signup", prompt } });
     } else {
       navigate({ to: "/dashboard", search: { prompt } });
     }
   };
+
+
 
 
   return (
