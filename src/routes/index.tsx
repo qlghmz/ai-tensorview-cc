@@ -89,21 +89,21 @@ function Landing() {
       <section className="relative mx-auto max-w-[1100px] px-6 pt-20 pb-24 text-center">
         <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-muted-foreground">
           <span className="grid h-1.5 w-1.5 rounded-full bg-brand" />
-          全新 AI 引擎已上线 · 生成速度提升 3 倍
+          {t("landing.badge")}
         </div>
 
         <h1 className="mt-6 text-5xl md:text-7xl font-bold tracking-tight leading-[1.05]">
           <span className="inline-flex items-center gap-3">
-            用一句话
+            {t("landing.title.1")}
             <span className="inline-flex items-center rounded-full bg-brand/15 text-brand border border-brand/30 px-2.5 py-0.5 text-xs font-semibold tracking-wider align-middle">
               BETA
             </span>
           </span>
           <br />
-          <span className="text-gradient">生成你的网站</span>
+          <span className="text-gradient">{t("landing.title.2")}</span>
         </h1>
         <p className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-          TensorView把你的想法变成可运行的网页应用。无需写一行代码。
+          {t("landing.subtitle")}
         </p>
 
         {/* Prompt box */}
@@ -115,7 +115,7 @@ function Landing() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && prompt && start()}
-                placeholder="描述一个你想要的网站，比如：一个极简的笔记应用..."
+                placeholder={t("landing.input.placeholder")}
                 className="flex-1 bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground"
               />
               <button
@@ -141,26 +141,27 @@ function Landing() {
         </div>
 
         <div className="mt-12 flex flex-wrap justify-center gap-6 text-xs text-muted-foreground">
-          {["✨ 即开即用", "🚀 一键发布", "🔒 安全托管", "💳 无需信用卡"].map((x) => (
+          {[t("landing.tag.1"), t("landing.tag.2"), t("landing.tag.3"), t("landing.tag.4")].map((x) => (
             <span key={x}>{x}</span>
           ))}
         </div>
       </section>
 
+
       {/* Features */}
       <section id="features" className="relative mx-auto max-w-[1200px] px-6 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-bold">为创造者打造</h2>
-          <p className="mt-3 text-muted-foreground">从灵感到上线，只差一句话。</p>
+          <h2 className="text-4xl md:text-5xl font-bold">{t("features.title")}</h2>
+          <p className="mt-3 text-muted-foreground">{t("features.subtitle")}</p>
         </div>
         <div className="grid gap-5 md:grid-cols-3">
           {[
-            { i: Wand2, t: "AI 生成", d: "用自然语言描述，AI 立即生成完整网页。" },
-            { i: Code2, t: "实时预览", d: "聊天即编辑。每次修改实时反映在预览中。" },
-            { i: Database, t: "云端后端", d: "数据库、用户、存储一键启用。" },
-            { i: Rocket, t: "一键部署", d: "自动打包，秒级上线，全球加速。" },
-            { i: Zap, t: "极速响应", d: "毫秒级编辑反馈，流畅创作体验。" },
-            { i: Shield, t: "安全可靠", d: "企业级安全，数据全程加密。" },
+            { i: Wand2, t: t("features.aigen.t"), d: t("features.aigen.d") },
+            { i: Code2, t: t("features.preview.t"), d: t("features.preview.d") },
+            { i: Database, t: t("features.backend.t"), d: t("features.backend.d") },
+            { i: Rocket, t: t("features.deploy.t"), d: t("features.deploy.d") },
+            { i: Zap, t: t("features.speed.t"), d: t("features.speed.d") },
+            { i: Shield, t: t("features.secure.t"), d: t("features.secure.d") },
           ].map((f) => (
             <div key={f.t} className="glass rounded-2xl p-6 group hover:border-brand/40 transition">
               <span className="grid h-10 w-10 place-items-center rounded-xl btn-brand">
@@ -173,34 +174,36 @@ function Landing() {
         </div>
       </section>
 
+
       {/* Showcase */}
       <section id="showcase" className="relative mx-auto max-w-[1200px] px-6 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-4xl md:text-5xl font-bold">用户在创造什么</h2>
-          <p className="mt-3 text-muted-foreground">100,000+ 项目已经在TensorView上诞生。</p>
+          <h2 className="text-4xl md:text-5xl font-bold">{t("showcase.title")}</h2>
+          <p className="mt-3 text-muted-foreground">{t("showcase.subtitle")}</p>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { t: "极简笔记", d: "一个支持 Markdown 的笔记应用", g: "linear-gradient(135deg, oklch(0.4 0.2 350), oklch(0.3 0.15 295))" },
-            { t: "咖啡商店", d: "精品咖啡的电商落地页", g: "linear-gradient(135deg, oklch(0.4 0.18 30), oklch(0.3 0.12 50))" },
-            { t: "AI 对话", d: "可定制的 AI 聊天工具", g: "linear-gradient(135deg, oklch(0.35 0.2 250), oklch(0.3 0.18 295))" },
-            { t: "作品集", d: "深色风格的开发者主页", g: "linear-gradient(135deg, oklch(0.3 0.12 200), oklch(0.25 0.1 230))" },
-            { t: "活动页", d: "线下活动报名落地页", g: "linear-gradient(135deg, oklch(0.4 0.2 12), oklch(0.3 0.15 350))" },
-            { t: "数据看板", d: "团队 SaaS 数据仪表盘", g: "linear-gradient(135deg, oklch(0.35 0.18 160), oklch(0.3 0.15 200))" },
+            { t: t("landing.suggest.1"), d: "", g: "linear-gradient(135deg, oklch(0.4 0.2 350), oklch(0.3 0.15 295))" },
+            { t: t("landing.suggest.3"), d: "", g: "linear-gradient(135deg, oklch(0.4 0.18 30), oklch(0.3 0.12 50))" },
+            { t: t("landing.suggest.4"), d: "", g: "linear-gradient(135deg, oklch(0.35 0.2 250), oklch(0.3 0.18 295))" },
+            { t: t("landing.suggest.2"), d: "", g: "linear-gradient(135deg, oklch(0.3 0.12 200), oklch(0.25 0.1 230))" },
+            { t: t("features.deploy.t"), d: t("features.deploy.d"), g: "linear-gradient(135deg, oklch(0.4 0.2 12), oklch(0.3 0.15 350))" },
+            { t: t("features.backend.t"), d: t("features.backend.d"), g: "linear-gradient(135deg, oklch(0.35 0.18 160), oklch(0.3 0.15 200))" },
           ].map((c) => (
             <div key={c.t} className="glass rounded-2xl overflow-hidden group cursor-pointer">
               <div className="aspect-[16/10] relative" style={{ background: c.g }}>
                 <div className="absolute inset-0 bg-grid opacity-30" />
-                <div className="absolute bottom-3 left-3 glass rounded-lg px-2 py-1 text-xs">在线预览</div>
+                <div className="absolute bottom-3 left-3 glass rounded-lg px-2 py-1 text-xs">{t("showcase.preview")}</div>
               </div>
               <div className="p-4">
                 <div className="font-semibold">{c.t}</div>
-                <div className="text-sm text-muted-foreground">{c.d}</div>
+                {c.d && <div className="text-sm text-muted-foreground">{c.d}</div>}
               </div>
             </div>
           ))}
         </div>
       </section>
+
 
       {/* Pricing */}
       <section id="pricing" className="relative mx-auto max-w-[1200px] px-6 py-20">
