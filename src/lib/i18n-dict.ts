@@ -1,17 +1,20 @@
 export type Lang = "zh" | "en";
 
+// =============================================================================
+// CHINESE SOURCE (zh) — authoritative key set.
+// =============================================================================
 const zh = {
-  // Mobile banner
+  // --------- Mobile banner ---------
   "mobile.banner": "📱 手机端预览较慢（2–5 分钟），推荐使用电脑端获得最佳体验。",
   "mobile.banner.short": "手机端生成 2–5 分钟，请耐心等待，推荐使用电脑开发。",
   "mobile.dismiss": "关闭",
 
-  // Language toggle
+  // --------- Language toggle ---------
   "lang.toggle.title": "切换语言",
   "lang.zh": "中文",
   "lang.en": "EN",
 
-  // Site header
+  // --------- Site header ---------
   "nav.features": "功能",
   "nav.showcase": "案例",
   "nav.pricing": "价格",
@@ -22,7 +25,7 @@ const zh = {
   "nav.login": "登录",
   "nav.signup": "免费开始",
 
-  // Site footer
+  // --------- Site footer ---------
   "footer.tagline": "用一句话生成可运行的网页和应用。",
   "footer.group.product": "产品",
   "footer.group.resources": "资源",
@@ -41,7 +44,7 @@ const zh = {
   "footer.item.privacy": "隐私",
   "footer.copyright": "© 2026 TensorView · 让创造更简单",
 
-  // Landing
+  // --------- Landing page ---------
   "landing.badge": "全新 AI 引擎已上线 · 生成速度提升 3 倍",
   "landing.title.1": "用一句话",
   "landing.title.2": "生成你的网站",
@@ -81,19 +84,214 @@ const zh = {
   "pricing.month": "/月",
 
   "faq.title": "常见问题",
+  "faq.q1": "我需要会编程吗？",
+  "faq.a1": "完全不需要。用中文描述你想要的网站，AI 会帮你生成全部代码。",
+  "faq.q2": "生成的网页可以发布吗？",
+  "faq.a2": "可以。每个项目都有专属预览和发布链接，支持绑定自定义域名。",
+  "faq.q3": "能修改生成的内容吗？",
+  "faq.a3": "当然。你可以在聊天里继续描述修改，AI 会增量更新页面。",
+  "faq.q4": "免费额度够用吗？",
+  "faq.a4": "免费版每月有 5 次生成额度，适合体验。深度使用建议升级专业版。",
+  "faq.q5": "数据安全吗？",
+  "faq.a5": "全部数据加密存储，启用了行级权限控制，只有你能访问自己的项目。",
 
   "cta.title": "现在就开始创造",
   "cta.subtitle": "免费注册，几秒钟就能生成你的第一个网页。",
   "cta.button": "免费开始",
 
-  // Settings
+  // --------- SEO meta (root + per route) ---------
+  "seo.site.title": "TensorView — 用一句话生成网页应用",
+  "seo.site.desc": "TensorView 是 AI 网页生成平台，用自然语言描述即可生成可运行的网站和应用，无需写代码。",
+  "seo.site.keywords": "AI 建站, AI 网页生成, AI 网站生成器, lovable 替代, no-code, vibe coding, TensorView",
+
+  "seo.home.title": "TensorView AI — AI 建站平台 | 一句话生成并部署网页应用",
+  "seo.home.desc":
+    "TensorView AI 是面向开发者与创作者的 AI 建站平台。用自然语言一句话生成、编辑并一键部署现代网页应用，无需写代码。",
+
+  "seo.pricing.title": "TensorView AI 定价 — 灵活套餐，免费开始",
+  "seo.pricing.desc":
+    "TensorView AI 定价方案：免费开始构建 AI 网页应用，按需升级享受高级托管、自定义域名与更多 AI 生成额度。支持微信、支付宝。",
+
+  "seo.docs.title": "TensorView AI 使用文档与教程",
+  "seo.docs.desc": "学习如何使用 TensorView AI 构建、部署与管理你的网站：分步指南、最佳实践与常见问题。",
+
+  "seo.auth.title": "登录 / 注册 — TensorView",
+  "seo.auth.desc": "登录或注册 TensorView，开始用 AI 一句话生成你的网页。",
+
+  "seo.dashboard.title": "我的项目 — TensorView",
+  "seo.dashboard.desc": "在 TensorView 仪表盘管理你的 AI 网页项目。",
+
+  // --------- Auth page ---------
+  "auth.signin.title": "欢迎回来",
+  "auth.signup.title": "创建账户",
+  "auth.signin.sub": "登录继续你的创作。",
+  "auth.signup.sub": "注册后需要先完成邮箱验证。",
+  "auth.google": "使用 Google 继续",
+  "auth.method.email": "邮箱",
+  "auth.method.phone": "手机号",
+  "auth.name.placeholder": "显示名称",
+  "auth.email.placeholder": "邮箱",
+  "auth.password.placeholder": "密码（至少 6 位）",
+  "auth.forgot": "忘记密码？",
+  "auth.submit.signin": "登录",
+  "auth.submit.signup": "创建账户",
+  "auth.signup.resend.hint": "没收到邮件时，请先检查垃圾箱；同一邮箱短时间重复注册可能不会连续发送。",
+  "auth.signup.resend.action": "重新发送",
+  "auth.phone.name.placeholder": "显示名称（可选）",
+  "auth.phone.placeholder": "手机号（含国家代码，如 +8613800138000）",
+  "auth.otp.placeholder": "6 位短信验证码",
+  "auth.otp.get": "获取验证码",
+  "auth.otp.resend": "重新发送",
+  "auth.phone.submit.signin": "登录",
+  "auth.phone.submit.signup": "注册并登录",
+  "auth.phone.hint": "提示：手机号登录需在后端启用 SMS 服务商。",
+  "auth.switch.toSignin": "已有账户？",
+  "auth.switch.toSignup": "还没有账户？",
+  "auth.switch.signinLink": "登录",
+  "auth.switch.signupLink": "注册",
+  "auth.toast.needEmail": "请先输入邮箱",
+  "auth.toast.resent": "验证邮件已重新发送",
+  "auth.toast.sendFail": "发送失败，请稍后再试",
+  "auth.toast.signupOk": "验证邮件已发送，请先到邮箱确认后再登录",
+  "auth.toast.signinOk": "登录成功，正在跳转…",
+  "auth.toast.signinFail": "邮箱或密码错误",
+  "auth.toast.opFail": "操作失败",
+  "auth.toast.needPhone": "请输入手机号",
+  "auth.toast.otpSent": "验证码已发送",
+  "auth.toast.otpSendFail": "发送失败",
+  "auth.toast.phoneUnavail": "手机号登录暂未启用，请联系管理员",
+  "auth.toast.verifyOk": "登录成功",
+  "auth.toast.verifyFail": "验证失败",
+  "auth.toast.googleFail": "Google 登录失败",
+
+  // --------- Forgot / reset password ---------
+  "forgot.backToSignin": "返回登录",
+  "forgot.title": "找回密码",
+  "forgot.sub": "输入注册邮箱，我们会发送重置链接。",
+  "forgot.email.placeholder": "注册邮箱",
+  "forgot.submit": "发送重置邮件",
+  "forgot.sentTitle": "✨ 邮件已发送到",
+  "forgot.sentBody": "请查收邮件并点击链接重置密码。",
+  "forgot.toast.sent": "重置邮件已发送",
+  "forgot.toast.fail": "发送失败",
+  "reset.title": "设置新密码",
+  "reset.sub": "为账户设置一个新的登录密码。",
+  "reset.new.placeholder": "新密码",
+  "reset.confirm.placeholder": "确认新密码",
+  "reset.submit": "更新密码",
+  "reset.toast.short": "密码至少 6 位",
+  "reset.toast.mismatch": "两次密码不一致",
+  "reset.toast.ok": "密码已更新",
+  "reset.toast.fail": "更新失败",
+
+  // --------- Dashboard ---------
+  "dash.title.1": "你想",
+  "dash.title.2": "创造",
+  "dash.title.3": "什么？",
+  "dash.subtitle": "用一句话描述，立即生成。",
+  "dash.input.placeholder": "描述你想要的网站...",
+  "dash.projects.title": "我的项目",
+  "dash.projects.empty": "还没有项目。在上方输入想法，开始创造吧 ✨",
+  "dash.project.rename": "重命名",
+  "dash.project.delete": "删除",
+  "dash.project.updatedSuffix": "更新",
+  "dash.toast.loadFail": "加载项目失败",
+  "dash.toast.createFail": "创建失败",
+  "dash.toast.delFail": "删除失败",
+  "dash.toast.delOk": "已删除",
+
+  // --------- Settings ---------
   "settings.title": "账户设置",
   "settings.subtitle": "管理你的个人信息与登录方式",
   "settings.language.title": "语言 / Language",
   "settings.language.desc": "选择网站界面语言，立即生效。",
+  "settings.email.empty": "未绑定邮箱",
+  "settings.userId": "用户 ID",
+  "settings.field.displayName": "显示名称",
+  "settings.field.displayName.placeholder": "你想被怎么称呼？",
+  "settings.field.avatar": "头像 URL",
+  "settings.save": "保存修改",
+  "settings.toast.saveFail": "保存失败",
+  "settings.toast.saveOk": "已保存",
+  "settings.password.title": "修改密码",
+  "settings.password.sub": "直接设置新密码，无需邮箱验证。",
+  "settings.password.new.placeholder": "新密码（至少 6 位）",
+  "settings.password.confirm.placeholder": "再次输入新密码",
+  "settings.password.submit": "更新密码",
+  "settings.password.toast.short": "密码至少 6 位",
+  "settings.password.toast.mismatch": "两次输入不一致",
+  "settings.password.toast.ok": "密码已更新",
+  "settings.forgot.title": "忘记密码？",
+  "settings.forgot.sub": "如果你忘了当前密码，可以通过邮箱重置。",
+  "settings.forgot.cta": "通过邮件重置",
   "settings.signout.title": "退出登录",
+  "settings.signout.sub": "在这台设备上退出当前账户。",
+  "settings.signout.cta": "退出",
+  "settings.upgrade.prefix": "想要更多功能？查看",
+  "settings.upgrade.link": "付费方案",
+
+  // --------- Pricing page ---------
+  "pricing.badge": "简单透明，按月订阅，随时取消",
+  "pricing.heroTitle.1": "选个适合你的",
+  "pricing.heroTitle.2": "方案",
+  "pricing.heroSub": "从免费试用到团队协作，按需扩展，无套路。",
+  "pricing.payments.title": "支付与收款",
+  "pricing.payments.body":
+    "国际卡支付会接入 Paddle，适合海外用户；国内用户更习惯支付宝和微信支付，通常需要单独接入国内支付通道。Paddle 的款项会进入你的 Paddle 商户余额，完成审核和绑定收款账户后提现；支付宝/微信则进入对应商户号。",
+  "pricing.payments.paddle": "Paddle：海外卡/订阅",
+  "pricing.payments.alipay": "支付宝：国内用户",
+  "pricing.payments.wechat": "微信支付：国内用户",
+  "pricing.help.prefix": "还有疑问？查看",
+  "pricing.help.docs": "使用文档",
+  "pricing.help.or": "或",
+  "pricing.help.contact": "联系我们",
+  "pricing.dialog.title": "订单已创建",
+  "pricing.dialog.sub": "通过爱发电完成支付，付款成功后会员将自动开通。",
+  "pricing.dialog.orderNo": "订单号",
+  "pricing.dialog.plan": "套餐",
+  "pricing.dialog.amount": "金额",
+  "pricing.dialog.payCta": "前往爱发电支付",
+  "pricing.dialog.note":
+    "付款成功后会员将自动开通，无需联系管理员。如长时间未到账，可联系 support@tensorview.cc。",
+  "pricing.dialog.qrToggle": "不便使用爱发电？查看二维码兜底支付",
+  "pricing.dialog.qrNote": "扫码支付后，备注订单号，截图发送至 support@tensorview.cc 由管理员手动激活。",
+  "pricing.dialog.close": "关闭",
+
+  // --------- Docs index ---------
+  "docs.badge": "5 分钟上手",
+  "docs.title.1": "使用",
+  "docs.title.2": "文档",
+  "docs.subtitle": "从注册到发布，了解 TensorView 的核心工作流。",
+  "docs.section1.t": "1. 创建你的第一个项目",
+  "docs.section1.d": "登录后在仪表盘输入一句话描述你想要的网页，AI 会立即生成完整 HTML。",
+  "docs.section2.t": "2. 用对话持续优化",
+  "docs.section2.d": "在项目编辑器左侧聊天，告诉 AI 想修改的内容。AI 会基于上一版做最小改动。",
+  "docs.section3.t": "3. 查看与导出代码",
+  "docs.section3.d": "顶栏切换「代码」视图查看生成的 HTML，点击「下载」导出单文件。",
+  "docs.section4.t": "4. 公开分享你的页面",
+  "docs.section4.d": "在编辑器中点击「分享」开关，生成一个公开链接，任何人都能直接访问。",
+  "docs.section5.t": "5. 接入自有 AI 模型",
+  "docs.section5.d":
+    "默认使用平台 AI；如需接入自有 OpenAI / Claude 等模型，在后端设置环境变量 CUSTOM_AI_API_KEY、CUSTOM_AI_BASE_URL、CUSTOM_AI_MODEL 即可。",
+  "docs.tutorials.title": "教程文章",
+  "docs.tutorials.sub": "更深入的实战教程：从生成到部署再到自定义域名。",
+  "docs.minutes": "分钟",
+  "docs.cta.title": "准备好开始了吗？",
+  "docs.cta.sub": "注册免费账户，几秒钟后就能看到 AI 生成的第一个网页。",
+  "docs.cta.button": "免费开始",
+  "docs.englishNotice": "",
+
+  // --------- 404 ---------
+  "nf.title": "页面不存在",
+  "nf.sub": "你要找的页面已被移除或地址错了。",
+  "nf.home": "回到首页",
 } as const;
 
+// =============================================================================
+// ENGLISH (en) — SEO-rewritten copy, NOT a literal translation.
+// Target keywords: ai website builder, text to website, build website with ai,
+// ai web app generator, generate website from prompt, no-code ai builder.
+// =============================================================================
 const en: Record<keyof typeof zh, string> = {
   "mobile.banner": "📱 Mobile preview is slow (2–5 min). Use desktop for the best experience.",
   "mobile.banner.short": "Mobile generation takes 2–5 min. Desktop recommended.",
@@ -111,9 +309,9 @@ const en: Record<keyof typeof zh, string> = {
   "nav.settings": "Settings",
   "nav.admin": "Admin",
   "nav.login": "Log in",
-  "nav.signup": "Get started",
+  "nav.signup": "Start free",
 
-  "footer.tagline": "Generate runnable websites and apps from a single sentence.",
+  "footer.tagline": "Generate production-ready websites and web apps from a single prompt.",
   "footer.group.product": "Product",
   "footer.group.resources": "Resources",
   "footer.group.company": "Company",
@@ -129,57 +327,265 @@ const en: Record<keyof typeof zh, string> = {
   "footer.item.contact": "Contact",
   "footer.item.terms": "Terms",
   "footer.item.privacy": "Privacy",
-  "footer.copyright": "© 2026 TensorView · Make creating simpler",
+  "footer.copyright": "© 2026 TensorView · Build the web with words",
 
-  "landing.badge": "New AI engine live · 3× faster generation",
-  "landing.title.1": "From a sentence",
-  "landing.title.2": "to a full website",
-  "landing.subtitle": "TensorView turns your ideas into runnable web apps. No code required.",
-  "landing.input.placeholder": "Describe the website you want, e.g. a minimal note-taking app...",
-  "landing.tag.1": "✨ Ready to use",
-  "landing.tag.2": "🚀 One-click publish",
+  "landing.badge": "New AI engine is live — 3× faster generation",
+  "landing.title.1": "Build a website",
+  "landing.title.2": "from a single prompt",
+  "landing.subtitle":
+    "TensorView is the AI website builder that turns plain English into a production-ready web app. No code, no setup, ship in minutes.",
+  "landing.input.placeholder": "Describe the website you want — e.g. a minimal note-taking SaaS landing page…",
+  "landing.tag.1": "✨ Ready to ship",
+  "landing.tag.2": "🚀 One-click deploy",
   "landing.tag.3": "🔒 Secure hosting",
   "landing.tag.4": "💳 No credit card",
-  "landing.suggest.1": "A minimal landing page for a to-do SaaS",
+  "landing.suggest.1": "A minimal SaaS landing page for a to-do app",
   "landing.suggest.2": "A dark-themed developer portfolio",
-  "landing.suggest.3": "A coffee brand e-commerce homepage",
+  "landing.suggest.3": "An e-commerce homepage for a coffee brand",
   "landing.suggest.4": "A marketing site for an AI chat product",
 
-  "features.title": "Built for creators",
-  "features.subtitle": "From idea to live, just one sentence away.",
-  "features.aigen.t": "AI generation",
-  "features.aigen.d": "Describe in plain language and get a full website instantly.",
+  "features.title": "Everything you need to ship",
+  "features.subtitle": "From prompt to production in a single workflow.",
+  "features.aigen.t": "Prompt-to-website",
+  "features.aigen.d": "Describe what you want in plain English. The AI writes the full code instantly.",
   "features.preview.t": "Live preview",
-  "features.preview.d": "Chat to edit. Every change reflected in the preview.",
-  "features.backend.t": "Cloud backend",
-  "features.backend.d": "Database, users, storage — enabled in one click.",
+  "features.preview.d": "Chat to iterate. Every edit shows up in the preview in real time.",
+  "features.backend.t": "Built-in backend",
+  "features.backend.d": "Database, auth, and storage available the moment you need them.",
   "features.deploy.t": "One-click deploy",
-  "features.deploy.d": "Auto-bundled, live in seconds, globally accelerated.",
-  "features.speed.t": "Blazing fast",
-  "features.speed.d": "Millisecond edit feedback for a smooth creative flow.",
-  "features.secure.t": "Secure",
-  "features.secure.d": "Enterprise-grade security with end-to-end encryption.",
+  "features.deploy.d": "Auto-bundled and live in seconds on a global edge network.",
+  "features.speed.t": "Instant feedback",
+  "features.speed.d": "Millisecond preview updates keep you in flow while you build.",
+  "features.secure.t": "Enterprise-grade security",
+  "features.secure.d": "Encrypted at rest, row-level access control, GDPR-friendly hosting.",
 
-  "showcase.title": "What people are building",
-  "showcase.subtitle": "100,000+ projects already born on TensorView.",
+  "showcase.title": "What people are shipping",
+  "showcase.subtitle": "100,000+ AI-generated sites already launched on TensorView.",
   "showcase.preview": "Live preview",
 
   "pricing.title": "Simple, transparent pricing",
-  "pricing.subtitle": "Start free, scale as you grow.",
+  "pricing.subtitle": "Start free. Upgrade when you ship.",
   "pricing.popular": "Most popular",
   "pricing.month": "/mo",
 
   "faq.title": "Frequently asked questions",
+  "faq.q1": "How does an AI website builder work?",
+  "faq.a1":
+    "You describe the website you want in plain English and TensorView's AI generates the full code — HTML, styles and components — that you can preview and publish instantly. No coding required.",
+  "faq.q2": "Can I publish the website I generate?",
+  "faq.a2":
+    "Yes. Every project gets a hosted preview URL and a one-click publish flow with HTTPS and custom domain support.",
+  "faq.q3": "Can I edit the AI-generated website?",
+  "faq.a3":
+    "Yes. Keep chatting with the AI to refine layout, copy, or behavior. Each change is applied as a minimal incremental edit, not a full rebuild.",
+  "faq.q4": "Is there a free plan?",
+  "faq.a4":
+    "Yes — the free plan includes daily credits so you can build and publish small projects without paying. Upgrade when you need more generations or custom domains.",
+  "faq.q5": "Is my data secure?",
+  "faq.a5":
+    "All data is encrypted at rest, every table uses row-level security, and only you can access your own projects.",
 
-  "cta.title": "Start creating now",
+  "cta.title": "Start building now",
   "cta.subtitle": "Sign up free and generate your first website in seconds.",
-  "cta.button": "Get started free",
+  "cta.button": "Start free",
 
+  // --------- SEO meta (per route) ---------
+  "seo.site.title": "TensorView — AI Website Builder",
+  "seo.site.desc":
+    "TensorView is the AI website builder that turns a single prompt into a production-ready web app. Build, edit and deploy without code.",
+  "seo.site.keywords":
+    "AI website builder, text to website, build website with AI, AI web app generator, no-code AI builder, lovable alternative, vibe coding, TensorView",
+
+  "seo.home.title": "TensorView — AI Website Builder | Generate & Deploy in Seconds",
+  "seo.home.desc":
+    "Build a production website from a single prompt. TensorView is the AI website builder for founders and developers — generate, edit and deploy a full web app in seconds, no code required.",
+
+  "seo.pricing.title": "Pricing — TensorView AI Website Builder",
+  "seo.pricing.desc":
+    "Transparent pricing for TensorView. Start free, upgrade for unlimited AI generations, custom domains and team collaboration. Cancel anytime.",
+
+  "seo.docs.title": "Docs & Tutorials — TensorView AI Website Builder",
+  "seo.docs.desc":
+    "Step-by-step guides for building, deploying and customizing AI-generated websites with TensorView. Quickstart, best practices and FAQs.",
+
+  "seo.auth.title": "Log in or sign up — TensorView",
+  "seo.auth.desc": "Log in or create a free TensorView account to start building websites with AI.",
+
+  "seo.dashboard.title": "My projects — TensorView",
+  "seo.dashboard.desc": "Manage your AI-generated website projects on TensorView.",
+
+  // --------- Auth page ---------
+  "auth.signin.title": "Welcome back",
+  "auth.signup.title": "Create your account",
+  "auth.signin.sub": "Log in to keep building.",
+  "auth.signup.sub": "We'll send a verification link to your email after sign-up.",
+  "auth.google": "Continue with Google",
+  "auth.method.email": "Email",
+  "auth.method.phone": "Phone",
+  "auth.name.placeholder": "Display name",
+  "auth.email.placeholder": "Email",
+  "auth.password.placeholder": "Password (6+ characters)",
+  "auth.forgot": "Forgot password?",
+  "auth.submit.signin": "Log in",
+  "auth.submit.signup": "Create account",
+  "auth.signup.resend.hint":
+    "Didn't see the email? Check your spam folder. We rate-limit duplicate sign-ups on the same address.",
+  "auth.signup.resend.action": "Resend",
+  "auth.phone.name.placeholder": "Display name (optional)",
+  "auth.phone.placeholder": "Phone number with country code (e.g. +14155550100)",
+  "auth.otp.placeholder": "6-digit code",
+  "auth.otp.get": "Send code",
+  "auth.otp.resend": "Resend",
+  "auth.phone.submit.signin": "Log in",
+  "auth.phone.submit.signup": "Sign up and log in",
+  "auth.phone.hint": "Phone sign-in requires an SMS provider to be configured on the backend.",
+  "auth.switch.toSignin": "Already have an account?",
+  "auth.switch.toSignup": "Don't have an account?",
+  "auth.switch.signinLink": "Log in",
+  "auth.switch.signupLink": "Sign up",
+  "auth.toast.needEmail": "Enter your email first.",
+  "auth.toast.resent": "Verification email re-sent.",
+  "auth.toast.sendFail": "Send failed. Please try again later.",
+  "auth.toast.signupOk": "Verification email sent. Please confirm before logging in.",
+  "auth.toast.signinOk": "Logged in. Redirecting…",
+  "auth.toast.signinFail": "Wrong email or password.",
+  "auth.toast.opFail": "Operation failed.",
+  "auth.toast.needPhone": "Enter a phone number.",
+  "auth.toast.otpSent": "Code sent.",
+  "auth.toast.otpSendFail": "Send failed.",
+  "auth.toast.phoneUnavail": "Phone sign-in is not enabled. Please contact support.",
+  "auth.toast.verifyOk": "Logged in.",
+  "auth.toast.verifyFail": "Verification failed.",
+  "auth.toast.googleFail": "Google sign-in failed.",
+
+  // --------- Forgot / reset password ---------
+  "forgot.backToSignin": "Back to log in",
+  "forgot.title": "Reset your password",
+  "forgot.sub": "Enter your account email and we'll send a reset link.",
+  "forgot.email.placeholder": "Account email",
+  "forgot.submit": "Send reset email",
+  "forgot.sentTitle": "✨ Email sent to",
+  "forgot.sentBody": "Check your inbox and follow the link to reset your password.",
+  "forgot.toast.sent": "Reset email sent.",
+  "forgot.toast.fail": "Send failed.",
+  "reset.title": "Set a new password",
+  "reset.sub": "Choose a new password for your account.",
+  "reset.new.placeholder": "New password",
+  "reset.confirm.placeholder": "Confirm new password",
+  "reset.submit": "Update password",
+  "reset.toast.short": "Password must be at least 6 characters.",
+  "reset.toast.mismatch": "Passwords don't match.",
+  "reset.toast.ok": "Password updated.",
+  "reset.toast.fail": "Update failed.",
+
+  // --------- Dashboard ---------
+  "dash.title.1": "What do you want to",
+  "dash.title.2": "build",
+  "dash.title.3": "today?",
+  "dash.subtitle": "Describe it in one sentence — we'll generate it instantly.",
+  "dash.input.placeholder": "Describe the website you want…",
+  "dash.projects.title": "Your projects",
+  "dash.projects.empty": "No projects yet. Drop an idea above and start building ✨",
+  "dash.project.rename": "Rename",
+  "dash.project.delete": "Delete",
+  "dash.project.updatedSuffix": "",
+  "dash.toast.loadFail": "Failed to load projects.",
+  "dash.toast.createFail": "Failed to create project.",
+  "dash.toast.delFail": "Failed to delete.",
+  "dash.toast.delOk": "Deleted.",
+
+  // --------- Settings ---------
   "settings.title": "Account settings",
-  "settings.subtitle": "Manage your profile and sign-in methods",
+  "settings.subtitle": "Manage your profile and sign-in methods.",
   "settings.language.title": "Language / 语言",
-  "settings.language.desc": "Choose the interface language. Applies immediately.",
+  "settings.language.desc": "Pick the interface language. Applies instantly.",
+  "settings.email.empty": "No email linked",
+  "settings.userId": "User ID",
+  "settings.field.displayName": "Display name",
+  "settings.field.displayName.placeholder": "What should we call you?",
+  "settings.field.avatar": "Avatar URL",
+  "settings.save": "Save changes",
+  "settings.toast.saveFail": "Save failed.",
+  "settings.toast.saveOk": "Saved.",
+  "settings.password.title": "Change password",
+  "settings.password.sub": "Set a new password without email verification.",
+  "settings.password.new.placeholder": "New password (6+ characters)",
+  "settings.password.confirm.placeholder": "Confirm new password",
+  "settings.password.submit": "Update password",
+  "settings.password.toast.short": "Password must be at least 6 characters.",
+  "settings.password.toast.mismatch": "Passwords don't match.",
+  "settings.password.toast.ok": "Password updated.",
+  "settings.forgot.title": "Forgot your password?",
+  "settings.forgot.sub": "Reset it from your email if you've lost access.",
+  "settings.forgot.cta": "Reset via email",
   "settings.signout.title": "Sign out",
+  "settings.signout.sub": "Sign out of this device.",
+  "settings.signout.cta": "Sign out",
+  "settings.upgrade.prefix": "Want more? See",
+  "settings.upgrade.link": "paid plans",
+
+  // --------- Pricing page ---------
+  "pricing.badge": "Simple, transparent, cancel anytime",
+  "pricing.heroTitle.1": "A plan that grows",
+  "pricing.heroTitle.2": "with you",
+  "pricing.heroSub": "Start free. Upgrade when you need more — no surprises.",
+  "pricing.payments.title": "Payments & payouts",
+  "pricing.payments.body":
+    "International cards go through Paddle (subscriptions and one-time, ideal for global users). Chinese users prefer Alipay and WeChat Pay, which typically need a local payment integration. Paddle payouts land in your Paddle merchant balance; Alipay/WeChat payouts land in the corresponding merchant account.",
+  "pricing.payments.paddle": "Paddle — international cards / subscriptions",
+  "pricing.payments.alipay": "Alipay — Chinese users",
+  "pricing.payments.wechat": "WeChat Pay — Chinese users",
+  "pricing.help.prefix": "Questions? Check the",
+  "pricing.help.docs": "docs",
+  "pricing.help.or": "or",
+  "pricing.help.contact": "contact us",
+  "pricing.dialog.title": "Order created",
+  "pricing.dialog.sub": "Complete payment via Afdian — your plan activates automatically once paid.",
+  "pricing.dialog.orderNo": "Order #",
+  "pricing.dialog.plan": "Plan",
+  "pricing.dialog.amount": "Amount",
+  "pricing.dialog.payCta": "Pay on Afdian",
+  "pricing.dialog.note":
+    "Your plan activates automatically after payment — no need to contact support. If it hasn't activated after a long delay, email support@tensorview.cc.",
+  "pricing.dialog.qrToggle": "Can't use Afdian? Show fallback QR codes",
+  "pricing.dialog.qrNote":
+    "Scan to pay, then send a screenshot with your order number to support@tensorview.cc for manual activation.",
+  "pricing.dialog.close": "Close",
+
+  // --------- Docs index ---------
+  "docs.badge": "5-minute quickstart",
+  "docs.title.1": "Docs &",
+  "docs.title.2": "tutorials",
+  "docs.subtitle": "From sign-up to publish — learn TensorView's core workflow.",
+  "docs.section1.t": "1. Create your first project",
+  "docs.section1.d":
+    "After signing in, describe the website you want on the dashboard. The AI generates the full HTML instantly.",
+  "docs.section2.t": "2. Iterate by chatting",
+  "docs.section2.d":
+    "Chat with the AI in the project editor. Each request is applied as a minimal incremental edit to the previous version.",
+  "docs.section3.t": "3. View and export code",
+  "docs.section3.d":
+    "Switch to the Code tab in the top bar to view the generated HTML, then click Download to export a single-file build.",
+  "docs.section4.t": "4. Share your page publicly",
+  "docs.section4.d":
+    "Toggle Share in the editor to generate a public URL anyone can visit directly.",
+  "docs.section5.t": "5. Bring your own AI model",
+  "docs.section5.d":
+    "TensorView uses the platform AI by default. To use your own OpenAI / Claude key, set the backend env vars CUSTOM_AI_API_KEY, CUSTOM_AI_BASE_URL and CUSTOM_AI_MODEL.",
+  "docs.tutorials.title": "Tutorial articles",
+  "docs.tutorials.sub":
+    "Deeper walkthroughs — from generation to deployment and custom domains.",
+  "docs.minutes": "min read",
+  "docs.cta.title": "Ready to start building?",
+  "docs.cta.sub": "Create a free account and see your first AI-generated website in seconds.",
+  "docs.cta.button": "Start free",
+  "docs.englishNotice":
+    "Note: the long-form tutorial articles below are still being translated. Quickstart and dashboard UI are fully in English.",
+
+  // --------- 404 ---------
+  "nf.title": "Page not found",
+  "nf.sub": "The page you're looking for has moved or doesn't exist.",
+  "nf.home": "Back to home",
 };
 
 export const dict = { zh, en } as const;
