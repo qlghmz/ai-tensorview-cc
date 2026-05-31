@@ -1,0 +1,186 @@
+export type Lang = "zh" | "en";
+
+const zh = {
+  // Mobile banner
+  "mobile.banner": "📱 手机端预览较慢（2–5 分钟），推荐使用电脑端获得最佳体验。",
+  "mobile.banner.short": "手机端生成 2–5 分钟，请耐心等待，推荐使用电脑开发。",
+  "mobile.dismiss": "关闭",
+
+  // Language toggle
+  "lang.toggle.title": "切换语言",
+  "lang.zh": "中文",
+  "lang.en": "EN",
+
+  // Site header
+  "nav.features": "功能",
+  "nav.showcase": "案例",
+  "nav.pricing": "价格",
+  "nav.docs": "文档",
+  "nav.projects": "项目",
+  "nav.settings": "设置",
+  "nav.admin": "管理员后台",
+  "nav.login": "登录",
+  "nav.signup": "免费开始",
+
+  // Site footer
+  "footer.tagline": "用一句话生成可运行的网页和应用。",
+  "footer.group.product": "产品",
+  "footer.group.resources": "资源",
+  "footer.group.company": "公司",
+  "footer.item.features": "功能",
+  "footer.item.showcase": "案例",
+  "footer.item.pricing": "价格",
+  "footer.item.changelog": "更新日志",
+  "footer.item.docs": "文档",
+  "footer.item.tutorials": "教程",
+  "footer.item.community": "社区",
+  "footer.item.blog": "博客",
+  "footer.item.about": "关于我们",
+  "footer.item.contact": "联系",
+  "footer.item.terms": "条款",
+  "footer.item.privacy": "隐私",
+  "footer.copyright": "© 2026 TensorView · 让创造更简单",
+
+  // Landing
+  "landing.badge": "全新 AI 引擎已上线 · 生成速度提升 3 倍",
+  "landing.title.1": "用一句话",
+  "landing.title.2": "生成你的网站",
+  "landing.subtitle": "TensorView 把你的想法变成可运行的网页应用。无需写一行代码。",
+  "landing.input.placeholder": "描述一个你想要的网站，比如：一个极简的笔记应用...",
+  "landing.tag.1": "✨ 即开即用",
+  "landing.tag.2": "🚀 一键发布",
+  "landing.tag.3": "🔒 安全托管",
+  "landing.tag.4": "💳 无需信用卡",
+  "landing.suggest.1": "做一个极简风格的待办清单 SaaS 落地页",
+  "landing.suggest.2": "生成一个深色主题的开发者作品集",
+  "landing.suggest.3": "做一个咖啡品牌的电商首页",
+  "landing.suggest.4": "搭一个 AI 对话产品的官网",
+
+  "features.title": "为创造者打造",
+  "features.subtitle": "从灵感到上线，只差一句话。",
+  "features.aigen.t": "AI 生成",
+  "features.aigen.d": "用自然语言描述，AI 立即生成完整网页。",
+  "features.preview.t": "实时预览",
+  "features.preview.d": "聊天即编辑。每次修改实时反映在预览中。",
+  "features.backend.t": "云端后端",
+  "features.backend.d": "数据库、用户、存储一键启用。",
+  "features.deploy.t": "一键部署",
+  "features.deploy.d": "自动打包，秒级上线，全球加速。",
+  "features.speed.t": "极速响应",
+  "features.speed.d": "毫秒级编辑反馈，流畅创作体验。",
+  "features.secure.t": "安全可靠",
+  "features.secure.d": "企业级安全，数据全程加密。",
+
+  "showcase.title": "用户在创造什么",
+  "showcase.subtitle": "100,000+ 项目已经在 TensorView 上诞生。",
+  "showcase.preview": "在线预览",
+
+  "pricing.title": "简单直接的价格",
+  "pricing.subtitle": "从免费开始，按需扩展。",
+  "pricing.popular": "最受欢迎",
+  "pricing.month": "/月",
+
+  "faq.title": "常见问题",
+
+  "cta.title": "现在就开始创造",
+  "cta.subtitle": "免费注册，几秒钟就能生成你的第一个网页。",
+  "cta.button": "免费开始",
+
+  // Settings
+  "settings.title": "账户设置",
+  "settings.subtitle": "管理你的个人信息与登录方式",
+  "settings.language.title": "语言 / Language",
+  "settings.language.desc": "选择网站界面语言，立即生效。",
+  "settings.signout.title": "退出登录",
+} as const;
+
+const en: Record<keyof typeof zh, string> = {
+  "mobile.banner": "📱 Mobile preview is slow (2–5 min). Use desktop for the best experience.",
+  "mobile.banner.short": "Mobile generation takes 2–5 min. Desktop recommended.",
+  "mobile.dismiss": "Dismiss",
+
+  "lang.toggle.title": "Switch language",
+  "lang.zh": "中文",
+  "lang.en": "EN",
+
+  "nav.features": "Features",
+  "nav.showcase": "Showcase",
+  "nav.pricing": "Pricing",
+  "nav.docs": "Docs",
+  "nav.projects": "Projects",
+  "nav.settings": "Settings",
+  "nav.admin": "Admin",
+  "nav.login": "Log in",
+  "nav.signup": "Get started",
+
+  "footer.tagline": "Generate runnable websites and apps from a single sentence.",
+  "footer.group.product": "Product",
+  "footer.group.resources": "Resources",
+  "footer.group.company": "Company",
+  "footer.item.features": "Features",
+  "footer.item.showcase": "Showcase",
+  "footer.item.pricing": "Pricing",
+  "footer.item.changelog": "Changelog",
+  "footer.item.docs": "Docs",
+  "footer.item.tutorials": "Tutorials",
+  "footer.item.community": "Community",
+  "footer.item.blog": "Blog",
+  "footer.item.about": "About",
+  "footer.item.contact": "Contact",
+  "footer.item.terms": "Terms",
+  "footer.item.privacy": "Privacy",
+  "footer.copyright": "© 2026 TensorView · Make creating simpler",
+
+  "landing.badge": "New AI engine live · 3× faster generation",
+  "landing.title.1": "From a sentence",
+  "landing.title.2": "to a full website",
+  "landing.subtitle": "TensorView turns your ideas into runnable web apps. No code required.",
+  "landing.input.placeholder": "Describe the website you want, e.g. a minimal note-taking app...",
+  "landing.tag.1": "✨ Ready to use",
+  "landing.tag.2": "🚀 One-click publish",
+  "landing.tag.3": "🔒 Secure hosting",
+  "landing.tag.4": "💳 No credit card",
+  "landing.suggest.1": "A minimal landing page for a to-do SaaS",
+  "landing.suggest.2": "A dark-themed developer portfolio",
+  "landing.suggest.3": "A coffee brand e-commerce homepage",
+  "landing.suggest.4": "A marketing site for an AI chat product",
+
+  "features.title": "Built for creators",
+  "features.subtitle": "From idea to live, just one sentence away.",
+  "features.aigen.t": "AI generation",
+  "features.aigen.d": "Describe in plain language and get a full website instantly.",
+  "features.preview.t": "Live preview",
+  "features.preview.d": "Chat to edit. Every change reflected in the preview.",
+  "features.backend.t": "Cloud backend",
+  "features.backend.d": "Database, users, storage — enabled in one click.",
+  "features.deploy.t": "One-click deploy",
+  "features.deploy.d": "Auto-bundled, live in seconds, globally accelerated.",
+  "features.speed.t": "Blazing fast",
+  "features.speed.d": "Millisecond edit feedback for a smooth creative flow.",
+  "features.secure.t": "Secure",
+  "features.secure.d": "Enterprise-grade security with end-to-end encryption.",
+
+  "showcase.title": "What people are building",
+  "showcase.subtitle": "100,000+ projects already born on TensorView.",
+  "showcase.preview": "Live preview",
+
+  "pricing.title": "Simple, transparent pricing",
+  "pricing.subtitle": "Start free, scale as you grow.",
+  "pricing.popular": "Most popular",
+  "pricing.month": "/mo",
+
+  "faq.title": "Frequently asked questions",
+
+  "cta.title": "Start creating now",
+  "cta.subtitle": "Sign up free and generate your first website in seconds.",
+  "cta.button": "Get started free",
+
+  "settings.title": "Account settings",
+  "settings.subtitle": "Manage your profile and sign-in methods",
+  "settings.language.title": "Language / 语言",
+  "settings.language.desc": "Choose the interface language. Applies immediately.",
+  "settings.signout.title": "Sign out",
+};
+
+export const dict = { zh, en } as const;
+export type DictKey = keyof typeof zh;
