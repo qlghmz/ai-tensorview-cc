@@ -5,6 +5,7 @@ import { Sparkles, ArrowRight, Wand2, Code2, Database, Rocket, Zap, Shield, Glob
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -58,7 +59,15 @@ const SUGGESTIONS = [
 function Landing() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const t = useT();
   const [prompt, setPrompt] = useState("");
+
+  const SUGGESTIONS = [
+    t("landing.suggest.1"),
+    t("landing.suggest.2"),
+    t("landing.suggest.3"),
+    t("landing.suggest.4"),
+  ];
 
   const start = () => {
     if (!user) {
@@ -67,6 +76,7 @@ function Landing() {
       navigate({ to: "/dashboard", search: { prompt } });
     }
   };
+
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: "var(--gradient-hero)" }}>
