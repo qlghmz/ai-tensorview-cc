@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { zhCN, enUS } from "date-fns/locale";
 
 const searchSchema = z.object({
   prompt: z.string().optional(),
