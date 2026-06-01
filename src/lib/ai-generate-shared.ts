@@ -595,6 +595,7 @@ topbar/brand/page/pagehead/eyebrow/lead/hero/section/section-title/stats/stat/gr
 其它已有页面：${allRoutes.filter((r) => r.path !== route.path).map((r) => `${r.label}(${r.path})`).join("、") || "无"}
 用户原始需求：${prompt}
 ${context ? `\n历史上下文：${context.slice(0, 1500)}` : ""}
+${backendHint}
 
 直接输出 .tsx 源码：`;
 
