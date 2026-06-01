@@ -472,14 +472,14 @@ export async function generateSegmentedLovableBundle(
   const appRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
-      { role: "system", content: "你是 Lovable 风格 React 多页面代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。" },
+      { role: "system", content: "你是 Lovable 风格 React 多页面代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。视觉品质对标 Lovable / Linear / Vercel / Stripe 官网。" },
       {
         role: "user",
         content:
-          `生成一个完整可预览多页面网站的 /App.tsx。要求：默认导出 App；必须 import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react 和 react-router-dom；代码控制在 260 行内；用数据数组 map 减少体积；中文真实文案；每个 Route 都要渲染明显不同的完整页面，不能只用 tab 切换；导航 Link 必须覆盖全部 routes；如果有登录/注册/管理后台必须是独立页面；要结合历史上下文保留已有站点主题和已生成页面。\n视觉风格指引（不要固定一种风格，按需求自适应）：\n- 如果用户要求"仿站/克隆/复刻"某个真实产品（如飞猪、淘宝、京东、抖音、小红书、Notion、Apple 等），必须模仿该品牌的真实视觉：标志性主色、Logo 色、典型布局（如电商首页用卡片瀑布流 + 促销 Banner，旅游站点用大图轮播 + 搜索框）、文案语气。\n- 否则按用户描述里的关键词推断（"暗黑/科技/极客"用深色背景，"复古/文艺"用米黄+衬线字，"儿童/教育"用糖果色，"金融/政务"用稳重蓝/灰）。\n- 不要默认套用黑白极简；只在用户明确要求时才用。\n- styles.css 已经按品牌注入了 CSS 变量 --bg/--ink/--brand/--accent，App.tsx 里尽量用语义类（.hero/.card/.grid/.primary/.eyebrow）和 CSS 变量，可以用少量内联样式做差异化。\n当前推断主题：${theme.label}（主色 ${theme.brand}，背景 ${theme.bg}）。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+          `生成一个完整可预览多页面网站的 /App.tsx。基础：默认导出 App；import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react / react-router-dom；260 行内；中文真实文案；导航 Link 覆盖全部 routes；登录/注册/管理后台/订单/个人中心都是独立完整页面。\n\n【关键：视觉质量对标 Lovable / Linear / Vercel / Stripe，禁止"大白底 + 孤立巨大 h1 + 简陋列表"】每页必须满足：\n1. <header className="topbar"> 含品牌 logo + 主导航（active 高亮）+ 右侧操作按钮。\n2. 主体页头用 <section className="pagehead">：<p className="eyebrow">小标签</p> + <h1>（已被 CSS 限制在 32-44px，不要再写超大字号）+ <p className="lead">副标题描述</p> + 1-2 个 .primary/.ghost 按钮。禁止页面里只有一个孤零零的 h1。\n3. 主体至少 2-3 个不同视觉区块，从下列里选组合：.stats 数据条 / .grid 卡片网格（每卡 emoji icon + 标题 + 描述 + 操作）/ .panel 深色面板 / .tablecard 表格 / .features 横向图标特性列 / .listcard 列表项（含 avatar emoji + 标题 + meta + 标签 + 右侧金额或操作）/ .formcard 表单卡。\n4. 商品/封面图统一 <img className="cover" src={"https://picsum.photos/seed/"+key+"/600/400"} alt="" />；头像用 <span className="avatar">🍜</span>，禁止留空白图位。\n5. 页底 <footer className="sitefoot"> 含品牌简介 + 3-4 列链接 + © 行。\n6. 选 1-2 处用 .gradtxt（标题局部渐变）或 .glow，不要满屏渐变。\n7. 仿站任务（飞猪/淘宝/京东/美团/抖音/小红书/Notion/Apple 等）必须复刻该品牌真实首页结构：标志色、典型版式（电商=Banner+分类九宫格+商品瀑布流；外卖/团购=Banner+分类九宫格+推荐商家卡片；旅游=大搜索+目的地卡；社交=Feed；工具=Hero+Features+Pricing）。\n8. 否则按用户关键词推断风格；不要默认黑白极简。\n\nstyles.css 已注入 CSS 变量 --bg/--ink/--brand/--brand2/--accent/--card/--line/--radius 和大量预设类（.topbar/.brand/.pagehead/.eyebrow/.lead/.hero/.primary/.ghost/.grid/.card/.cover/.avatar/.listcard/.formcard/.stats/.panel/.features/.tablecard/.gradtxt/.glow/.tag/.sitefoot/.searchbar）。优先用这些语义类，少量内联样式做差异化。\n\n当前主题：${theme.label}（主色 ${theme.brand}）。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
-    temperature: 0.55,
+    temperature: 0.5,
   });
   if (!appRes.ok) return { reply: "", bundle: null, finishReason: "app_failed" };
   const appJson = (await appRes.json().catch(() => null)) as
