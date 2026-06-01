@@ -42,38 +42,6 @@ export const Route = createFileRoute("/pricing")({
 
 type Plan = { name: string; planKey: "free" | "pro" | "team"; price: string; period: string; desc: string; cta: string; features: string[]; highlight: boolean };
 
-const PLANS: Plan[] = [
-  {
-    name: "免费",
-    planKey: "free",
-    price: "¥0",
-    period: "永久免费",
-    desc: "适合体验和小项目",
-    cta: "开始使用",
-    features: ["注册赠送 100 credits", "每日补到 10 credits", "无限项目", "公开预览链接"],
-    highlight: false,
-  },
-  {
-    name: "专业",
-    planKey: "pro",
-    price: "¥69",
-    period: "/月",
-    desc: "适合个人创作者",
-    cta: "升级专业版",
-    features: ["每月 200 Pro credits", "每日补到 10 credits", "无限项目", "自定义域名", "优先邮件支持"],
-    highlight: true,
-  },
-  {
-    name: "团队",
-    planKey: "team",
-    price: "¥299",
-    period: "/月",
-    desc: "适合团队协作",
-    cta: "升级团队版",
-    features: ["每月 1000 Team credits", "每日补到 10 credits", "团队协作（5 席位）", "项目权限管理", "专属客服"],
-    highlight: false,
-  },
-];
 
 function PricingPage() {
   const { user } = useAuth();
