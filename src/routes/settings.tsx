@@ -15,6 +15,7 @@ export const Route = createFileRoute("/settings")({
 function SettingsPage() {
   const { user, loading, signOut } = useAuth();
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [displayName, setDisplayName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [saving, setSaving] = useState(false);
@@ -45,8 +46,8 @@ function SettingsPage() {
       .from("profiles")
       .upsert({ id: user.id, display_name: displayName, avatar_url: avatarUrl || null });
     setSaving(false);
-    if (error) return toast.error("保存失败");
-    toast.success("已保存");
+    if (error) return toast.error(t("settings.toast.saveFail"));
+    toast.success(t("settings.toast.saveOk"));
   };
 
   if (loading || !user || !loaded) {
