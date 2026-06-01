@@ -623,12 +623,31 @@ export async function generateSegmentedLovableBundle(
   messages?: Array<{ role: string; content: string }>,
 ): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
   const context = compactGenerationContext(messages);
+
+  // ===== Plan-first：检测后端能力，未确认就先抛 plan 卡片 =====
+  const detected = detectBackendNeeds(prompt);
+  const confirmed = isPlanConfirmed(messages);
+  if (detected.needsBackend && !confirmed) {
+    return {
+      reply: renderPlanMessage(detected.recipes),
+      bundle: null,
+      finishReason: "needs_backend_plan",
+    };
+  }
+
+  // 已确认 → 把方案 prompt 片段注入到后续 page 生成
+  let backendHint = "";
+  if (detected.needsBackend && confirmed) {
+    const lastUser = [...(messages ?? [])].reverse().find((m) => m.role === "user")?.content ?? prompt;
+    const picks = extractConfirmedOptions(detected.recipes, lastUser);
+    if (picks.length) {
+      backendHint =
+        "\n\n## 后端实现要求（客户已确认方案，必须严格按此实现）\n" +
+        picks.map((p) => `- ${p.option.label}：${p.option.promptHint}`).join("\n");
+    }
+  }
+
   const planRes = await chatCompletionNonStream(cfg, {
-    model: cfg.model,
-    messages: [
-      { role: "system", content: "你是产品信息架构规划器。只输出 JSON，不要 Markdown。brief 写清这一页要展示什么（≥20 字）。" },
-      {
-        role: "user",
         content:
           `为这个 AI 生成网站需求规划 3-6 个页面路由（首页最丰富，其它各司其职）。结合历史上下文做增量修改，保留已有页面。输出格式：{"routes":[{"path":"/","label":"首页","brief":"≥20字"}]}。\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
