@@ -3,6 +3,7 @@ import { Sparkles, Wand2, Edit3, Share2, Code2, Database, BookOpen, ArrowRight, 
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { DOC_ARTICLES } from "@/content/docs-articles";
+import { useT } from "@/lib/i18n";
 
 export const Route = createFileRoute("/docs")({
   head: () => ({
@@ -25,35 +26,16 @@ export const Route = createFileRoute("/docs")({
   component: DocsPage,
 });
 
-const SECTIONS = [
-  {
-    icon: Wand2,
-    title: "1. 创建你的第一个项目",
-    body: "登录后在仪表盘输入一句话描述你想要的网页，AI 会立即生成完整 HTML。",
-  },
-  {
-    icon: Edit3,
-    title: "2. 用对话持续优化",
-    body: "在项目编辑器左侧聊天，告诉 AI 想修改的内容。AI 会基于上一版做最小改动。",
-  },
-  {
-    icon: Code2,
-    title: "3. 查看与导出代码",
-    body: "顶栏切换「代码」视图查看生成的 HTML，点击「下载」导出单文件。",
-  },
-  {
-    icon: Share2,
-    title: "4. 公开分享你的页面",
-    body: "在编辑器中点击「分享」开关，生成一个公开链接，任何人都能直接访问。",
-  },
-  {
-    icon: Database,
-    title: "5. 接入自有 AI 模型",
-    body: "默认使用平台 AI；如需接入自有 OpenAI / Claude 等模型，在后端设置环境变量 CUSTOM_AI_API_KEY、CUSTOM_AI_BASE_URL、CUSTOM_AI_MODEL 即可。",
-  },
-];
-
 function DocsPage() {
+  const t = useT();
+  const SECTIONS = [
+    { icon: Wand2, title: t("docs.section1.t"), body: t("docs.section1.d") },
+    { icon: Edit3, title: t("docs.section2.t"), body: t("docs.section2.d") },
+    { icon: Code2, title: t("docs.section3.t"), body: t("docs.section3.d") },
+    { icon: Share2, title: t("docs.section4.t"), body: t("docs.section4.d") },
+    { icon: Database, title: t("docs.section5.t"), body: t("docs.section5.d") },
+  ];
+
   return (
     <div className="min-h-screen relative" style={{ background: "var(--gradient-hero)" }}>
       <div className="absolute inset-0 bg-grid pointer-events-none" />
@@ -62,12 +44,12 @@ function DocsPage() {
         <main className="mx-auto max-w-3xl px-6 py-20">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-brand" /> 5 分钟上手
+              <Sparkles className="h-3 w-3 text-brand" /> {t("docs.badge")}
             </div>
             <h1 className="mt-5 text-4xl md:text-5xl font-bold">
-              使用<span className="text-gradient">文档</span>
+              {t("docs.title.1")}<span className="text-gradient">{t("docs.title.2")}</span>
             </h1>
-            <p className="mt-4 text-muted-foreground">从注册到发布，了解TensorView的核心工作流。</p>
+            <p className="mt-4 text-muted-foreground">{t("docs.subtitle")}</p>
           </div>
 
           <div className="mt-14 space-y-4">
@@ -87,11 +69,12 @@ function DocsPage() {
           <section className="mt-16">
             <div className="flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-brand" />
-              <h2 className="text-lg font-semibold">教程文章</h2>
+              <h2 className="text-lg font-semibold">{t("docs.tutorials.title")}</h2>
             </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              更深入的实战教程：从生成到部署再到自定义域名。
-            </p>
+            <p className="mt-1 text-sm text-muted-foreground">{t("docs.tutorials.sub")}</p>
+            {t("docs.englishNotice") && (
+              <p className="mt-2 text-xs text-amber-300/80">{t("docs.englishNotice")}</p>
+            )}
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {DOC_ARTICLES.map((a) => (
                 <Link
@@ -104,7 +87,7 @@ function DocsPage() {
                   <p className="mt-2 text-sm text-muted-foreground line-clamp-2">{a.description}</p>
                   <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5" /> {a.readMinutes} 分钟
+                      <Clock className="h-3.5 w-3.5" /> {a.readMinutes} {t("docs.minutes")}
                     </span>
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition" />
                   </div>
@@ -114,14 +97,14 @@ function DocsPage() {
           </section>
 
           <div className="mt-12 rounded-3xl glass p-8 text-center">
-            <h2 className="text-xl font-bold">准备好开始了吗？</h2>
-            <p className="mt-2 text-sm text-muted-foreground">注册免费账户，几秒钟后就能看到 AI 生成的第一个网页。</p>
+            <h2 className="text-xl font-bold">{t("docs.cta.title")}</h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("docs.cta.sub")}</p>
             <Link
               to="/auth"
               search={{ mode: "signup" }}
               className="mt-5 inline-flex rounded-full btn-brand px-6 py-2.5 text-sm font-semibold"
             >
-              免费开始
+              {t("docs.cta.button")}
             </Link>
           </div>
         </main>
