@@ -498,6 +498,119 @@ export async function repairLovableReplyToBundle(
   return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
 }
 
+function buildAppShell(routes: PlannedRoute[], theme: PreviewTheme, brand: string): string {
+  const imports = routes.map((_r, i) => `import Page${i} from './pages/Page${i}';`).join("\n");
+  const routeJsx = routes
+    .map((r, i) => `        <Route path="${r.path}" element={<Page${i} />} />`)
+    .join("\n");
+  const navJsx = routes
+    .map((r) => `<Link key="${r.path}" to="${r.path}" className={loc.pathname === '${r.path}' ? 'active' : ''}>${r.label}</Link>`)
+    .join("");
+  const footLinks = routes.slice(0, 5).map((r) => `<li><Link to="${r.path}">${r.label}</Link></li>`).join("");
+  return `import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import './styles.css';
+${imports}
+
+function Layout({ children }: { children: React.ReactNode }) {
+  const loc = useLocation();
+  return (
+    <div className="page">
+      <header className="topbar">
+        <Link to="/" className="brand">${brand}</Link>
+        <nav>${navJsx}</nav>
+        <Link to="${routes[routes.length - 1]?.path ?? "/"}" className="primary" style={{padding:'8px 14px'}}>开始使用</Link>
+      </header>
+      {children}
+      <footer className="sitefoot">
+        <div className="cols">
+          <div>
+            <h4>${brand}</h4>
+            <p style={{margin:0,lineHeight:1.6}}>${theme.label} 风格 · AI 一键生成的产品站点，结构清晰、视觉精致。</p>
+          </div>
+          <div><h4>产品</h4><ul>${footLinks}</ul></div>
+          <div><h4>资源</h4><ul><li><a href="#">文档</a></li><li><a href="#">更新日志</a></li><li><a href="#">帮助中心</a></li></ul></div>
+          <div><h4>公司</h4><ul><li><a href="#">关于我们</a></li><li><a href="#">联系</a></li><li><a href="#">加入我们</a></li></ul></div>
+        </div>
+        <div className="copy"><span>© 2026 ${brand}. All rights reserved.</span><span>Powered by AI</span></div>
+      </footer>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Layout>
+      <Routes>
+${routeJsx}
+        <Route path="*" element={<Page0 />} />
+      </Routes>
+    </Layout>
+  );
+}
+`;
+}
+
+async function generateOnePage(
+  cfg: AIProviderConfig,
+  route: PlannedRoute,
+  allRoutes: PlannedRoute[],
+  theme: PreviewTheme,
+  brand: string,
+  prompt: string,
+  context: string,
+): Promise<string> {
+  const sys = `你是 Lovable / Vercel / Linear / Stripe 级别的资深前端设计师 + React 工程师。你只输出**一个 React 函数组件**的完整 .tsx 源码（默认导出），不要 Markdown，不要解释，不要 import './styles.css'，不要 import 路由库（路由由外层 App 处理）。可以 import React、useState/useEffect 等。`;
+  const user = `为「${brand}」生成单个页面组件：${route.label}（${route.path}）。
+
+页面意图：${route.brief}
+
+【强制视觉规范——违反任何一条都视为失败】
+1. 体量：组件 60-200 行，至少 4 个明显的视觉区块。
+2. 顶部 <section className="pagehead">：<p className="eyebrow">小标签</p> + <h1>真实主标题</h1> + <p className="lead">2 行副标题</p> + .actions 里放 1 个 .primary + 1 个 .ghost 按钮。
+3. 然后从下列区块**至少选 3 种组合**，按页面意图取舍：
+   - .stats（4 个数据卡，含 .k 标签 / .v 数值 / <small>+12%</small> 趋势）
+   - .grid（6-9 个 .card，每张含 <img className="cover" src="https://picsum.photos/seed/xxx/600/400" /> + h3 + p + .row 含 .price 和 .ghost 按钮 或 .tag）
+   - .features（4-6 个 .feature，每个含 .icon emoji + h3 + p）
+   - .listcard（5-8 个 .listitem，每个 .avatar emoji + .body 含 .title + .meta + .right）
+   - .tablecard（带 table，5-8 行真实数据，状态用 .tag.ok/.warn/.gray）
+   - .formcard（label + input + select + .primary 提交按钮）
+   - .panel（深色 CTA 面板，含 h2 + p + .panel-grid 4 项）
+4. 文案：**真实中文业务文案**，禁止 Lorem / "示例" / "Demo"。卡片标题、价格、人名、地名、商品名、统计数字都要具体、有差异、像真站。
+5. 图：商品/封面统一 <img className="cover" src={"https://picsum.photos/seed/"+seed+"/600/400"} alt={...} />，每张 seed 都不同。
+6. 不要全屏渐变，不要超大孤立 h1，不要满屏只用一种 emoji，不要空白卡片。
+7. 1-2 处用 <span className="gradtxt">关键词</span> 给标题加渐变高亮。
+8. 不要写 import './styles.css'，不要写 BrowserRouter / Routes / Route，只 export default function ...()。
+
+可用 CSS 类（已注入，只能用这些 + 必要内联样式）：
+topbar/brand/page/pagehead/eyebrow/lead/hero/section/section-title/stats/stat/grid/cards/products/card/cover/categories/category/features/feature/listcard/listitem/avatar/formcard/tablecard/tag/tag.ok/tag.warn/tag.gray/panel/panel-grid/searchbar/search/primary/ghost/cta/gradtxt/glow/sitefoot
+
+当前主题：${theme.label}（主色 ${theme.brand}，强调色 ${theme.accent}）。
+其它已有页面：${allRoutes.filter((r) => r.path !== route.path).map((r) => `${r.label}(${r.path})`).join("、") || "无"}
+用户原始需求：${prompt}
+${context ? `\n历史上下文：${context.slice(0, 1500)}` : ""}
+
+直接输出 .tsx 源码：`;
+
+  const res = await chatCompletionNonStream(cfg, {
+    model: cfg.model,
+    messages: [
+      { role: "system", content: sys },
+      { role: "user", content: user },
+    ],
+    temperature: 0.75,
+  });
+  const fallback = `export default function Page() { return <section className="pagehead"><p className="eyebrow">${route.label}</p><h1>${route.label}</h1><p className="lead">${route.brief}</p></section>; }`;
+  if (!res.ok) return fallback;
+  const json = (await res.json().catch(() => null)) as
+    | { choices?: Array<{ message?: { content?: string } }> }
+    | null;
+  let code = stripCodeFence(json?.choices?.[0]?.message?.content ?? "").trim();
+  code = code.replace(/^\s*import\s+['"]\.\/styles\.css['"];?\s*$/gm, "");
+  code = code.replace(/^\s*import\s+\{[^}]*\}\s+from\s+['"]react-router-dom['"];?\s*$/gm, "");
+  if (!/export\s+default/.test(code)) return fallback;
+  return code;
+}
+
 export async function generateSegmentedLovableBundle(
   cfg: AIProviderConfig,
   prompt: string,
@@ -507,49 +620,45 @@ export async function generateSegmentedLovableBundle(
   const planRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
-      { role: "system", content: "你是产品信息架构规划器。只输出 JSON，不要 Markdown。根据用户的增量需求规划可预览网站路由。" },
+      { role: "system", content: "你是产品信息架构规划器。只输出 JSON，不要 Markdown。brief 写清这一页要展示什么（≥20 字）。" },
       {
         role: "user",
         content:
-          `为这个 AI 生成网站需求规划 3-7 个页面路由。必须结合历史上下文做增量修改，保留已有页面，并覆盖用户明确提到的页面（如登录、注册、管理员界面、订单、个人中心等）。输出格式：{"routes":[{"path":"/","label":"首页","brief":"..."}]}。path 只能用小写英文短路径。\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
+          `为这个 AI 生成网站需求规划 3-6 个页面路由（首页最丰富，其它各司其职）。结合历史上下文做增量修改，保留已有页面。输出格式：{"routes":[{"path":"/","label":"首页","brief":"≥20字"}]}。\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
       },
     ],
-    temperature: 0.15,
+    temperature: 0.2,
   });
   const planJson = planRes.ok ? await planRes.json().catch(() => null) : null;
   const planContent = (planJson as { choices?: Array<{ message?: { content?: string } }> } | null)?.choices?.[0]?.message?.content ?? "";
-  const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt);
+  const routes = normalizePlannedRoutes(parseAnyJsonObject(planContent), prompt).slice(0, 6);
 
   const theme = inferTheme(prompt, context);
-  const appRes = await chatCompletionNonStream(cfg, {
-    model: cfg.model,
-    messages: [
-      { role: "system", content: "你是 Lovable 风格 React 多页面代码生成器。只输出 /App.tsx 的完整源码，不要 Markdown，不要解释。只能使用 react 和 react-router-dom。视觉品质对标 Lovable / Linear / Vercel / Stripe 官网。" },
-      {
-        role: "user",
-        content:
-          `生成一个完整可预览多页面网站的 /App.tsx。基础：默认导出 App；import { Routes, Route, Link, useLocation } from 'react-router-dom'；导入 './styles.css'；不要 BrowserRouter；只用 react / react-router-dom；260 行内；中文真实文案；导航 Link 覆盖全部 routes；登录/注册/管理后台/订单/个人中心都是独立完整页面。\n\n【关键：视觉质量对标 Lovable / Linear / Vercel / Stripe，禁止"大白底 + 孤立巨大 h1 + 简陋列表"】每页必须满足：\n1. <header className="topbar"> 含品牌 logo + 主导航（active 高亮）+ 右侧操作按钮。\n2. 主体页头用 <section className="pagehead">：<p className="eyebrow">小标签</p> + <h1>（已被 CSS 限制在 32-44px，不要再写超大字号）+ <p className="lead">副标题描述</p> + 1-2 个 .primary/.ghost 按钮。禁止页面里只有一个孤零零的 h1。\n3. 主体至少 2-3 个不同视觉区块，从下列里选组合：.stats 数据条 / .grid 卡片网格（每卡 emoji icon + 标题 + 描述 + 操作）/ .panel 深色面板 / .tablecard 表格 / .features 横向图标特性列 / .listcard 列表项（含 avatar emoji + 标题 + meta + 标签 + 右侧金额或操作）/ .formcard 表单卡。\n4. 商品/封面图统一 <img className="cover" src={"https://picsum.photos/seed/"+key+"/600/400"} alt="" />；头像用 <span className="avatar">🍜</span>，禁止留空白图位。\n5. 页底 <footer className="sitefoot"> 含品牌简介 + 3-4 列链接 + © 行。\n6. 选 1-2 处用 .gradtxt（标题局部渐变）或 .glow，不要满屏渐变。\n7. 仿站任务（飞猪/淘宝/京东/美团/抖音/小红书/Notion/Apple 等）必须复刻该品牌真实首页结构：标志色、典型版式（电商=Banner+分类九宫格+商品瀑布流；外卖/团购=Banner+分类九宫格+推荐商家卡片；旅游=大搜索+目的地卡；社交=Feed；工具=Hero+Features+Pricing）。\n8. 否则按用户关键词推断风格；不要默认黑白极简。\n\nstyles.css 已注入 CSS 变量 --bg/--ink/--brand/--brand2/--accent/--card/--line/--radius 和大量预设类（.topbar/.brand/.pagehead/.eyebrow/.lead/.hero/.primary/.ghost/.grid/.card/.cover/.avatar/.listcard/.formcard/.stats/.panel/.features/.tablecard/.gradtxt/.glow/.tag/.sitefoot/.searchbar）。优先用这些语义类，少量内联样式做差异化。\n\n当前主题：${theme.label}（主色 ${theme.brand}）。\nroutes=${JSON.stringify(routes)}\n历史上下文：${context || "无"}\n最新需求：${prompt}`,
-      },
-    ],
-    temperature: 0.5,
-  });
-  if (!appRes.ok) return { reply: "", bundle: null, finishReason: "app_failed" };
-  const appJson = (await appRes.json().catch(() => null)) as
-    | { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> }
-    | null;
-  const appCode = stripCodeFence(appJson?.choices?.[0]?.message?.content ?? "");
-  const missingRoute = routes.find((r) => !appCode.includes(`path=\"${r.path}\"`) && !appCode.includes(`path='${r.path}'`));
-  if (!appCode.includes("export default") || !appCode.includes("./styles.css") || missingRoute) {
-    return { reply: appCode, bundle: null, finishReason: "app_invalid" };
-  }
+  const brandMatch = prompt.match(/(飞猪|淘宝|天猫|京东|拼多多|美团|饿了么|抖音|小红书|Bilibili|微信|支付宝|Apple|Notion|GitHub|Starbucks|麦当劳)/i);
+  const brand = brandMatch?.[1] ?? theme.label;
 
-  const cssCode = themedPreviewCss(theme);
-  const bundle = lovableBundleSchema.safeParse({ routes: routes.map(({ path, label }) => ({ path, label })), files: { "/App.tsx": appCode, "/styles.css": cssCode } });
-  if (!bundle.success) return { reply: appCode + "\n\n" + cssCode, bundle: null, finishReason: "bundle_invalid" };
+  // 关键改动：并行生成每一页，每页独立模型调用 → 内容密度远高于单文件
+  const pageCodes = await Promise.all(
+    routes.map((r) => generateOnePage(cfg, r, routes, theme, brand, prompt, context)),
+  );
+
+  const files: Record<string, string> = {
+    "/App.tsx": buildAppShell(routes, theme, brand),
+    "/styles.css": themedPreviewCss(theme),
+  };
+  routes.forEach((_, i) => {
+    files[`/pages/Page${i}.tsx`] = pageCodes[i];
+  });
+
+  const bundle = lovableBundleSchema.safeParse({
+    routes: routes.map(({ path, label }) => ({ path, label })),
+    files,
+  });
+  if (!bundle.success) return { reply: "", bundle: null, finishReason: "bundle_invalid" };
   return {
-    reply: `已生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
+    reply: `已生成可预览网页（${routes.length} 页，每页独立生成以提升质量）。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
     bundle: { ...bundle.data, files: patchReactImports(bundle.data.files) },
-    finishReason: "segmented",
+    finishReason: "segmented_parallel",
   };
 }
 
