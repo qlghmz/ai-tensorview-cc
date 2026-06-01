@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { FeedbackButton } from "@/components/FeedbackButton";
 import { MobileWarningBanner } from "@/components/MobileWarningBanner";
 import { detectLangClient } from "@/lib/lang";
+import { getServerLang } from "@/lib/lang.functions";
 import type { Lang } from "@/lib/i18n-dict";
 import { dict } from "@/lib/i18n-dict";
 
@@ -32,16 +33,15 @@ function NotFoundComponent() {
 }
 
 /**
- * Detect the visitor's language on every request. On the server we read the
- * Cloudflare `cf-ipcountry` header (CN → zh, everything else → en). On the
- * client we read pinned cookie/localStorage. Returned `lang` flows into the
- * router context and is read by per-route `head()` functions for SEO meta.
+ * Detect the visitor's language on every request. On the server the server
+ * fn handler runs inline and reads the Cloudflare `cf-ipcountry` header /
+ * cookies. On the client we skip the RPC roundtrip and read pinned
+ * cookie/localStorage/navigator directly.
  */
 async function detectLang(): Promise<Lang> {
   if (typeof window === "undefined") {
     try {
-      const mod = await import("@/lib/lang.server");
-      return mod.detectLangServer();
+      return await getServerLang();
     } catch {
       return "en";
     }
