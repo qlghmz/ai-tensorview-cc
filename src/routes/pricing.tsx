@@ -120,12 +120,12 @@ function PricingPage() {
         <main className="mx-auto max-w-[1200px] px-6 py-20">
           <div className="text-center">
             <div className="inline-flex items-center gap-2 rounded-full glass px-4 py-1.5 text-xs text-muted-foreground">
-              <Sparkles className="h-3 w-3 text-brand" /> 简单透明，按月订阅，随时取消
+              <Sparkles className="h-3 w-3 text-brand" /> {t("pricing.badge")}
             </div>
             <h1 className="mt-5 text-4xl md:text-6xl font-bold">
-              选个适合你的<span className="text-gradient">方案</span>
+              {t("pricing.heroTitle.1")}<span className="text-gradient">{t("pricing.heroTitle.2")}</span>
             </h1>
-            <p className="mt-4 text-muted-foreground">从免费试用到团队协作，按需扩展，无套路。</p>
+            <p className="mt-4 text-muted-foreground">{t("pricing.heroSub")}</p>
           </div>
 
           <div className="mt-14 grid gap-5 md:grid-cols-3 max-w-5xl mx-auto">
@@ -136,7 +136,7 @@ function PricingPage() {
               >
                 {p.highlight && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full btn-brand px-3 py-1 text-xs font-semibold">
-                    最受欢迎
+                    {t("pricing.popular")}
                   </div>
                 )}
                 <div className="text-sm text-muted-foreground">{p.name}</div>
@@ -172,25 +172,22 @@ function PricingPage() {
                 <WalletCards className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="text-lg font-semibold">支付与收款</h2>
-                <p className="mt-2 text-sm text-muted-foreground leading-6">
-                  国际卡支付会接入 Paddle，适合海外用户；国内用户更习惯支付宝和微信支付，通常需要单独接入国内支付通道。
-                  Paddle 的款项会进入你的 Paddle 商户余额，完成审核和绑定收款账户后提现；支付宝/微信则进入对应商户号。
-                </p>
+                <h2 className="text-lg font-semibold">{t("pricing.payments.title")}</h2>
+                <p className="mt-2 text-sm text-muted-foreground leading-6">{t("pricing.payments.body")}</p>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-border px-3 py-1">Paddle：海外卡/订阅</span>
-                  <span className="rounded-full border border-border px-3 py-1">支付宝：国内用户</span>
-                  <span className="rounded-full border border-border px-3 py-1">微信支付：国内用户</span>
+                  <span className="rounded-full border border-border px-3 py-1">{t("pricing.payments.paddle")}</span>
+                  <span className="rounded-full border border-border px-3 py-1">{t("pricing.payments.alipay")}</span>
+                  <span className="rounded-full border border-border px-3 py-1">{t("pricing.payments.wechat")}</span>
                 </div>
               </div>
             </div>
           </section>
 
           <div className="mt-16 text-center text-sm text-muted-foreground">
-            还有疑问？查看
-            <Link to="/docs" className="text-brand hover:underline mx-1">使用文档</Link>
-            或
-            <a href="mailto:support@tensorview.cc" className="text-brand hover:underline mx-1">联系我们</a>
+            {t("pricing.help.prefix")}
+            <Link to="/docs" className="text-brand hover:underline mx-1">{t("pricing.help.docs")}</Link>
+            {t("pricing.help.or")}
+            <a href="mailto:support@tensorview.cc" className="text-brand hover:underline mx-1">{t("pricing.help.contact")}</a>
           </div>
         </main>
         <SiteFooter />
