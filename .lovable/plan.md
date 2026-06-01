@@ -1,121 +1,82 @@
 
-## 目标
+## 思路（参考 Lovable 的方式）
 
-在不破坏现有功能（中文界面 + 多页 i18n + EdgeOne 一键发布 + AI 生成）的前提下：
+Lovable 遇到"需要后端 / 第三方 API"时不会闷头硬写，而是：
+1. 在 chat 里先抛出 **plan 卡片**，列出 2–3 个方案 + 利弊；
+2. 用户选完，再要 Key（如果需要）；
+3. 然后才写代码。
 
-1. **多平台发布**：发布弹窗里让用户在两个 Tab 之间二选一
-   - 国内：腾讯云 EdgeOne（已有，保留）
-   - 海外：Vercel（新增）
-2. **账号模式（参考 Lovable）**：用户带自己的 Token，平台不代付费
-   - 弹窗里有「去 Vercel 创建 Token」按钮，直接深链到 `https://vercel.com/account/tokens?name=TensorView&expiration=never`
-   - 用户粘贴一次，平台加密保存到他自己的账号下（`user_deploy_tokens` 表，仅本人可读写），下次直接复用
-   - 不做完整 OAuth（Vercel OAuth 需要审批且要回调 URL 备案，对国内项目不划算）
-3. **生成内容升级：页面 + 后端接口**
-   - AI 输出新增可选的 `api/*.ts` 文件（Vercel Serverless / Edge Function 格式）
-   - 部署到 Vercel：原样工作
-   - 部署到 EdgeOne：仅打包静态页（保持现状），UI 上提示"含后端的项目建议部署到 Vercel"
-4. **自定义域名**：本轮不做（按你的要求）
+我们把这套搬到自己的生成器里：让 AI 在生成前自己判断"这页面要不要后端"，要的话先发 plan，而不是默认搞个假表单。
 
-## 用户流程
+---
 
-```text
-点击「发布」
-  ├─ Tab 1 国内 EdgeOne                ← 现有流程，按钮文案微调
-  │     [立即发布] → *.edgeone.app
-  │
-  └─ Tab 2 海外 Vercel                 ← 新增
-        ① 首次：输入框 + [去 Vercel 拿 Token ↗]
-           粘贴 Token → [保存并发布]
-        ② 已保存：直接 [发布到 Vercel]   (旁边小字「更换 Token」)
-        部署中 → 拉取状态 → *.vercel.app
-```
+## 1. 生成侧：加一个"plan-first"前置节点
 
-## 技术实现
+修改 `src/lib/ai-generate-shared.ts` 里的多页并行生成流程，前面加一步 **意图扫描**：
 
-### 1. 数据库（迁移）
-新增 `public.user_deploy_tokens`：
-- `user_id uuid` (FK auth.users)
-- `provider text` ('vercel' | 'netlify' 预留)
-- `token_encrypted text`（用 pgsodium / 简单 base64 + service role 隔离，仅 service_role 可读明文）
-- `vercel_team_id text nullable`
-- unique(user_id, provider)
-- RLS: 用户只能 `select`/`delete` 自己的行（看是否存在），写入和读明文走 service_role 的 server fn。
-
-在 `projects` 表加：
-- `vercel_project_id text nullable`
-- `vercel_deployment_url text nullable`
-
-### 2. 服务端（TanStack server fn，不用 Edge Function）
-
-新建 `src/server/vercel-deploy.functions.ts`：
-- `saveVercelToken({ token, teamId? })`：校验 Token（GET `https://api.vercel.com/v2/user`），存库
-- `getVercelTokenStatus()`：仅返回 `{ hasToken: true/false, scope }`，永不回传明文
-- `deleteVercelToken()`
-- `publishToVercel({ projectId })`：
-  1. service_role 取明文 Token
-  2. 复用 `buildPublishedHtml` 拿到 `index.html`
-  3. 把当前项目的 `api/*` 文件（来自 Lovable bundle）一起打包
-  4. 调 Vercel `POST /v13/deployments`，body: `{ name, files: [...], projectSettings: { framework: null } }`，files 用 `file` + `data`（base64）字段
-  5. 轮询 `GET /v13/deployments/{id}` 直到 `READY`，回写 `vercel_deployment_url` + `is_public=true`
-
-> Vercel REST 直接接受 files 数组，不用 git；同一个 `name` 第二次部署会自动落到同一个 project。
-
-### 3. AI 生成扩展（增量，不改现有页面生成）
-
-`src/lib/ai-generate-shared.ts`：
-- system prompt 末尾追加：如果用户需求里有"接口/后端/表单提交/保存数据"等关键词，输出额外 `api/*.ts` 文件，签名固定为：
-  ```ts
-  export default async function handler(req: Request): Promise<Response> { ... }
+- 第 1 次 model 调用：只让模型读用户 prompt，输出 JSON：
   ```
-  （这是 Vercel Edge Runtime 标准，也方便我们自己后续兼容 Cloudflare/EdgeOne Workers）
-- `LovableBundle` 类型已经是 `Record<filename, content>`，把 `api/foo.ts` 一起塞进去即可，前端 sandpack 预览忽略（只渲染 html/css/js），部署时打包进去。
+  { needsBackend: boolean,
+    backendFeatures: ["sms_otp", "email_login", "form_submit", "payment", ...],
+    proposal: { title, options: [{label, desc, requires:["ALI_SMS_*"]}, ...] } }
+  ```
+- 如果 `needsBackend=false`：走老逻辑，直接生成多页。
+- 如果 `needsBackend=true`：**不生成代码**，而是把 `proposal` 作为一条 assistant 消息回到 chat（前端渲染成"方案卡片 + 选项按钮"），等用户回复"用方案 A / B / C"后再继续。
 
-### 4. UI 调整
+每个能力对应一个"后端配方"（写死的 prompt 片段 + 需要的 env 列表）。首批支持：
+- **短信验证码**：方案 A=前端 Mock（验证码弹窗显示，零成本），方案 B=阿里云短信（需 `ALI_SMS_ACCESS_KEY_ID/SECRET/SIGN_NAME/TEMPLATE_CODE`）。默认推荐 A。
+- **邮箱注册/登录**：方案 A=前端 localStorage Mock，方案 B=接 Lovable AI Gateway 旁的轻量邮件服务（已有 LOVABLE_API_KEY 体系），方案 C=接用户自己的 Resend Key。
+- **表单提交 / 留言**：方案 A=Mock，方案 B=写一个 `/api/contact.ts` serverless，落到 webhook（用户给 URL）。
+- **支付**：始终 Mock，提示"上线请接 Stripe/支付宝"。
 
-`src/components/PublishDialog.tsx` 重构成 Tabs：
-- 顶部两个 Tab：国内（EdgeOne）/ 海外（Vercel），默认根据当前语言（中文=EdgeOne，英文=Vercel）
-- EdgeOne Tab：完整保留现有 UI
-- Vercel Tab：新增子组件 `VercelDeployPanel`
-  - 未配 Token：输入框 + 「去 Vercel 拿 Token」按钮（target=_blank）+ 一行小说明「Token 只在你的账号下使用，平台加密保存」
-  - 已配 Token：显示 Token 后 4 位 + 「发布」按钮 + 「更换」链接
-  - 部署中：spinner + 当前阶段提示
-  - 完成：复制链接、打开链接、重新部署
-- 全部文案接 `t()`（中英文都覆盖）
+用户选完，AI 在下一轮：
+- 生成对应的 `/api/*.ts`（Web 标准 Request/Response，Vercel & EdgeOne Pages Functions 都能跑）；
+- 在前端 form 里把 fetch 接到 `/api/...`；
+- 如果方案需要 Key，在 chat 里**用 add_secret 工具向客户索要**（参考 Lovable）。
 
-### 5. i18n
-`src/lib/i18n-dict.ts` 新增一组 `publish.vercel.*` / `publish.edgeone.*` / `publish.tabs.*` 键值。
+> 关键：plan 决策是模型生成的，不是我硬编码的清单。我只提供"已知能力→需要哪些 env"的配方表，模型自由组合。
 
-### 6. 安全
-- Vercel Token 只在 server fn + service_role 路径下解密使用；前端永不出现明文（即便回显也只显示尾 4 位）
-- `saveVercelToken` 调一次 `https://api.vercel.com/v2/user` 校验有效性，失败直接拒收
-- RLS：`user_deploy_tokens` 用户只能看到 "我有没有 token"，看不到明文；明文路径走 service_role
-- 部署接口加积分扣费（沿用 `consume_credits`，例如每次 Vercel 部署 2 分），admin 用户不扣
+## 2. Key 注入到客户的部署里
 
-### 7. 不影响的范围（明确列出，避免误改）
-- 不动 `src/integrations/supabase/*`
-- 不动现有 EdgeOne server fn / RPC
-- 不动 i18n 检测、SEO head、auth、积分核心逻辑
-- 不动 sandpack 预览（api 文件忽略即可）
-- 不动现有路由结构
+客户填的 `ALI_SMS_*` 这种业务 Key，存到 `user_deploy_tokens` 表新加的 `env_vars jsonb` 字段（加密同样用 deploy-token-crypto）。部署时：
+- **Vercel**：调 `POST /v10/projects/{id}/env` 把这些 env 推上去；
+- **EdgeOne**：当前我们用的"一次性 HTML 托管"接口不支持 env，所以生成"含后端"的站点时，EdgeOne 这一栏置灰，提示"需切到 Vercel 才能部署后端"。
+
+## 3. 修复部署链接 Bug（图二的 `expected POST method. Got GET`）
+
+复现确认：那条 `ai.tensorview.cc/_serverFn/...` 其实是 TanStack 给 `publishToEdgeOne` 这个 serverFn 自动生成的内部 RPC 端点。
+
+**根因**：当 EdgeOne 接口偶发返回非 JSON / 空 body 时，前端 `res.url` 是 `undefined`，但旧代码没拦住就 `setCurrentUrl(undefined)`，然后某次 useEffect 把 fallback 写成了 RPC URL；或者更可能——`fetch('/api/public/indexnow', …)` 这类相对路径在某个浏览器扩展里被替换。但直接证据是 PublishDialog 把 `res.url` 当真。
+
+修法（小改，定位精准）：
+1. `edgeone-deploy.functions.ts` 里 deploy 成功后**再加一层防御**：URL 必须满足 `/^https:\/\/.+\.edgeone\.(app|site)/`，否则 throw。
+2. `PublishDialog.tsx` 的 `<a href={currentUrl}>`：只有当 `currentUrl` 通过同样正则才渲染，否则显示 "部署返回异常，请重试" + 把原始返回打到 toast。
+3. 数据库里那条已经污染的 `published_url`：加个 migration，把所有以 `/_serverFn/` 结尾的 `published_url` 清成 null。
+
+## 4. 顺手把 UI 文案接上
+
+`i18n-dict.ts` 加：
+- `publish.edgeone.invalidUrl`
+- `chat.backendPlan.title` / `.pickOption` / `.needsKey`
+- 短信/邮件方案卡片用到的文案。
+
+---
 
 ## 文件清单
 
-新增：
-- `supabase/migrations/<timestamp>_user_deploy_tokens.sql`
-- `src/server/vercel-deploy.functions.ts`
-- `src/components/publish/VercelDeployPanel.tsx`
-- `src/components/publish/EdgeOneDeployPanel.tsx`（把现有 PublishDialog 内部抽出来）
+- `src/lib/ai-generate-shared.ts`：加 plan-first 阶段 + 配方表
+- `src/lib/backend-recipes.ts`（新）：能力→env→prompt 片段
+- `src/components/lovable/...` 聊天气泡：新增"方案卡片"渲染分支
+- `src/server/vercel-deploy.functions.ts`：部署时同步 env_vars
+- `src/server/edgeone-deploy.functions.ts`：URL 严格校验
+- `src/components/PublishDialog.tsx`：URL 校验 + 错误提示
+- `supabase/migrations/...`：`user_deploy_tokens.env_vars jsonb` + 清洗脏 `published_url`
+- `src/lib/i18n-dict.ts`：文案
 
-修改：
-- `src/components/PublishDialog.tsx`（改成 Tabs 外壳）
-- `src/lib/i18n-dict.ts`（新增发布相关词条）
-- `src/lib/ai-generate-shared.ts`（system prompt 增加可选 api 文件指令）
-- `src/lib/publish-snapshot.ts`（导出一个把 bundle 拆成 `{ staticFiles, apiFiles }` 的小工具）
+## 不会动
 
-## 验证步骤
+之前生成的 EdgeOne / Vercel 流程主干、auth、积分、UI 主题——只新增，不重写。
 
-1. 现有 EdgeOne 发布流程跑通（回归）
-2. Vercel：未配 Token → 弹输入框 → 拿 Token → 保存 → 触发部署 → 拿到 `*.vercel.app` 链接
-3. 生成一个带「保存留言到接口」需求的项目 → AI 输出 `api/save.ts` → 部署到 Vercel → curl 接口能返回 200
-4. 中英文切换，所有发布相关文案都对
-5. 重新部署同一项目 → 用同一个 vercel_project_id，不会冒出新项目
+---
+
+确认这个方向我就开干。要不要把"plan-first"也用到非后端场景（比如"做电商还是做博客"这种大方向也先 plan）？默认我**只对后端能力 plan**，避免拖慢普通生成。

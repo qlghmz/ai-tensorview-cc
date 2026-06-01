@@ -8,6 +8,12 @@ import {
   type LovableBundle,
 } from "@/lib/lovable-bundle";
 import { chatCompletionNonStream, type AIProviderConfig } from "@/lib/ai-config";
+import {
+  detectBackendNeeds,
+  isPlanConfirmed,
+  renderPlanMessage,
+  extractConfirmedOptions,
+} from "@/lib/backend-recipes";
 
 export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
@@ -558,6 +564,7 @@ async function generateOnePage(
   brand: string,
   prompt: string,
   context: string,
+  backendHint = "",
 ): Promise<string> {
   const sys = `你是 Lovable / Vercel / Linear / Stripe 级别的资深前端设计师 + React 工程师。你只输出**一个 React 函数组件**的完整 .tsx 源码（默认导出），不要 Markdown，不要解释，不要 import './styles.css'，不要 import 路由库（路由由外层 App 处理）。可以 import React、useState/useEffect 等。`;
   const user = `为「${brand}」生成单个页面组件：${route.label}（${route.path}）。
@@ -588,6 +595,7 @@ topbar/brand/page/pagehead/eyebrow/lead/hero/section/section-title/stats/stat/gr
 其它已有页面：${allRoutes.filter((r) => r.path !== route.path).map((r) => `${r.label}(${r.path})`).join("、") || "无"}
 用户原始需求：${prompt}
 ${context ? `\n历史上下文：${context.slice(0, 1500)}` : ""}
+${backendHint}
 
 直接输出 .tsx 源码：`;
 
@@ -617,6 +625,30 @@ export async function generateSegmentedLovableBundle(
   messages?: Array<{ role: string; content: string }>,
 ): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
   const context = compactGenerationContext(messages);
+
+  // ===== Plan-first：检测后端能力，未确认就先抛 plan 卡片 =====
+  const detected = detectBackendNeeds(prompt);
+  const confirmed = isPlanConfirmed(messages);
+  if (detected.needsBackend && !confirmed) {
+    return {
+      reply: renderPlanMessage(detected.recipes),
+      bundle: null,
+      finishReason: "needs_backend_plan",
+    };
+  }
+
+  // 已确认 → 把方案 prompt 片段注入到后续 page 生成
+  let backendHint = "";
+  if (detected.needsBackend && confirmed) {
+    const lastUser = [...(messages ?? [])].reverse().find((m) => m.role === "user")?.content ?? prompt;
+    const picks = extractConfirmedOptions(detected.recipes, lastUser);
+    if (picks.length) {
+      backendHint =
+        "\n\n## 后端实现要求（客户已确认方案，必须严格按此实现）\n" +
+        picks.map((p) => `- ${p.option.label}：${p.option.promptHint}`).join("\n");
+    }
+  }
+
   const planRes = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
@@ -639,7 +671,7 @@ export async function generateSegmentedLovableBundle(
 
   // 关键改动：并行生成每一页，每页独立模型调用 → 内容密度远高于单文件
   const pageCodes = await Promise.all(
-    routes.map((r) => generateOnePage(cfg, r, routes, theme, brand, prompt, context)),
+    routes.map((r) => generateOnePage(cfg, r, routes, theme, brand, prompt, context, backendHint)),
   );
 
   const files: Record<string, string> = {
@@ -675,7 +707,7 @@ export async function persistGenerationResult(
   if (bundle) bundle = { ...bundle, files: patchReactImports(bundle.files) };
 
   let savedReply = reply;
-  if (!bundle) {
+  if (!bundle && finishReason !== "needs_backend_plan") {
     if (finishReason === "length" || isReplyTruncated(reply)) {
       savedReply =
         "⚠️ 生成失败：模型多次续写后仍未返回完整代码，已记录失败原因。";

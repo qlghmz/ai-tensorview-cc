@@ -44,7 +44,10 @@ async function deployHtmlToEdgeOne(html: string): Promise<string> {
     throw new Error(`EdgeOne 部署失败: ${depRes.status} ${txt.slice(0, 200)}`);
   }
   const { url } = (await depRes.json()) as EdgeOneDeployResp;
-  if (!url || !/^https?:\/\//.test(url)) throw new Error("EdgeOne 返回的 URL 无效: " + String(url));
+  // 严格校验：必须是 edgeone 域名，避免把内部 serverFn URL 当成结果
+  if (!url || !/^https:\/\/[^/]+\.edgeone\.(app|site|run)(\/|$)/i.test(url)) {
+    throw new Error("EdgeOne 返回的 URL 无效，部署可能未生效：" + String(url ?? "(空)"));
+  }
   return url;
 }
 
