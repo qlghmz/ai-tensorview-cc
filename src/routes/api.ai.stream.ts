@@ -54,7 +54,7 @@ export const Route = createFileRoute("/api/ai/stream")({
 
               let reply = generated.reply;
               let finishReason = generated.finishReason;
-              if (!generated.bundle) finishReason = "force_fallback";
+              if (!generated.bundle && finishReason !== "needs_backend_plan") finishReason = "force_fallback";
 
               const saved = await persistGenerationResult(
                 supabase,
