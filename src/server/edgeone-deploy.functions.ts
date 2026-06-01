@@ -44,7 +44,7 @@ async function deployHtmlToEdgeOne(html: string): Promise<string> {
     throw new Error(`EdgeOne 部署失败: ${depRes.status} ${txt.slice(0, 200)}`);
   }
   const { url } = (await depRes.json()) as EdgeOneDeployResp;
-  if (!url) throw new Error("EdgeOne 未返回 URL");
+  if (!url || !/^https?:\/\//.test(url)) throw new Error("EdgeOne 返回的 URL 无效: " + String(url));
   return url;
 }
 
