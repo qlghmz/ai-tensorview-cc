@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { useI18n } from "@/lib/i18n";
+import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
