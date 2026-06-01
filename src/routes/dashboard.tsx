@@ -6,9 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
+import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
-import { zhCN } from "date-fns/locale";
+import { zhCN, enUS } from "date-fns/locale";
 
 const searchSchema = z.object({
   prompt: z.string().optional(),
@@ -30,6 +31,7 @@ function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const { t, lang } = useI18n();
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [prompt, setPrompt] = useState(search.prompt ?? "");
   const [creating, setCreating] = useState(false);
@@ -46,10 +48,10 @@ function Dashboard() {
       .select("id, name, description, updated_at")
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
-        if (error) toast.error("加载项目失败");
+        if (error) toast.error(t("dash.toast.loadFail"));
         setProjects(data ?? []);
       });
-  }, [user]);
+  }, [user, t]);
 
   const create = async () => {
     if (!user || !prompt.trim()) return;
@@ -61,10 +63,10 @@ function Dashboard() {
         .insert({ user_id: user.id, name, description: prompt })
         .select()
         .single();
-      if (error || !data) throw error ?? new Error("创建失败");
+      if (error || !data) throw error ?? new Error(t("dash.toast.createFail"));
       navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial: prompt } });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "创建失败");
+      toast.error(err instanceof Error ? err.message : t("dash.toast.createFail"));
     } finally {
       setCreating(false);
     }
@@ -72,9 +74,9 @@ function Dashboard() {
 
   const del = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (error) return toast.error("删除失败");
+    if (error) return toast.error(t("dash.toast.delFail"));
     setProjects((prev) => prev?.filter((p) => p.id !== id) ?? null);
-    toast.success("已删除");
+    toast.success(t("dash.toast.delOk"));
   };
 
   if (authLoading || !user) {
@@ -94,9 +96,9 @@ function Dashboard() {
         <main className="mx-auto max-w-[1100px] px-6 py-10">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold">
-              你想<span className="text-gradient">创造</span>什么？
+              {t("dash.title.1")}<span className="text-gradient">{t("dash.title.2")}</span>{t("dash.title.3")}
             </h1>
-            <p className="mt-3 text-muted-foreground">用一句话描述，立即生成。</p>
+            <p className="mt-3 text-muted-foreground">{t("dash.subtitle")}</p>
           </div>
 
           <div className="mt-8 max-w-2xl mx-auto glass rounded-3xl p-2 shadow-[var(--shadow-card)]">
@@ -106,7 +108,7 @@ function Dashboard() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !creating && create()}
-                placeholder="描述你想要的网站..."
+                placeholder={t("dash.input.placeholder")}
                 className="flex-1 bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground"
               />
               <button
@@ -121,14 +123,14 @@ function Dashboard() {
 
           {/* Projects */}
           <div className="mt-16">
-            <h2 className="text-xl font-semibold mb-5">我的项目</h2>
+            <h2 className="text-xl font-semibold mb-5">{t("dash.projects.title")}</h2>
             {projects === null ? (
               <div className="grid place-items-center py-20">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : projects.length === 0 ? (
               <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
-                还没有项目。在上方输入想法，开始创造吧 ✨
+                {t("dash.projects.empty")}
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -158,20 +160,20 @@ function Dashboard() {
                         <button
                           onClick={() => setRenaming(p)}
                           className="text-muted-foreground hover:text-brand transition"
-                          title="重命名"
+                          title={t("dash.project.rename")}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => del(p.id)}
                           className="text-muted-foreground hover:text-destructive transition"
-                          title="删除"
+                          title={t("dash.project.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true, locale: zhCN })}更新
+                        {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true, locale: lang === "zh" ? zhCN : enUS })}{t("dash.project.updatedSuffix")}
                       </div>
                     </div>
                   </div>
