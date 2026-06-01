@@ -564,6 +564,7 @@ async function generateOnePage(
   brand: string,
   prompt: string,
   context: string,
+  backendHint = "",
 ): Promise<string> {
   const sys = `你是 Lovable / Vercel / Linear / Stripe 级别的资深前端设计师 + React 工程师。你只输出**一个 React 函数组件**的完整 .tsx 源码（默认导出），不要 Markdown，不要解释，不要 import './styles.css'，不要 import 路由库（路由由外层 App 处理）。可以 import React、useState/useEffect 等。`;
   const user = `为「${brand}」生成单个页面组件：${route.label}（${route.path}）。
