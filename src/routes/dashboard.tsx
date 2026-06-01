@@ -31,6 +31,7 @@ function Dashboard() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const search = Route.useSearch();
+  const { t, lang } = useI18n();
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [prompt, setPrompt] = useState(search.prompt ?? "");
   const [creating, setCreating] = useState(false);
@@ -47,10 +48,10 @@ function Dashboard() {
       .select("id, name, description, updated_at")
       .order("updated_at", { ascending: false })
       .then(({ data, error }) => {
-        if (error) toast.error("加载项目失败");
+        if (error) toast.error(t("dash.toast.loadFail"));
         setProjects(data ?? []);
       });
-  }, [user]);
+  }, [user, t]);
 
   const create = async () => {
     if (!user || !prompt.trim()) return;
@@ -62,10 +63,10 @@ function Dashboard() {
         .insert({ user_id: user.id, name, description: prompt })
         .select()
         .single();
-      if (error || !data) throw error ?? new Error("创建失败");
+      if (error || !data) throw error ?? new Error(t("dash.toast.createFail"));
       navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial: prompt } });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "创建失败");
+      toast.error(err instanceof Error ? err.message : t("dash.toast.createFail"));
     } finally {
       setCreating(false);
     }
@@ -73,9 +74,9 @@ function Dashboard() {
 
   const del = async (id: string) => {
     const { error } = await supabase.from("projects").delete().eq("id", id);
-    if (error) return toast.error("删除失败");
+    if (error) return toast.error(t("dash.toast.delFail"));
     setProjects((prev) => prev?.filter((p) => p.id !== id) ?? null);
-    toast.success("已删除");
+    toast.success(t("dash.toast.delOk"));
   };
 
   if (authLoading || !user) {
