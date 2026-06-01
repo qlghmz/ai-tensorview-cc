@@ -707,7 +707,7 @@ export async function persistGenerationResult(
   if (bundle) bundle = { ...bundle, files: patchReactImports(bundle.files) };
 
   let savedReply = reply;
-  if (!bundle) {
+  if (!bundle && finishReason !== "needs_backend_plan") {
     if (finishReason === "length" || isReplyTruncated(reply)) {
       savedReply =
         "⚠️ 生成失败：模型多次续写后仍未返回完整代码，已记录失败原因。";
