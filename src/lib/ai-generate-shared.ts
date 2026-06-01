@@ -671,7 +671,7 @@ export async function generateSegmentedLovableBundle(
 
   // 关键改动：并行生成每一页，每页独立模型调用 → 内容密度远高于单文件
   const pageCodes = await Promise.all(
-    routes.map((r) => generateOnePage(cfg, r, routes, theme, brand, prompt, context)),
+    routes.map((r) => generateOnePage(cfg, r, routes, theme, brand, prompt, context, backendHint)),
   );
 
   const files: Record<string, string> = {
