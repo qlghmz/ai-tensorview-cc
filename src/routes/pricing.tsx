@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n";
+import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { createOrder } from "@/server/orders.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import {
@@ -20,23 +21,14 @@ import payAlipay from "@/assets/pay-alipay.jpg";
 import payWechat from "@/assets/pay-wechat.png";
 
 export const Route = createFileRoute("/pricing")({
-  head: () => ({
-    meta: [
-      { title: "TensorView AI 定价 — 灵活套餐，免费开始 | Pricing" },
-      {
-        name: "description",
-        content:
-          "TensorView AI 定价方案：免费开始构建 AI 网页应用，按需升级享受高级托管、自定义域名与更多 AI 生成额度。支持微信、支付宝。",
-      },
-      { property: "og:title", content: "TensorView AI 定价 — 灵活套餐，免费开始" },
-      {
-        property: "og:description",
-        content: "查看 TensorView AI 价格方案，从免费版开始，升级解锁高级托管、自定义域名与高额 AI 生成。",
-      },
-      { property: "og:url", content: "https://ai.tensorview.cc/pricing" },
-    ],
-    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/pricing" }],
-  }),
+  loader: ({ context }) => ({ lang: (context as { lang?: "zh" | "en" }).lang ?? "en" }),
+  head: ({ loaderData }) => {
+    const lang = pickLang(loaderData);
+    return {
+      meta: localizedMeta(lang, "seo.pricing.title", "seo.pricing.desc", "/pricing"),
+      links: localizedLinks("/pricing"),
+    };
+  },
   component: PricingPage,
 });
 

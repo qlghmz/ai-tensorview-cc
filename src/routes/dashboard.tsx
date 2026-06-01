@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { useI18n } from "@/lib/i18n";
+import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
@@ -17,6 +18,17 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (s) => searchSchema.parse(s),
+  loader: ({ context }) => ({ lang: (context as { lang?: "zh" | "en" }).lang ?? "en" }),
+  head: ({ loaderData }) => {
+    const lang = pickLang(loaderData);
+    return {
+      meta: [
+        ...localizedMeta(lang, "seo.dashboard.title", "seo.dashboard.desc", "/dashboard"),
+        { name: "robots", content: "noindex, follow" },
+      ],
+      links: localizedLinks("/dashboard"),
+    };
+  },
   component: Dashboard,
 });
 

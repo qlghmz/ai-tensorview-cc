@@ -6,9 +6,21 @@ import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { CreditsPanel } from "@/components/CreditsPanel";
 import { useI18n } from "@/lib/i18n";
+import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/settings")({
+  loader: ({ context }) => ({ lang: (context as { lang?: "zh" | "en" }).lang ?? "en" }),
+  head: ({ loaderData }) => {
+    const lang = pickLang(loaderData);
+    return {
+      meta: [
+        ...localizedMeta(lang, "seo.settings.title", "seo.settings.desc", "/settings"),
+        { name: "robots", content: "noindex, follow" },
+      ],
+      links: localizedLinks("/settings"),
+    };
+  },
   component: SettingsPage,
 });
 

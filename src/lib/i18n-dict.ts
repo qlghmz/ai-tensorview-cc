@@ -120,6 +120,8 @@ const zh = {
 
   "seo.dashboard.title": "我的项目 — TensorView",
   "seo.dashboard.desc": "在 TensorView 仪表盘管理你的 AI 网页项目。",
+  "seo.settings.title": "账户设置 — TensorView",
+  "seo.settings.desc": "管理你的 TensorView 账户信息、语言偏好、密码与积分。",
 
   // --------- Auth page ---------
   "auth.signin.title": "欢迎回来",
@@ -413,6 +415,8 @@ const en: Record<keyof typeof zh, string> = {
 
   "seo.dashboard.title": "My projects — TensorView",
   "seo.dashboard.desc": "Manage your AI-generated website projects on TensorView.",
+  "seo.settings.title": "Account settings — TensorView",
+  "seo.settings.desc": "Manage your TensorView account, language preference, password and credits.",
 
   // --------- Auth page ---------
   "auth.signin.title": "Welcome back",
