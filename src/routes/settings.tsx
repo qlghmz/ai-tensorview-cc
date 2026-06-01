@@ -183,37 +183,37 @@ function LanguageSection() {
 }
 
 function PasswordSection() {
-
+  const { t } = useI18n();
   const [pwd, setPwd] = useState("");
   const [pwd2, setPwd2] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    if (pwd.length < 6) return toast.error("密码至少 6 位");
-    if (pwd !== pwd2) return toast.error("两次输入不一致");
+    if (pwd.length < 6) return toast.error(t("settings.password.toast.short"));
+    if (pwd !== pwd2) return toast.error(t("settings.password.toast.mismatch"));
     setBusy(true);
     const { error } = await supabase.auth.updateUser({ password: pwd });
     setBusy(false);
     if (error) return toast.error(error.message);
     setPwd("");
     setPwd2("");
-    toast.success("密码已更新");
+    toast.success(t("settings.password.toast.ok"));
   };
 
   return (
     <section className="glass rounded-3xl p-6 mt-5">
       <div className="flex items-center gap-2 mb-1">
         <Lock className="h-4 w-4 text-brand" />
-        <div className="font-semibold">修改密码</div>
+        <div className="font-semibold">{t("settings.password.title")}</div>
       </div>
-      <p className="text-sm text-muted-foreground mb-4">直接设置新密码，无需邮箱验证。</p>
+      <p className="text-sm text-muted-foreground mb-4">{t("settings.password.sub")}</p>
       <div className="space-y-3">
         <div className="flex items-center gap-3 rounded-xl bg-input border border-border px-3 py-2.5 focus-within:border-brand transition">
           <input
             type="password"
             value={pwd}
             onChange={(e) => setPwd(e.target.value)}
-            placeholder="新密码（至少 6 位）"
+            placeholder={t("settings.password.new.placeholder")}
             className="flex-1 bg-transparent outline-none text-sm"
           />
         </div>
@@ -222,7 +222,7 @@ function PasswordSection() {
             type="password"
             value={pwd2}
             onChange={(e) => setPwd2(e.target.value)}
-            placeholder="再次输入新密码"
+            placeholder={t("settings.password.confirm.placeholder")}
             className="flex-1 bg-transparent outline-none text-sm"
           />
         </div>
@@ -232,7 +232,7 @@ function PasswordSection() {
           className="rounded-xl btn-brand px-5 py-2.5 text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-40"
         >
           {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lock className="h-4 w-4" />}
-          更新密码
+          {t("settings.password.submit")}
         </button>
       </div>
     </section>
