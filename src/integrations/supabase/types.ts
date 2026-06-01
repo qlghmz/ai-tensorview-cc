@@ -321,6 +321,8 @@ export type Database = {
           published_url: string | null
           updated_at: string
           user_id: string
+          vercel_deployment_url: string | null
+          vercel_project_id: string | null
         }
         Insert: {
           created_at?: string
@@ -335,6 +337,8 @@ export type Database = {
           published_url?: string | null
           updated_at?: string
           user_id: string
+          vercel_deployment_url?: string | null
+          vercel_project_id?: string | null
         }
         Update: {
           created_at?: string
@@ -349,6 +353,8 @@ export type Database = {
           published_url?: string | null
           updated_at?: string
           user_id?: string
+          vercel_deployment_url?: string | null
+          vercel_project_id?: string | null
         }
         Relationships: []
       }
@@ -407,6 +413,39 @@ export type Database = {
           monthly_credits?: number
           monthly_reset_at?: string
           plan?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_deploy_tokens: {
+        Row: {
+          created_at: string
+          id: string
+          provider: string
+          team_id: string | null
+          token_encrypted: string
+          token_tail: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          provider: string
+          team_id?: string | null
+          token_encrypted: string
+          token_tail: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          provider?: string
+          team_id?: string | null
+          token_encrypted?: string
+          token_tail?: string
           updated_at?: string
           user_id?: string
         }
