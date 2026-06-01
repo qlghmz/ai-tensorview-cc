@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { Sparkles, Lock, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useT } from "@/lib/i18n";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/reset-password")({
@@ -10,22 +11,23 @@ export const Route = createFileRoute("/reset-password")({
 
 function ResetPasswordPage() {
   const navigate = useNavigate();
+  const t = useT();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [busy, setBusy] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) return toast.error("密码至少 6 位");
-    if (password !== confirm) return toast.error("两次密码不一致");
+    if (password.length < 6) return toast.error(t("reset.toast.short"));
+    if (password !== confirm) return toast.error(t("reset.toast.mismatch"));
     setBusy(true);
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast.success("密码已更新");
+      toast.success(t("reset.toast.ok"));
       navigate({ to: "/dashboard", search: {} });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "更新失败");
+      toast.error(err instanceof Error ? err.message : t("reset.toast.fail"));
     } finally {
       setBusy(false);
     }
@@ -45,8 +47,8 @@ function ResetPasswordPage() {
       </Link>
 
       <div className="relative w-full max-w-md glass rounded-3xl p-8 shadow-[var(--shadow-card)]">
-        <h1 className="text-2xl font-bold">设置新密码</h1>
-        <p className="mt-1 text-sm text-muted-foreground">为账户设置一个新的登录密码。</p>
+        <h1 className="text-2xl font-bold">{t("reset.title")}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{t("reset.sub")}</p>
 
         <form onSubmit={submit} className="mt-6 space-y-3">
           <Field>
@@ -57,7 +59,7 @@ function ResetPasswordPage() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="新密码"
+              placeholder={t("reset.new.placeholder")}
               className="flex-1 bg-transparent outline-none text-sm"
             />
           </Field>
@@ -69,7 +71,7 @@ function ResetPasswordPage() {
               minLength={6}
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="确认新密码"
+              placeholder={t("reset.confirm.placeholder")}
               className="flex-1 bg-transparent outline-none text-sm"
             />
           </Field>
@@ -79,7 +81,7 @@ function ResetPasswordPage() {
             disabled={busy}
             className="w-full rounded-xl btn-brand py-2.5 text-sm font-semibold disabled:opacity-50"
           >
-            {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : "更新密码"}
+            {busy ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : t("reset.submit")}
           </button>
         </form>
       </div>
