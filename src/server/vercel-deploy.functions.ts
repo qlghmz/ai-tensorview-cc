@@ -185,21 +185,3 @@ export const publishToVercel = createServerFn({ method: "POST" })
     return { url: publicUrl, deploymentId: dep.id };
   });
 
-// 给前端用：判断当前 bundle 是否含 api/* 文件
-export function extractApiFiles(bundle: LovableBundle | null): Record<string, string> | undefined {
-  if (!bundle) return undefined;
-  const out: Record<string, string> = {};
-  for (const [path, src] of Object.entries(bundle.files)) {
-    const clean = path.replace(/^\/+/, "");
-    if (clean.startsWith("api/") && /\.(t|j)sx?$/.test(clean)) {
-      out[clean] = src;
-    }
-  }
-  return Object.keys(out).length ? out : undefined;
-}
-
-// 仅用于 build helper 类型
-export type { LovableBundle };
-
-// 让构建器知道这里有调用，避免 tree-shake 警告
-void buildPublishedHtml;
