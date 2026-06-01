@@ -2,9 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { buildPublishedHtml } from "@/lib/publish-snapshot";
 import { decryptToken, encryptToken, tokenTail } from "./deploy-token-crypto.server";
-import type { LovableBundle } from "@/lib/lovable-bundle";
 
 const PROVIDER = "vercel" as const;
 
