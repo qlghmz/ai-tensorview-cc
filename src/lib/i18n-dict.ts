@@ -415,6 +415,8 @@ const en: Record<keyof typeof zh, string> = {
 
   "seo.dashboard.title": "My projects — TensorView",
   "seo.dashboard.desc": "Manage your AI-generated website projects on TensorView.",
+  "seo.settings.title": "Account settings — TensorView",
+  "seo.settings.desc": "Manage your TensorView account, language preference, password and credits.",
 
   // --------- Auth page ---------
   "auth.signin.title": "Welcome back",
