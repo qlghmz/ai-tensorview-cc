@@ -8,6 +8,12 @@ import {
   type LovableBundle,
 } from "@/lib/lovable-bundle";
 import { chatCompletionNonStream, type AIProviderConfig } from "@/lib/ai-config";
+import {
+  detectBackendNeeds,
+  isPlanConfirmed,
+  renderPlanMessage,
+  extractConfirmedOptions,
+} from "@/lib/backend-recipes";
 
 export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
