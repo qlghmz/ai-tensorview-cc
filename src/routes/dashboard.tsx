@@ -96,9 +96,9 @@ function Dashboard() {
         <main className="mx-auto max-w-[1100px] px-6 py-10">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold">
-              你想<span className="text-gradient">创造</span>什么？
+              {t("dash.title.1")}<span className="text-gradient">{t("dash.title.2")}</span>{t("dash.title.3")}
             </h1>
-            <p className="mt-3 text-muted-foreground">用一句话描述，立即生成。</p>
+            <p className="mt-3 text-muted-foreground">{t("dash.subtitle")}</p>
           </div>
 
           <div className="mt-8 max-w-2xl mx-auto glass rounded-3xl p-2 shadow-[var(--shadow-card)]">
@@ -108,7 +108,7 @@ function Dashboard() {
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !creating && create()}
-                placeholder="描述你想要的网站..."
+                placeholder={t("dash.input.placeholder")}
                 className="flex-1 bg-transparent py-3 text-base outline-none placeholder:text-muted-foreground"
               />
               <button
@@ -123,14 +123,14 @@ function Dashboard() {
 
           {/* Projects */}
           <div className="mt-16">
-            <h2 className="text-xl font-semibold mb-5">我的项目</h2>
+            <h2 className="text-xl font-semibold mb-5">{t("dash.projects.title")}</h2>
             {projects === null ? (
               <div className="grid place-items-center py-20">
                 <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
               </div>
             ) : projects.length === 0 ? (
               <div className="glass rounded-2xl p-12 text-center text-muted-foreground">
-                还没有项目。在上方输入想法，开始创造吧 ✨
+                {t("dash.projects.empty")}
               </div>
             ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
