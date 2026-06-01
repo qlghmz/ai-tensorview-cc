@@ -4,6 +4,7 @@ import { useState } from "react";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
+import { useI18n } from "@/lib/i18n";
 import { createOrder } from "@/server/orders.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import {
