@@ -4,25 +4,17 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { DOC_ARTICLES } from "@/content/docs-articles";
 import { useT } from "@/lib/i18n";
+import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 
 export const Route = createFileRoute("/docs")({
-  head: () => ({
-    meta: [
-      { title: "TensorView AI 使用文档与教程 | Documentation" },
-      {
-        name: "description",
-        content:
-          "学习如何使用 TensorView AI 构建、部署与管理你的网站：分步指南、最佳实践与常见问题。Step-by-step guides for building AI web apps.",
-      },
-      { property: "og:title", content: "TensorView AI 使用文档与教程" },
-      {
-        property: "og:description",
-        content: "TensorView AI 上手指南：生成、编辑、部署你的第一个 AI 网页，含最佳实践与教程。",
-      },
-      { property: "og:url", content: "https://ai.tensorview.cc/docs" },
-    ],
-    links: [{ rel: "canonical", href: "https://ai.tensorview.cc/docs" }],
-  }),
+  loader: ({ context }) => ({ lang: (context as { lang?: "zh" | "en" }).lang ?? "en" }),
+  head: ({ loaderData }) => {
+    const lang = pickLang(loaderData);
+    return {
+      meta: localizedMeta(lang, "seo.docs.title", "seo.docs.desc", "/docs"),
+      links: localizedLinks("/docs"),
+    };
+  },
   component: DocsPage,
 });
 
