@@ -160,20 +160,20 @@ function Dashboard() {
                         <button
                           onClick={() => setRenaming(p)}
                           className="text-muted-foreground hover:text-brand transition"
-                          title="重命名"
+                          title={t("dash.project.rename")}
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => del(p.id)}
                           className="text-muted-foreground hover:text-destructive transition"
-                          title="删除"
+                          title={t("dash.project.delete")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                       <div className="mt-1 text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true, locale: zhCN })}更新
+                        {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true, locale: lang === "zh" ? zhCN : enUS })}{t("dash.project.updatedSuffix")}
                       </div>
                     </div>
                   </div>
