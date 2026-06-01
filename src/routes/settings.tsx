@@ -71,8 +71,8 @@ function SettingsPage() {
               <User className="h-5 w-5" />
             </span>
             <div>
-              <h1 className="text-2xl font-bold">账户设置</h1>
-              <p className="text-sm text-muted-foreground">管理你的个人信息与登录方式</p>
+              <h1 className="text-2xl font-bold">{t("settings.title")}</h1>
+              <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
             </div>
           </div>
 
@@ -86,20 +86,20 @@ function SettingsPage() {
                 </div>
               )}
               <div className="text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{user.email ?? "未绑定邮箱"}</div>
-                <div className="text-xs mt-1">用户 ID：{user.id.slice(0, 8)}…</div>
+                <div className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{user.email ?? t("settings.email.empty")}</div>
+                <div className="text-xs mt-1">{t("settings.userId")}：{user.id.slice(0, 8)}…</div>
               </div>
             </div>
 
-            <Field label="显示名称">
+            <Field label={t("settings.field.displayName")}>
               <input
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="你想被怎么称呼？"
+                placeholder={t("settings.field.displayName.placeholder")}
                 className="flex-1 bg-transparent outline-none text-sm"
               />
             </Field>
-            <Field label="头像 URL">
+            <Field label={t("settings.field.avatar")}>
               <input
                 value={avatarUrl}
                 onChange={(e) => setAvatarUrl(e.target.value)}
@@ -114,7 +114,7 @@ function SettingsPage() {
               className="rounded-xl btn-brand px-5 py-2.5 text-sm font-semibold inline-flex items-center gap-2"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              保存修改
+              {t("settings.save")}
             </button>
           </section>
           <CreditsPanel />
@@ -123,16 +123,16 @@ function SettingsPage() {
 
           <PasswordSection />
           <section className="glass rounded-3xl p-6 mt-5">
-            <div className="font-semibold mb-1">忘记密码？</div>
-            <p className="text-sm text-muted-foreground mb-4">如果你忘了当前密码，可以通过邮箱重置。</p>
+            <div className="font-semibold mb-1">{t("settings.forgot.title")}</div>
+            <p className="text-sm text-muted-foreground mb-4">{t("settings.forgot.sub")}</p>
             <Link to="/forgot-password" className="rounded-xl glass px-4 py-2 text-sm hover:border-brand/40 transition inline-flex">
-              通过邮件重置
+              {t("settings.forgot.cta")}
             </Link>
           </section>
 
           <section className="glass rounded-3xl p-6 mt-5 border-destructive/40">
-            <div className="font-semibold mb-1">退出登录</div>
-            <p className="text-sm text-muted-foreground mb-4">在这台设备上退出当前账户。</p>
+            <div className="font-semibold mb-1">{t("settings.signout.title")}</div>
+            <p className="text-sm text-muted-foreground mb-4">{t("settings.signout.sub")}</p>
             <button
               onClick={async () => {
                 await signOut();
@@ -140,14 +140,14 @@ function SettingsPage() {
               }}
               className="rounded-xl bg-destructive/20 text-destructive border border-destructive/30 hover:bg-destructive/30 transition px-4 py-2 text-sm font-medium inline-flex items-center gap-2"
             >
-              <LogOut className="h-4 w-4" /> 退出
+              <LogOut className="h-4 w-4" /> {t("settings.signout.cta")}
             </button>
           </section>
 
           <p className="mt-8 text-center text-xs text-muted-foreground">
             <Sparkles className="h-3 w-3 inline mr-1" />
-            想要更多功能？查看
-            <Link to="/pricing" className="text-brand hover:underline ml-1">付费方案</Link>
+            {t("settings.upgrade.prefix")}
+            <Link to="/pricing" className="text-brand hover:underline ml-1">{t("settings.upgrade.link")}</Link>
           </p>
         </main>
       </div>
