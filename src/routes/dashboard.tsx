@@ -17,6 +17,17 @@ const searchSchema = z.object({
 
 export const Route = createFileRoute("/dashboard")({
   validateSearch: (s) => searchSchema.parse(s),
+  loader: ({ context }) => ({ lang: (context as { lang?: "zh" | "en" }).lang ?? "en" }),
+  head: ({ loaderData }) => {
+    const lang = pickLang(loaderData);
+    return {
+      meta: [
+        ...localizedMeta(lang, "seo.dashboard.title", "seo.dashboard.desc", "/dashboard"),
+        { name: "robots", content: "noindex, follow" },
+      ],
+      links: localizedLinks("/dashboard"),
+    };
+  },
   component: Dashboard,
 });
 
