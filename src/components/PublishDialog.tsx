@@ -204,9 +204,18 @@ function EdgeOnePanel({
     }
   };
 
+  const isValidDeployUrl = (u: string | null): u is string =>
+    !!u && /^https:\/\/[^/]+\.edgeone\.(app|site|run)(\/|$)/i.test(u);
+  const showDeployUrl = isValidDeployUrl(currentUrl);
+
   return (
     <div className="space-y-3">
-      {currentUrl && (
+      {currentUrl && !showDeployUrl && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-[11px] text-destructive">
+          上一次部署返回的链接异常（非 EdgeOne 域名），已忽略。请点击下方按钮重新部署。
+        </div>
+      )}
+      {showDeployUrl && (
         <div>
           <label className="text-xs text-muted-foreground flex items-center gap-1">
             <Globe className="h-3 w-3 text-brand" />
