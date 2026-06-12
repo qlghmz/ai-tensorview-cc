@@ -42,7 +42,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
     ]);
 
     const totalSpent = (txRes.data ?? []).reduce(
-      (a, r) => a + Math.abs(r.amount as number),
+      (a: number, r: { amount: number | null }) => a + Math.abs(r.amount ?? 0),
       0,
     );
 
