@@ -34,6 +34,7 @@ import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users
 import { Route as AdminAdminProjectsRouteImport } from './routes/_admin.admin.projects'
 import { Route as AdminAdminOrdersRouteImport } from './routes/_admin.admin.orders'
 import { Route as AdminAdminCreditsRouteImport } from './routes/_admin.admin.credits'
+import { Route as AdminAdminCouponsRouteImport } from './routes/_admin.admin.coupons'
 import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
@@ -164,6 +165,11 @@ const AdminAdminCreditsRoute = AdminAdminCreditsRouteImport.update({
   path: '/admin/credits',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminCouponsRoute = AdminAdminCouponsRouteImport.update({
+  id: '/admin/coupons',
+  path: '/admin/coupons',
+  getParentRoute: () => AdminRoute,
+} as any)
 const LovableEmailTransactionalSendRoute =
   LovableEmailTransactionalSendRouteImport.update({
     id: '/lovable/email/transactional/send',
@@ -209,6 +215,7 @@ export interface FileRoutesByFullPath {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/credits': typeof AdminAdminCreditsRoute
   '/admin/orders': typeof AdminAdminOrdersRoute
   '/admin/projects': typeof AdminAdminProjectsRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/credits': typeof AdminAdminCreditsRoute
   '/admin/orders': typeof AdminAdminOrdersRoute
   '/admin/projects': typeof AdminAdminProjectsRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/_admin/admin/coupons': typeof AdminAdminCouponsRoute
   '/_admin/admin/credits': typeof AdminAdminCreditsRoute
   '/_admin/admin/orders': typeof AdminAdminOrdersRoute
   '/_admin/admin/projects': typeof AdminAdminProjectsRoute
@@ -306,6 +315,7 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/admin/coupons'
     | '/admin/credits'
     | '/admin/orders'
     | '/admin/projects'
@@ -337,6 +347,7 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/admin/coupons'
     | '/admin/credits'
     | '/admin/orders'
     | '/admin/projects'
@@ -369,6 +380,7 @@ export interface FileRouteTypes {
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/_admin/admin/coupons'
     | '/_admin/admin/credits'
     | '/_admin/admin/orders'
     | '/_admin/admin/projects'
@@ -589,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCreditsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/coupons': {
+      id: '/_admin/admin/coupons'
+      path: '/admin/coupons'
+      fullPath: '/admin/coupons'
+      preLoaderRoute: typeof AdminAdminCouponsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/lovable/email/transactional/send': {
       id: '/lovable/email/transactional/send'
       path: '/lovable/email/transactional/send'
@@ -628,6 +647,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AdminRouteChildren {
+  AdminAdminCouponsRoute: typeof AdminAdminCouponsRoute
   AdminAdminCreditsRoute: typeof AdminAdminCreditsRoute
   AdminAdminOrdersRoute: typeof AdminAdminOrdersRoute
   AdminAdminProjectsRoute: typeof AdminAdminProjectsRoute
@@ -636,6 +656,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAdminCouponsRoute: AdminAdminCouponsRoute,
   AdminAdminCreditsRoute: AdminAdminCreditsRoute,
   AdminAdminOrdersRoute: AdminAdminOrdersRoute,
   AdminAdminProjectsRoute: AdminAdminProjectsRoute,

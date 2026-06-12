@@ -49,7 +49,7 @@ function AdminCoupons() {
       _count: count,
       _tier: "lifetime_tier_1",
       _monthly_credits: monthly,
-      _batch: batch || null,
+      _batch: batch || undefined,
     });
     setBusy(false);
     if (error) {
