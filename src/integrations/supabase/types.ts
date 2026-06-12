@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      coupon_codes: {
+        Row: {
+          batch: string | null
+          code: string
+          created_at: string
+          id: string
+          monthly_credits: number
+          redeemed_at: string | null
+          redeemed_by: string | null
+          source: string
+          tier: string
+        }
+        Insert: {
+          batch?: string | null
+          code: string
+          created_at?: string
+          id?: string
+          monthly_credits?: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source?: string
+          tier?: string
+        }
+        Update: {
+          batch?: string | null
+          code?: string
+          created_at?: string
+          id?: string
+          monthly_credits?: number
+          redeemed_at?: string | null
+          redeemed_by?: string | null
+          source?: string
+          tier?: string
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number
@@ -388,6 +424,8 @@ export type Database = {
           created_at: string
           daily_credits: number
           daily_reset_at: string
+          lifetime_monthly_allowance: number
+          lifetime_tier: string | null
           monthly_credits: number
           monthly_reset_at: string
           plan: string
@@ -399,6 +437,8 @@ export type Database = {
           created_at?: string
           daily_credits?: number
           daily_reset_at?: string
+          lifetime_monthly_allowance?: number
+          lifetime_tier?: string | null
           monthly_credits?: number
           monthly_reset_at?: string
           plan?: string
@@ -410,6 +450,8 @@ export type Database = {
           created_at?: string
           daily_credits?: number
           daily_reset_at?: string
+          lifetime_monthly_allowance?: number
+          lifetime_tier?: string | null
           monthly_credits?: number
           monthly_reset_at?: string
           plan?: string
@@ -531,6 +573,15 @@ export type Database = {
         Args: { _amount: number; _reason: string; _target: string }
         Returns: Json
       }
+      admin_generate_coupon_codes: {
+        Args: {
+          _batch?: string
+          _count: number
+          _monthly_credits?: number
+          _tier?: string
+        }
+        Returns: string[]
+      }
       admin_set_plan: {
         Args: { _plan: string; _target: string }
         Returns: Json
@@ -578,6 +629,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      redeem_coupon_code: { Args: { _code: string }; Returns: Json }
       refill_user_credits: {
         Args: { _user_id: string }
         Returns: {
@@ -585,6 +637,8 @@ export type Database = {
           created_at: string
           daily_credits: number
           daily_reset_at: string
+          lifetime_monthly_allowance: number
+          lifetime_tier: string | null
           monthly_credits: number
           monthly_reset_at: string
           plan: string
