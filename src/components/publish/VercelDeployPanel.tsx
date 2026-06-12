@@ -17,7 +17,7 @@ import {
   getVercelTokenStatus,
   publishToVercel,
   saveVercelToken,
-} from "@/server/vercel-deploy.functions";
+} from "@/lib/vercel-deploy.functions";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 
 interface Props {

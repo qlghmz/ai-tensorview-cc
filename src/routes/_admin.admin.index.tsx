@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getAdminOverview } from "@/server/admin.functions";
+import { getAdminOverview } from "@/lib/admin.functions";
 import { Card } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_admin/admin/")({

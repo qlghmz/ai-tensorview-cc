@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { listAdminProjects, adminUnpublishProject } from "@/server/admin.functions";
+import { listAdminProjects, adminUnpublishProject } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 

@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n } from "@/lib/i18n";
 import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
-import { createOrder } from "@/server/orders.functions";
+import { createOrder } from "@/lib/orders.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import {
   Dialog,

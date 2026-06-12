@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { LovableBundle } from "@/lib/lovable-bundle";
 import { buildPublishedHtml } from "@/lib/publish-snapshot";
-import { publishToEdgeOne } from "@/server/edgeone-deploy.functions";
+import { publishToEdgeOne } from "@/lib/edgeone-deploy.functions";
 import { useT, useI18n } from "@/lib/i18n";
 import { VercelDeployPanel } from "./publish/VercelDeployPanel";
 
