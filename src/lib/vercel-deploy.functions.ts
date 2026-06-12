@@ -23,6 +23,8 @@ export const saveVercelToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => saveTokenSchema.parse(d))
   .handler(async ({ data, context }) => {
+    const supabaseAdmin = await getAdmin();
+    const { decryptToken, encryptToken, tokenTail } = await getCrypto();
     const { userId } = context;
     // 校验 token
     const probe = await fetch("https://api.vercel.com/v2/user", {
@@ -52,6 +54,8 @@ export const saveVercelToken = createServerFn({ method: "POST" })
 export const getVercelTokenStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
+    const { decryptToken, encryptToken, tokenTail } = await getCrypto();
     const { userId } = context;
     const { data, error } = await supabaseAdmin
       .from("user_deploy_tokens" as never)
@@ -68,6 +72,8 @@ export const getVercelTokenStatus = createServerFn({ method: "GET" })
 export const deleteVercelToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
+    const { decryptToken, encryptToken, tokenTail } = await getCrypto();
     const { userId } = context;
     const { error } = await supabaseAdmin
       .from("user_deploy_tokens" as never)
@@ -118,6 +124,8 @@ export const publishToVercel = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => deploySchema.parse(d))
   .handler(async ({ data, context }) => {
+    const supabaseAdmin = await getAdmin();
+    const { decryptToken, encryptToken, tokenTail } = await getCrypto();
     const { userId } = context;
 
     // 1) 校验项目归属

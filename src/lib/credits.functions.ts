@@ -12,6 +12,7 @@ const MONTHLY_CREDITS: Record<string, number> = { pro: 100, team: 500 };
 export const getMyCredits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     const { userId } = context;
     const { data: row } = await supabaseAdmin
       .from("user_credits")
@@ -67,6 +68,7 @@ export const getMyCredits = createServerFn({ method: "GET" })
 export const getMyCreditTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     const { userId } = context;
     const { data } = await supabaseAdmin
       .from("credit_transactions")
