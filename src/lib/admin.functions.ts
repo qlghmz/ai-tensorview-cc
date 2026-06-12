@@ -21,6 +21,7 @@ async function assertAdmin(userId: string) {
 export const getAdminOverview = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
 
     const since24h = new Date(Date.now() - 86400000).toISOString();
@@ -57,6 +58,7 @@ export const getAdminOverview = createServerFn({ method: "GET" })
 export const listAdminUsers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
 
     const [profilesRes, creditsRes, rolesRes, authRes] = await Promise.all([
@@ -115,6 +117,7 @@ export const adminAdjustCredits = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data: result, error } = await supabaseAdmin.rpc("admin_adjust_credits", {
       _target: data.targetUserId,
@@ -134,6 +137,7 @@ export const adminSetPlan = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data: result, error } = await supabaseAdmin.rpc("admin_set_plan", {
       _target: data.targetUserId,
@@ -153,6 +157,7 @@ export const adminSetRole = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ context, data }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     if (data.grant) {
       const { error } = await supabaseAdmin
@@ -175,6 +180,7 @@ export const adminSetRole = createServerFn({ method: "POST" })
 export const listAdminOrders = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data } = await supabaseAdmin
       .from("payment_orders")
@@ -203,6 +209,7 @@ export const adminActivateOrder = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ orderId: z.string().uuid() }))
   .handler(async ({ context, data }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data: result, error } = await supabaseAdmin.rpc("admin_activate_order", {
       _order_id: data.orderId,
@@ -214,6 +221,7 @@ export const adminActivateOrder = createServerFn({ method: "POST" })
 export const listAdminProjects = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data } = await supabaseAdmin
       .from("projects")
@@ -227,6 +235,7 @@ export const adminUnpublishProject = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(z.object({ projectId: z.string().uuid() }))
   .handler(async ({ context, data }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { error } = await supabaseAdmin
       .from("projects")
@@ -239,6 +248,7 @@ export const adminUnpublishProject = createServerFn({ method: "POST" })
 export const listAdminTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     await assertAdmin(context.userId);
     const { data } = await supabaseAdmin
       .from("credit_transactions")
