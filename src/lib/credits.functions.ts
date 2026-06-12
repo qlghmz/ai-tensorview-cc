@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
 
 const DAILY_CREDITS = 5;
 const MONTHLY_CREDITS: Record<string, number> = { pro: 100, team: 500 };
@@ -8,6 +12,7 @@ const MONTHLY_CREDITS: Record<string, number> = { pro: 100, team: 500 };
 export const getMyCredits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     const { userId } = context;
     const { data: row } = await supabaseAdmin
       .from("user_credits")
@@ -63,6 +68,7 @@ export const getMyCredits = createServerFn({ method: "GET" })
 export const getMyCreditTransactions = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const supabaseAdmin = await getAdmin();
     const { userId } = context;
     const { data } = await supabaseAdmin
       .from("credit_transactions")

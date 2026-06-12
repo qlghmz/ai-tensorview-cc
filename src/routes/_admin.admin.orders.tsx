@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { listAdminOrders, adminActivateOrder } from "@/server/admin.functions";
+import { listAdminOrders, adminActivateOrder } from "@/lib/admin.functions";
 import { sendTransactionalEmail } from "@/lib/email/send";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";

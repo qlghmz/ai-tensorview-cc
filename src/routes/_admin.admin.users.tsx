@@ -5,7 +5,7 @@ import {
   adminAdjustCredits,
   adminSetPlan,
   adminSetRole,
-} from "@/server/admin.functions";
+} from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
