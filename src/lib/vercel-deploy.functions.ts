@@ -1,8 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { decryptToken, encryptToken, tokenTail } from "./deploy-token-crypto.server";
+
+async function getAdmin() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
+}
+async function getCrypto() {
+  return import("@/server/deploy-token-crypto.server");
+}
 
 const PROVIDER = "vercel" as const;
 
