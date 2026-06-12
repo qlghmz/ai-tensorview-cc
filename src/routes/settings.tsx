@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { CreditsPanel } from "@/components/CreditsPanel";
+import { RedeemCouponPanel } from "@/components/RedeemCouponPanel";
 import { useI18n } from "@/lib/i18n";
 import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
@@ -130,6 +131,7 @@ function SettingsPage() {
             </button>
           </section>
           <CreditsPanel />
+          <RedeemCouponPanel />
           <LanguageSection />
 
 
