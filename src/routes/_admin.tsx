@@ -57,7 +57,8 @@ function AdminLayout() {
     { to: "/admin/orders", label: "订单" },
     { to: "/admin/projects", label: "项目" },
     { to: "/admin/credits", label: "积分流水" },
-  ];
+    { to: "/admin/coupons", label: "兑换码" },
+  ] as const;
 
   return (
     <div className="min-h-screen bg-background">
