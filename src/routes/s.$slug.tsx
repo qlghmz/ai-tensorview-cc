@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovableBundleSchema } from "@/lib/lovable-bundle";
+import { uiBundleSchema } from "@/lib/ui-bundle";
 import { PublicProjectView, type PublicViewState } from "@/components/PublicProjectView";
 
 export const Route = createFileRoute("/s/$slug")({
@@ -28,7 +28,7 @@ function SlugPreviewPage() {
           setState({ kind: "snapshot", name: data.name, html: data.published_html });
           return;
         }
-        const parsed = data.preview_sandpack != null ? lovableBundleSchema.safeParse(data.preview_sandpack) : null;
+        const parsed = data.preview_sandpack != null ? uiBundleSchema.safeParse(data.preview_sandpack) : null;
         if (parsed?.success) {
           setState({ kind: "sandpack", name: data.name, bundle: parsed.data });
           return;

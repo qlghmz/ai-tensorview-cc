@@ -1,11 +1,11 @@
-import type { LovableBundle } from "@/lib/lovable-bundle";
+import type { UiBundle } from "@/lib/ui-bundle";
 
 /**
- * 从 LovableBundle 中抽出 api/*.ts(x) / api/*.js(x) 文件，部署时随静态页一起推到 Vercel。
+ * 从 UiBundle 中抽出 api/*.ts(x) / api/*.js(x) 文件，部署时随静态页一起推到 Vercel。
  * 安全：浏览器端调用即可，不涉及任何密钥。
  */
 export function extractApiFiles(
-  bundle: LovableBundle | null,
+  bundle: UiBundle | null,
 ): Record<string, string> | undefined {
   if (!bundle) return undefined;
   const out: Record<string, string> = {};
@@ -18,6 +18,6 @@ export function extractApiFiles(
   return Object.keys(out).length ? out : undefined;
 }
 
-export function hasApiFiles(bundle: LovableBundle | null): boolean {
+export function hasApiFiles(bundle: UiBundle | null): boolean {
   return !!extractApiFiles(bundle);
 }

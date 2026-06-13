@@ -1,5 +1,5 @@
 /**
- * 后端能力配方表（参考 Lovable：先 plan，再让客户选，再写代码）。
+ * 后端能力配方表：先 plan，再让客户选，再写代码。
  *
  * 这里只做「能力检测 + 方案描述」，不直接写代码。
  * 代码由模型在用户确认方案后才生成（见 ai-generate-shared.ts）。
@@ -58,7 +58,7 @@ export const BACKEND_RECIPES: BackendRecipe[] = [
           "邮箱登录全部用 localStorage：注册写入 users 数组，登录比对；不要假装调用真实接口。",
       },
       {
-        label: "B. 真实邮箱登录（Lovable Cloud 内置）",
+        label: "B. 真实邮箱登录（Supabase 内置）",
         desc: "接入站点自带的 Supabase Auth，支持邮箱+密码+发激活信。需要在生成站独立开启 Cloud。",
         envs: ["SUPABASE_URL", "SUPABASE_ANON_KEY"],
         promptHint:
@@ -128,7 +128,7 @@ export function isPlanConfirmed(messages?: Array<{ role: string; content: string
 /** 渲染 plan 卡片消息（assistant reply） */
 export function renderPlanMessage(recipes: BackendRecipe[]): string {
   const lines: string[] = [
-    "我注意到这个需求涉及**后端功能**。参考 Lovable 的做法，先给你几个方案选——回复「**方案 A**」「**方案 B**」即可继续生成。",
+    "我注意到这个需求涉及**后端功能**。先给你几个方案选——回复「**方案 A**」「**方案 B**」即可继续生成。",
     "",
   ];
   recipes.forEach((r) => {

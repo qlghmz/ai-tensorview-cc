@@ -19,8 +19,8 @@ import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json } from "@/integrations/supabase/types";
 import { useAuth } from "@/lib/auth-context";
-import { lovableBundleSchema, sanitizeLovableBundle, type LovableBundle } from "@/lib/lovable-bundle";
-import { ClientLovableSandpack } from "@/components/lovable/ClientLovableSandpack";
+import { uiBundleSchema, sanitizeUiBundle, type UiBundle } from "@/lib/ui-bundle";
+import { ClientSandpackPreview } from "@/components/preview/ClientSandpackPreview";
 import { RenameProjectDialog } from "@/components/RenameProjectDialog";
 import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { PublishDialog } from "@/components/PublishDialog";
@@ -119,11 +119,11 @@ function ProjectEditor() {
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const lovableBundle = useMemo((): LovableBundle | null => {
+  const uiBundle = useMemo((): UiBundle | null => {
     const raw = project?.preview_sandpack;
     if (raw == null) return null;
-    const r = lovableBundleSchema.safeParse(raw);
-    return r.success ? sanitizeLovableBundle(r.data) : null;
+    const r = uiBundleSchema.safeParse(raw);
+    return r.success ? sanitizeUiBundle(r.data) : null;
   }, [project?.preview_sandpack]);
 
   useEffect(() => {
@@ -266,16 +266,16 @@ function ProjectEditor() {
         }
         // 生成期间不展示具体代码内容，仅作为状态信号；保留最后的 reply 用于完成后展示。
         if (evt.type === "preview" && evt.sandpack != null) {
-          const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+          const parsed = uiBundleSchema.safeParse(evt.sandpack);
           if (parsed.success) {
-            pendingSandpack = JSON.parse(JSON.stringify(sanitizeLovableBundle(parsed.data))) as Json;
+            pendingSandpack = JSON.parse(JSON.stringify(sanitizeUiBundle(parsed.data))) as Json;
           }
         }
         if (evt.type === "final") {
           if (evt.sandpack != null) {
-            const parsed = lovableBundleSchema.safeParse(evt.sandpack);
+            const parsed = uiBundleSchema.safeParse(evt.sandpack);
             if (parsed.success) {
-              pendingSandpack = JSON.parse(JSON.stringify(sanitizeLovableBundle(parsed.data))) as Json;
+              pendingSandpack = JSON.parse(JSON.stringify(sanitizeUiBundle(parsed.data))) as Json;
               gotFinalSandpack = true;
             }
           }
@@ -312,7 +312,7 @@ function ProjectEditor() {
       // 用最终回复替换占位
       const cleanReply = finalReply
         ? finalReply
-            .replace(/```lovable[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+            .replace(/```(?:uibundle|lovable)[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
             .replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
         : gotFinalSandpack
           ? "✨ 已生成网页 — 见预览面板"
@@ -355,12 +355,12 @@ function ProjectEditor() {
 
   const download = () => {
     if (!project) return;
-    if (lovableBundle) {
-      const blob = new Blob([JSON.stringify(lovableBundle, null, 2)], { type: "application/json" });
+    if (uiBundle) {
+      const blob = new Blob([JSON.stringify(uiBundle, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${project.name}.lovable.json`;
+      a.download = `${project.name}.ui-bundle.json`;
       a.click();
       URL.revokeObjectURL(url);
       return;
@@ -375,7 +375,7 @@ function ProjectEditor() {
     URL.revokeObjectURL(url);
   };
 
-  const canDownload = !!(lovableBundle || project?.preview_html);
+  const canDownload = !!(uiBundle || project?.preview_html);
 
   const updatePublishState = (patch: {
     isPublic?: boolean;
@@ -408,19 +408,19 @@ function ProjectEditor() {
   const canvasPreview = (
     <div className="absolute inset-0 p-3 sm:p-4 flex flex-col min-h-0">
       <div className="flex-1 min-h-0 rounded-2xl border border-border/60 bg-[#0b0a14] overflow-hidden shadow-[var(--shadow-card)] relative flex flex-col">
-        {lovableBundle ? (
+        {uiBundle ? (
           <div className="flex-1 min-h-0 flex flex-col p-2">
-            <ClientLovableSandpack
-              bundle={lovableBundle}
+            <ClientSandpackPreview
+              bundle={uiBundle}
               view={view === "preview" ? "preview" : "code"}
               readOnly={false}
               onSaveFiles={async (files) => {
                 // Persist edited files back to the project's sandpack bundle.
-                const nextBundle: LovableBundle = {
-                  routes: lovableBundle.routes,
+                const nextBundle: UiBundle = {
+                  routes: uiBundle.routes,
                   files,
                 };
-                const safeBundle = sanitizeLovableBundle(nextBundle);
+                const safeBundle = sanitizeUiBundle(nextBundle);
                 const { error } = await supabase
                   .from("projects")
                   .update({
@@ -502,7 +502,7 @@ function ProjectEditor() {
                   ) : (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {m.content
-                        .replace(/```lovable[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
+                        .replace(/```(?:uibundle|lovable)[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")
                         .replace(/```html[\s\S]*?```/gi, "✨ _已生成网页 — 见预览面板_")}
                     </ReactMarkdown>
                   )}
@@ -595,7 +595,7 @@ function ProjectEditor() {
           <button
             type="button"
             onClick={() => setPushOpen(true)}
-            disabled={!lovableBundle}
+            disabled={!uiBundle}
             className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
             title="推送到 Gitee / GitHub"
           >
@@ -625,7 +625,7 @@ function ProjectEditor() {
           <button
             type="button"
             onClick={() => setPushOpen(true)}
-            disabled={!lovableBundle}
+            disabled={!uiBundle}
             className="rounded-full glass px-2.5 py-1.5 text-[11px] disabled:opacity-40 flex items-center gap-1"
             title="推送到 Gitee / GitHub"
           >
@@ -703,7 +703,7 @@ function ProjectEditor() {
         onOpenChange={setPushOpen}
         projectId={projectId}
         projectName={project.name}
-        bundle={lovableBundle}
+        bundle={uiBundle}
         userId={session?.user.id ?? ""}
       />
 
@@ -714,7 +714,7 @@ function ProjectEditor() {
         projectName={project.name}
         isPublic={project.is_public}
         publicSlug={project.public_slug}
-        bundle={lovableBundle}
+        bundle={uiBundle}
         hasSnapshot={project.has_snapshot}
         publishedUrl={project.published_url}
         onChange={updatePublishState}

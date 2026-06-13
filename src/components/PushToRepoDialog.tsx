@@ -10,14 +10,14 @@ import {
   pushToGithub,
   type Provider,
 } from "@/lib/code-hosting";
-import type { LovableBundle } from "@/lib/lovable-bundle";
+import type { UiBundle } from "@/lib/ui-bundle";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   projectId: string;
   projectName: string;
-  bundle: LovableBundle | null;
+  bundle: UiBundle | null;
   userId: string;
 }
 
@@ -42,7 +42,7 @@ const TOKEN_HELP: Record<Provider, { url: string; label: string; scopes: string 
     scopes: "勾选 projects、user_info 权限",
   },
   github: {
-    url: "https://github.com/settings/tokens/new?scopes=repo&description=LovableClone",
+    url: "https://github.com/settings/tokens/new?scopes=repo&description=TensorView",
     label: "GitHub Personal Access Token",
     scopes: "勾选 repo 权限（classic token）",
   },
@@ -53,7 +53,7 @@ function sanitizeRepoName(name: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9_.-]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 60) || "lovable-project";
+    .slice(0, 60) || "tensorview-project";
 }
 
 export function PushToRepoDialog({
@@ -77,7 +77,7 @@ export function PushToRepoDialog({
   });
   const [repoName, setRepoName] = useState(sanitizeRepoName(projectName));
   const [isPrivate, setIsPrivate] = useState(false);
-  const [commitMsg, setCommitMsg] = useState("Update from Lovable Clone");
+  const [commitMsg, setCommitMsg] = useState("Update from TensorView");
   const [loading, setLoading] = useState(false);
   const [pushing, setPushing] = useState(false);
   const [lastResult, setLastResult] = useState<{ url: string; count: number } | null>(null);
@@ -210,7 +210,7 @@ export function PushToRepoDialog({
         repoName: cleanRepo,
         isPrivate,
         files,
-        commitMessage: commitMsg || "Update from Lovable Clone",
+        commitMessage: commitMsg || "Update from TensorView",
       });
       // Persist mapping
       await supabase.from("project_repos").upsert(

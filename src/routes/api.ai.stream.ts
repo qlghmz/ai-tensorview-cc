@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import { getAIConfig } from "@/lib/ai-config";
 import { getAuthedSupabaseFromRequest } from "@/integrations/supabase/request-auth";
-import { beginWebsiteGeneration, generateSegmentedLovableBundle, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, generateSegmentedUiBundle, persistGenerationResult } from "@/lib/ai-generate-shared";
 import { consumeCredits } from "@/lib/credits-server";
 
 const bodySchema = z.object({
@@ -50,7 +50,7 @@ export const Route = createFileRoute("/api/ai/stream")({
               send({ type: "ready" });
               send({ type: "status", message: "正在分段生成页面结构…" });
               heartbeat = setInterval(() => send({ type: "status", message: "AI 仍在生成，请稍候…" }), 15_000);
-              const generated = await generateSegmentedLovableBundle(cfg, parsed.data.prompt, begun.messages);
+              const generated = await generateSegmentedUiBundle(cfg, parsed.data.prompt, begun.messages);
 
               let reply = generated.reply;
               let finishReason = generated.finishReason;

@@ -18,12 +18,12 @@ import {
   publishToVercel,
   saveVercelToken,
 } from "@/lib/vercel-deploy.functions";
-import type { LovableBundle } from "@/lib/lovable-bundle";
+import type { UiBundle } from "@/lib/ui-bundle";
 
 interface Props {
   projectId: string;
   projectName: string;
-  bundle: LovableBundle | null;
+  bundle: UiBundle | null;
   initialUrl?: string | null;
   onDeployed?: (url: string) => void;
 }

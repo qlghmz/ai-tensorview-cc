@@ -1,19 +1,17 @@
 # AI UI generation pipeline
 
-This document explains how natural language becomes a runnable React preview.
-
 ## Overview
 
 1. User opens `/project/:projectId` and sends a prompt.
 2. Frontend POSTs to `/api/ai/stream` with `{ projectId, prompt }`.
 3. Server validates auth, checks credits, loads chat history from Supabase.
-4. AI returns a **Lovable bundle** — JSON with `routes` and `files` (React source strings).
+4. AI returns a **UI bundle** — JSON with `routes` and `files` (React source strings).
 5. Server parses, validates, saves messages + Sandpack snapshot to the database.
 6. Client receives an NDJSON stream and updates the Sandpack preview.
 
-## Lovable bundle format
+## UI bundle format
 
-The model must output a single Markdown fence tagged `lovable` containing JSON:
+The model must output a single Markdown fence tagged `uibundle` containing JSON:
 
 ```json
 {
@@ -37,11 +35,11 @@ Rules enforced by the system prompt (`src/lib/ai-generate-shared.ts`):
 - Tailwind classes OK (CDN injected in Sandpack).
 - Optional `/api/*.ts` handlers for serverless backends when user asks.
 
-Parsing lives in `src/lib/lovable-bundle.ts`: extract fence → JSON parse → Zod validate → patch React imports.
+Parsing lives in `src/lib/ui-bundle.ts`: extract fence → JSON parse → Zod validate → patch React imports. Legacy ` ```lovable ` fences are still accepted when parsing old messages.
 
 ## Segmented generation
 
-Large sites are generated in segments (`generateSegmentedLovableBundle`) to stay within token limits:
+Large sites are generated in segments (`generateSegmentedUiBundle`) to stay within token limits:
 
 1. Plan routes and page names.
 2. Generate each page file in separate AI calls if needed.
@@ -69,7 +67,7 @@ Non-admin users consume 1 credit per successful generation.
 
 ## Sandpack preview
 
-`src/components/lovable/LovableSandpack.tsx` (client-only via `ClientLovableSandpack`):
+`src/components/preview/SandpackPreview.tsx` (client-only via `ClientSandpackPreview`):
 
 - Injects React 19, react-router-dom, Tailwind CDN.
 - Wraps app in `MemoryRouter` (routes from bundle).
@@ -87,7 +85,7 @@ After generation, `persistGenerationResult` saves:
 
 ## Backend recipes (optional)
 
-When the user needs forms, webhooks, or third-party APIs, `detectBackendNeeds` in `src/lib/backend-recipes.ts` can trigger a planning step before code generation. Confirmed options are injected into the prompt.
+When the user needs forms, webhooks, or third-party APIs, `detectBackendNeeds` in `src/lib/backend-recipes.ts` can trigger a planning step before code generation.
 
 ## Customizing the AI
 
@@ -103,5 +101,5 @@ DASHSCOPE_MODEL=qwen-plus
 ## Extending
 
 - **New UI patterns**: adjust system prompt constraints (line limits, allowed imports).
-- **Different preview runtime**: replace Sandpack mapping in `lovable-bundle.ts`.
+- **Different preview runtime**: replace Sandpack mapping in `ui-bundle.ts`.
 - **Other LLMs**: implement `chatCompletionNonStream` / streaming in `ai-config.ts`.

@@ -1,5 +1,5 @@
 /**
- * 把 LovableBundle 编译成「自包含、国内可访问」的 HTML 快照。
+ * 把 UiBundle 编译成「自包含、国内可访问」的 HTML 快照。
  *
  * 思路：
  * - 不依赖 codesandbox 在线 bundler（国内不稳定）
@@ -10,7 +10,7 @@
  * 编译时机：用户点 "发布" 时在浏览器里执行一次，把结果存到 projects.published_html。
  */
 
-import type { LovableBundle } from "./lovable-bundle";
+import type { UiBundle } from "./ui-bundle";
 
 declare global {
   interface Window {
@@ -91,7 +91,7 @@ function resolveExt(path: string, files: Record<string, string>): string {
  * 2) 用 import map 把用户文件 blob URL 注册成模块
  * 3) 入口动态 import("/App") → MemoryRouter 包一层渲染
  */
-export async function buildPublishedHtml(bundle: LovableBundle, options?: { title?: string }): Promise<string> {
+export async function buildPublishedHtml(bundle: UiBundle, options?: { title?: string }): Promise<string> {
   const babel = await loadBabel();
 
   // 1. 编译每个用户文件，并改写相对 import 路径为绝对 "/xxx.tsx"（绑到 import map）

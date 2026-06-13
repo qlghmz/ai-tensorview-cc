@@ -1,13 +1,13 @@
 import { z } from "zod";
 
-/** Stored in `projects.preview_sandpack` — Lovable-style multi-file React bundle. */
-export const lovableRouteSchema = z.object({
+/** Stored in `projects.preview_sandpack` — multi-file React bundle for Sandpack preview. */
+export const uiRouteSchema = z.object({
   path: z.string().min(1),
   label: z.string().min(1),
 });
 
-export const lovableBundleSchema = z.object({
-  routes: z.array(lovableRouteSchema).min(1),
+export const uiBundleSchema = z.object({
+  routes: z.array(uiRouteSchema).min(1),
   files: z.record(z.string()).superRefine((files, ctx) => {
     const keys = Object.keys(files);
     if (!keys.some((k) => k.replace(/^\//, "") === "App.tsx" || k === "/App.tsx")) {
@@ -21,23 +21,23 @@ export const lovableBundleSchema = z.object({
   }),
 });
 
-export type LovableBundle = z.infer<typeof lovableBundleSchema>;
+export type UiBundle = z.infer<typeof uiBundleSchema>;
 
-export function tryParseLovableBundle(raw: string): LovableBundle | null {
+export function tryParseUiBundle(raw: string): UiBundle | null {
   const trimmed = raw.trim();
   if (!trimmed.startsWith("{")) return null;
   try {
     const json = JSON.parse(trimmed) as unknown;
-    const r = lovableBundleSchema.safeParse(json);
+    const r = uiBundleSchema.safeParse(json);
     return r.success ? r.data : null;
   } catch {
     return null;
   }
 }
 
-/** Extract ```lovable ... ``` fenced JSON (trimmed inner text). */
-export function extractLovableFence(full: string): string | null {
-  const openRe = /```lovable\s*\n/gi;
+/** Extract ```uibundle ... ``` fenced JSON (also accepts legacy ```lovable fences). */
+export function extractUiBundleFence(full: string): string | null {
+  const openRe = /```(?:uibundle|lovable)\s*\n/gi;
   let fallback: string | null = null;
   let open: RegExpExecArray | null;
 
@@ -50,7 +50,7 @@ export function extractLovableFence(full: string): string | null {
       const body = full.slice(bodyStart, close).trim();
       if (body.startsWith("{")) {
         fallback ??= body;
-        if (tryParseLovableBundle(body)) return body;
+        if (tryParseUiBundle(body)) return body;
       }
       searchFrom = close + 3;
     }
@@ -59,11 +59,11 @@ export function extractLovableFence(full: string): string | null {
   return fallback;
 }
 
-export function bundleSignature(b: LovableBundle): string {
+export function bundleSignature(b: UiBundle): string {
   return `${b.routes.map((r) => r.path).join("|")}:${Object.keys(b.files).sort().join(",")}:${b.files["/App.tsx"]?.length ?? 0}`;
 }
 
-export function normalizeBundlePaths(bundle: LovableBundle): LovableBundle {
+export function normalizeBundlePaths(bundle: UiBundle): UiBundle {
   const files: Record<string, string> = {};
   for (const [k, v] of Object.entries(bundle.files)) {
     const key = k.startsWith("/") ? k : `/${k}`;
@@ -72,10 +72,6 @@ export function normalizeBundlePaths(bundle: LovableBundle): LovableBundle {
   return { routes: bundle.routes, files };
 }
 
-/**
- * 修复历史/手工编辑/AI 生成代码里最常见的 React API 缺失导入问题。
- * 这里放在 bundle 层，保证保存前和 Sandpack 渲染前都会兜底处理。
- */
 export function patchReactImports(files: Record<string, string>): Record<string, string> {
   const REACT_APIS = [
     "useState", "useEffect", "useRef", "useMemo", "useCallback", "useContext",
@@ -131,11 +127,6 @@ export function patchReactImports(files: Record<string, string>): Record<string,
   return out;
 }
 
-/**
- * 修复 AI 偶尔在 JSX 文本里直接写 `<2分钟` / `<10` 这种「裸 `<` 后紧跟数字」的写法
- * （Babel 会把它解析成新 JSX 标签起点，报 "Identifier directly after number"）。
- * 只替换 `>...<数字` 这种明显是文本内容的位置，不动真实标签。
- */
 function escapeStrayLtInJsxText(files: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [path, code] of Object.entries(files)) {
@@ -154,17 +145,13 @@ function escapeStrayLtInJsxText(files: Record<string, string>): Record<string, s
   return out;
 }
 
-export function sanitizeLovableBundle(bundle: LovableBundle): LovableBundle {
+export function sanitizeUiBundle(bundle: UiBundle): UiBundle {
   const normalized = normalizeBundlePaths(bundle);
   return { ...normalized, files: escapeStrayLtInJsxText(patchReactImports(normalized.files)) };
 }
 
-/**
- * Sandpack `react-ts` 模板已有入口；我们覆盖 `/index.tsx`，用 MemoryRouter 固定初始路由，
- * 便于编辑器外「切换页面预览」只改 initialEntries 即可（整包 remount）。
- */
-export function buildSandpackFiles(bundle: LovableBundle, memoryInitialPath: string): Record<string, string> {
-  const b = sanitizeLovableBundle(bundle);
+export function buildSandpackFiles(bundle: UiBundle, memoryInitialPath: string): Record<string, string> {
+  const b = sanitizeUiBundle(bundle);
   const entriesLiteral = JSON.stringify([memoryInitialPath]);
   const shellIndex = `import React from "react";
 import { createRoot } from "react-dom/client";

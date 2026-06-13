@@ -82,7 +82,7 @@ sequenceDiagram
   Editor->>API: POST projectId + prompt
   API->>DB: load messages, check credits
   API->>AI: segmented generation (system prompt + history)
-  AI-->>API: lovable JSON bundle
+  AI-->>API: UI bundle JSON
   API->>DB: save messages + sandpack snapshot
   API-->>Editor: NDJSON stream (preview + final)
   Editor->>Preview: render React files
@@ -97,8 +97,8 @@ Key source files:
 | `src/routes/project.$projectId.tsx` | Chat UI + preview panel |
 | `src/routes/api.ai.stream.ts` | Streaming generation API |
 | `src/lib/ai-generate-shared.ts` | Prompts, parsing, persistence |
-| `src/lib/lovable-bundle.ts` | Lovable JSON → Sandpack files |
-| `src/components/lovable/LovableSandpack.tsx` | In-browser preview |
+| `src/lib/ui-bundle.ts` | UI bundle JSON → Sandpack files |
+| `src/components/preview/SandpackPreview.tsx` | In-browser preview |
 
 ## Deploy to Cloudflare
 
@@ -141,7 +141,3 @@ docs/               # Architecture & deployment guides
 ## License
 
 [MIT](./LICENSE)
-
-## Acknowledgments
-
-Originally scaffolded with [Lovable](https://lovable.dev); migrated to self-hosted Supabase + Cloudflare Workers.

@@ -10,7 +10,7 @@ export type AIProviderConfig = {
 
 /**
  * Resolve AI backend.
- * 优先级：阿里云百炼 DashScope（额度大，便宜） → Gemini（备用） → Lovable AI Gateway → 自定义。
+ * 优先级：阿里云百炼 DashScope（额度大，便宜） → Gemini（备用） → 自定义 OpenAI 兼容网关。
  * 这样在某个 provider 超限/失败时上层可以 fallback。
  */
 export function getAIConfig(): AIProviderConfig | null {
@@ -51,13 +51,14 @@ export function getAIConfigChain(): AIProviderConfig[] {
     });
   }
 
-  const lovableKey = process.env.LOVABLE_API_KEY?.trim();
-  if (lovableKey) {
+  const gatewayKey = process.env.AI_GATEWAY_API_KEY?.trim() || process.env.LOVABLE_API_KEY?.trim();
+  if (gatewayKey) {
     chain.push({
-      provider: "lovable",
-      apiKey: lovableKey,
-      baseUrl: "https://ai.gateway.lovable.dev/v1",
-      model: "google/gemini-2.5-flash",
+      provider: "gateway",
+      apiKey: gatewayKey,
+      baseUrl:
+        process.env.AI_GATEWAY_BASE_URL?.trim() || "https://api.openai.com/v1",
+      model: process.env.AI_GATEWAY_MODEL?.trim() || "gpt-4o-mini",
     });
   }
 
@@ -76,7 +77,7 @@ export function getAIConfigChain(): AIProviderConfig[] {
 
 /**
  * 不强行设置 max_tokens——阿里 qwen-plus 等模型默认上限远高于固定 8192，
- * 强制 8192 反而会在多页面项目里把 ```lovable JSON 截断成无法解析。
+ * 强制 8192 反而会在多页面项目里把 ```uibundle JSON 截断成无法解析。
  * 调用方需要时可在 body 里显式传入 max_tokens 覆盖。
  */
 export async function chatCompletionNonStream(

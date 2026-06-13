@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Sparkles, Mail, Lock, Loader2, Phone, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
+import { cloudAuth } from "@/integrations/cloud-auth";
 import { useAuth } from "@/lib/auth-context";
 import { useI18n, useT } from "@/lib/i18n";
 import { toast } from "sonner";
@@ -184,7 +184,7 @@ function AuthPage() {
   const google = async () => {
     setBusy(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
+      const result = await cloudAuth.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin + "/dashboard",
       });
       if (result.error) {

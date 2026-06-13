@@ -8,7 +8,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  *   2. POST baseUrl   body: { value: <html> }    -> { url: "https://xxx.edgeone.app" }
  *
  * 这个 API 是 EdgeOne 给 AI 工具用的「一次性 HTML 托管」，链接公开可访问、国内速度好。
- * 我们用它把客户做好的成品页一键发到独立域名，跟 Lovable 平台域名完全分离。
+ * 我们用它把客户做好的成品页一键发到独立域名，与平台主站完全分离。
  */
 
 const InputSchema = z.object({

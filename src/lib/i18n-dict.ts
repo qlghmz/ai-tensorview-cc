@@ -102,7 +102,7 @@ const zh = {
   // --------- SEO meta (root + per route) ---------
   "seo.site.title": "TensorView — 用一句话生成网页应用",
   "seo.site.desc": "TensorView 是 AI 网页生成平台，用自然语言描述即可生成可运行的网站和应用，无需写代码。",
-  "seo.site.keywords": "AI 建站, AI 网页生成, AI 网站生成器, lovable 替代, no-code, vibe coding, TensorView",
+  "seo.site.keywords": "AI 建站, AI 网页生成, AI 网站生成器, AI 建站, no-code, vibe coding, TensorView",
 
   "seo.home.title": "TensorView AI — AI 建站平台 | 一句话生成并部署网页应用",
   "seo.home.desc":
@@ -434,7 +434,7 @@ const en: Record<keyof typeof zh, string> = {
   "seo.site.desc":
     "TensorView is the AI website builder that turns a single prompt into a production-ready web app. Build, edit and deploy without code.",
   "seo.site.keywords":
-    "AI website builder, text to website, build website with AI, AI web app generator, no-code AI builder, lovable alternative, vibe coding, TensorView",
+    "AI website builder, text to website, build website with AI, AI web app generator, no-code AI builder, AI website builder, vibe coding, TensorView",
 
   "seo.home.title": "TensorView — AI Website Builder | Generate & Deploy in Seconds",
   "seo.home.desc":

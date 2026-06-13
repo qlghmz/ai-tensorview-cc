@@ -16,7 +16,7 @@ export async function sendTransactionalEmail(params: SendTransactionalEmailParam
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
-  const response = await fetch('/lovable/email/transactional/send', {
+  const response = await fetch('/api/email/transactional/send', {
     method: 'POST',
     headers,
     body: JSON.stringify({

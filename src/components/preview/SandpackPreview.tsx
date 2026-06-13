@@ -8,19 +8,18 @@ import {
 } from "@codesandbox/sandpack-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Save, Loader2, Check } from "lucide-react";
-import { buildSandpackFiles, bundleSignature, type LovableBundle } from "@/lib/lovable-bundle";
+import { buildSandpackFiles, bundleSignature, type UiBundle } from "@/lib/ui-bundle";
 
 type View = "split" | "preview" | "code";
 
 interface Props {
-  bundle: LovableBundle;
+  bundle: UiBundle;
   readOnly?: boolean;
   view?: View;
-  /** Called when the user clicks Save in code view. Receives the latest user-editable files (no /index.tsx shell). */
   onSaveFiles?: (files: Record<string, string>) => Promise<void> | void;
 }
 
-export function LovableSandpack({ bundle, readOnly, view = "split", onSaveFiles }: Props) {
+export function SandpackPreviewPanel({ bundle, readOnly, view = "split", onSaveFiles }: Props) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -44,7 +43,6 @@ export function LovableSandpack({ bundle, readOnly, view = "split", onSaveFiles 
     );
   }
 
-  // Code view: split editor + live preview, editable, with save button
   const showCode = view === "code" || view === "split";
   const showPreview = view === "preview" || view === "split";
   const codeEditable = !readOnly && view !== "preview";
@@ -88,7 +86,6 @@ export function LovableSandpack({ bundle, readOnly, view = "split", onSaveFiles 
             },
           }}
         >
-          {/* In code/split modes, force a side-by-side layout for the best edit-and-see experience */}
           <SandpackLayout style={{ height: "100%" }}>
             {showCode && (
               <SandpackCodeEditor
@@ -103,26 +100,19 @@ export function LovableSandpack({ bundle, readOnly, view = "split", onSaveFiles 
             )}
           </SandpackLayout>
 
-          {codeEditable && onSaveFiles && (
-            <SaveButton onSaveFiles={onSaveFiles} />
-          )}
+          {codeEditable && onSaveFiles && <SaveButton onSaveFiles={onSaveFiles} />}
         </SandpackProvider>
       </div>
     </div>
   );
 }
 
-/**
- * Floating save button. Reads the live Sandpack files, strips the auto-generated
- * `/index.tsx` shell, and persists the rest via the parent callback.
- */
 function SaveButton({ onSaveFiles }: { onSaveFiles: (files: Record<string, string>) => Promise<void> | void }) {
   const { sandpack } = useSandpack();
   const [busy, setBusy] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const lastSavedRef = useRef<string>("");
 
-  // Build a snapshot of the current user-visible files (exclude the wrapper /index.tsx).
   const currentSnapshot = useMemo(() => {
     const out: Record<string, string> = {};
     for (const [path, file] of Object.entries(sandpack.files)) {
@@ -147,7 +137,6 @@ function SaveButton({ onSaveFiles }: { onSaveFiles: (files: Record<string, strin
     }
   };
 
-  // Initialize the saved baseline once after first render
   useEffect(() => {
     if (!lastSavedRef.current) {
       lastSavedRef.current = JSON.stringify(currentSnapshot);

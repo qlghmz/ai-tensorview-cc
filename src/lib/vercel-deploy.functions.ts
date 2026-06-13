@@ -89,7 +89,7 @@ export const deleteVercelToken = createServerFn({ method: "POST" })
 const deploySchema = z.object({
   projectId: z.string().uuid(),
   html: z.string().min(20).max(5_000_000),
-  // 项目里可选的 api/*.ts 文件（path → 源码），由前端从 LovableBundle 抽出
+  // 项目里可选的 api/*.ts 文件（path → 源码），由前端从 UiBundle 抽出
   apiFiles: z.record(z.string().max(200_000)).optional(),
 });
 

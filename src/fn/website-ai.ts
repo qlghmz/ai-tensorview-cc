@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { getAIConfig } from "@/lib/ai-config";
-import { beginWebsiteGeneration, generateSegmentedLovableBundle, persistGenerationResult } from "@/lib/ai-generate-shared";
+import { beginWebsiteGeneration, generateSegmentedUiBundle, persistGenerationResult } from "@/lib/ai-generate-shared";
 
 const inputSchema = z.object({
   projectId: z.string().uuid(),
@@ -26,9 +26,9 @@ export const generateWebsite = createServerFn({ method: "POST" })
     const begun = await beginWebsiteGeneration(supabase, userId, data.projectId, data.prompt);
     if (!begun.ok) throw new Error("项目未找到");
 
-    let generated: Awaited<ReturnType<typeof generateSegmentedLovableBundle>>;
+    let generated: Awaited<ReturnType<typeof generateSegmentedUiBundle>>;
     try {
-      generated = await generateSegmentedLovableBundle(cfg, data.prompt, begun.messages);
+      generated = await generateSegmentedUiBundle(cfg, data.prompt, begun.messages);
     } catch (err) {
       console.error("AI fetch failed", err);
       throw new Error("无法连接 AI 服务，请稍后再试");

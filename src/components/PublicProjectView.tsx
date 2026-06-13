@@ -2,13 +2,13 @@ import { Link } from "@tanstack/react-router";
 import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { buildPublishedHtml } from "@/lib/publish-snapshot";
-import type { LovableBundle } from "@/lib/lovable-bundle";
+import type { UiBundle } from "@/lib/ui-bundle";
 
 export type PublicViewState =
   | { kind: "loading" }
   | { kind: "notfound" }
   | { kind: "snapshot"; name: string; html: string }
-  | { kind: "sandpack"; name: string; bundle: LovableBundle }
+  | { kind: "sandpack"; name: string; bundle: UiBundle }
   | { kind: "html"; name: string; html: string };
 
 /**

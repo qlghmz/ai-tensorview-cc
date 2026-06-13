@@ -10,7 +10,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 //
 // 配置:
 //   1. 在爱发电后台开启 webhook，回调地址填本路由完整 URL
-//   2. 把后台的 token 设置为 Lovable 项目的 AFDIAN_TOKEN secret
+//   2. 把后台的 token 设置为项目的 AFDIAN_TOKEN secret
 
 function md5(s: string) {
   return createHash("md5").update(s, "utf8").digest("hex");

@@ -1,12 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/integrations/supabase/types";
 import {
-  extractLovableFence,
+  extractUiBundleFence,
   patchReactImports,
-  lovableBundleSchema,
-  tryParseLovableBundle,
-  type LovableBundle,
-} from "@/lib/lovable-bundle";
+  uiBundleSchema,
+  tryParseUiBundle,
+  type UiBundle,
+} from "@/lib/ui-bundle";
 import { chatCompletionNonStream, type AIProviderConfig } from "@/lib/ai-config";
 import {
   detectBackendNeeds,
@@ -15,14 +15,14 @@ import {
   extractConfirmedOptions,
 } from "@/lib/backend-recipes";
 
-export const SYSTEM_PROMPT = `你是 Lovable 风格的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
+export const SYSTEM_PROMPT = `你是专业的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
 ## 输出格式（必须严格遵守）
 
 1. 先用一句中文（≤30 字）说明你准备生成 / 修改哪些页面。
-2. 然后**只输出一个** Markdown 代码块，语言标记必须是 **lovable**，内容为**合法 JSON**（不要夹杂注释、不要有尾逗号），结构如下：
+2. 然后**只输出一个** Markdown 代码块，语言标记必须是 **uibundle**，内容为**合法 JSON**（不要夹杂注释、不要有尾逗号），结构如下：
 
-\`\`\`lovable
+\`\`\`uibundle
 {
   "routes": [
     { "path": "/", "label": "首页" },
@@ -77,9 +77,9 @@ export default async function handler(req: Request): Promise<Response> {
 - 单文件 ≤ 80 行；不写 secret，需要 key 的地方用 \`process.env.XXX\` 占位并在注释里说明
 - 若用户没明确要求后端，**不要**输出 \`/api/*\`，免得多余
 
-每次回复**只包含一个** \`\`\`lovable\`\`\` 代码块，不要输出第二个代码块。`;
+每次回复**只包含一个** \`\`\`uibundle\`\`\` 代码块，不要输出第二个代码块。`;
 
-function summarizeSandpackForContext(bundle: LovableBundle, maxPerFile = 1200): string {
+function summarizeSandpackForContext(bundle: UiBundle, maxPerFile = 1200): string {
   const lines: string[] = [];
   lines.push("routes: " + JSON.stringify(bundle.routes));
   for (const [path, code] of Object.entries(bundle.files)) {
@@ -131,7 +131,7 @@ export async function beginWebsiteGeneration(
 
   const sandpackRow = project.preview_sandpack;
   if (sandpackRow != null && typeof sandpackRow === "object") {
-    const parsedDb = lovableBundleSchema.safeParse(sandpackRow);
+    const parsedDb = uiBundleSchema.safeParse(sandpackRow);
     if (parsedDb.success) {
       messages.push({
         role: "system",
@@ -142,7 +142,7 @@ export async function beginWebsiteGeneration(
     messages.push({
       role: "system",
       content:
-        "（历史）该项目曾使用单页 HTML 预览；请按 Lovable JSON 规范生成新的 React 多文件项目替换之。旧 HTML 参考：\n```html\n" +
+        "（历史）该项目曾使用单页 HTML 预览；请按 UI bundle JSON 规范生成新的 React 多文件项目替换之。旧 HTML 参考：\n```html\n" +
         project.preview_html.slice(0, 8000) +
         "\n```",
     });
@@ -151,7 +151,7 @@ export async function beginWebsiteGeneration(
   for (const m of history ?? []) {
     const content =
       m.role === "assistant"
-        ? m.content.replace(/```lovable[\s\S]*?```/gi, "（生成了一版 React 项目 JSON）")
+        ? m.content.replace(/```(?:uibundle|lovable)[\s\S]*?```/gi, "（生成了一版 React 项目 JSON）")
         : m.content;
     messages.push({ role: m.role, content });
   }
@@ -160,27 +160,27 @@ export async function beginWebsiteGeneration(
   return { ok: true, messages, projectId };
 }
 
-/** 检测 ```lovable 代码块是否被截断（缺少闭合 ``` 或 JSON 大括号未闭合）。 */
+/** 检测 uibundle 代码块是否被截断（缺少闭合 ``` 或 JSON 大括号未闭合）。 */
 export function isReplyTruncated(reply: string): boolean {
-  const open = reply.match(/```lovable\s*\n/i);
+  const open = reply.match(/```(?:uibundle|lovable)\s*\n/i);
   if (!open) return false;
   const after = reply.slice((open.index ?? 0) + open[0].length);
   if (!/```/.test(after)) return true; // 没有闭合
   return false;
 }
 
-function parseBundleFromText(text: string): LovableBundle | null {
+function parseBundleFromText(text: string): UiBundle | null {
   const trimmed = text.trim();
-  const direct = tryParseLovableBundle(trimmed);
+  const direct = tryParseUiBundle(trimmed);
   if (direct) return direct;
   const first = trimmed.indexOf("{");
   const last = trimmed.lastIndexOf("}");
-  if (first >= 0 && last > first) return tryParseLovableBundle(trimmed.slice(first, last + 1));
+  if (first >= 0 && last > first) return tryParseUiBundle(trimmed.slice(first, last + 1));
   return null;
 }
 
-export function parseLovableBundleFromReply(reply: string): LovableBundle | null {
-  const fenced = extractLovableFence(reply);
+export function parseUiBundleFromReply(reply: string): UiBundle | null {
+  const fenced = extractUiBundleFence(reply);
   return (fenced ? parseBundleFromText(fenced) : null) ?? parseBundleFromText(reply);
 }
 
@@ -419,7 +419,7 @@ tr:last-child td{border-bottom:0}
 @media(max-width:720px){.topbar{padding:12px 16px}.brand,.logo{font-size:16px}nav a,nav button{padding:7px 10px;font-size:13px}.pagehead,.hero{padding-left:18px;padding-right:18px}.pagehead{padding-top:32px}.hero{padding-top:44px}.hero h1{font-size:32px}.pagehead h1{font-size:26px}.grid,.cards,.products,.features{padding-left:16px;padding-right:16px;gap:14px}.panel{margin:0 16px 36px;padding:28px 22px}.sitefoot .cols{grid-template-columns:1fr 1fr;gap:24px}.listcard{width:calc(100% - 32px)}.tablecard{width:calc(100% - 32px)}}`;
 }
 
-function deterministicBundle(prompt: string): LovableBundle {
+function deterministicBundle(prompt: string): UiBundle {
   const isTravel = /飞猪|旅行|旅游|酒店|机票/.test(prompt);
   const isShop = /淘宝|电商|商城|购物/.test(prompt);
   const title = isTravel ? "飞猪旅行" : isShop ? "淘宝精选" : "智能生成站点";
@@ -438,7 +438,7 @@ function deterministicBundle(prompt: string): LovableBundle {
   };
 }
 
-export async function completeTruncatedLovableReply(
+export async function completeTruncatedUiReply(
   cfg: AIProviderConfig,
   messages: Array<{ role: string; content: string }>,
   partialReply: string,
@@ -448,7 +448,7 @@ export async function completeTruncatedLovableReply(
   let finishReason: string | undefined = "length";
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-    if (parseLovableBundleFromReply(reply)) {
+    if (parseUiBundleFromReply(reply)) {
       return { reply, finishReason: "stop", attempts: attempt - 1 };
     }
     if (finishReason !== "length" && !isReplyTruncated(reply)) break;
@@ -461,7 +461,7 @@ export async function completeTruncatedLovableReply(
         {
           role: "user",
           content:
-            "继续上一次输出：不要重写、不要解释、不要从头开始，只从被截断的位置继续补完同一个 ```lovable JSON 代码块，直到 JSON 和代码块都闭合。",
+            "继续上一次输出：不要重写、不要解释、不要从头开始，只从被截断的位置继续补完同一个 ```uibundle JSON 代码块，直到 JSON 和代码块都闭合。",
         },
       ],
       temperature: 0.2,
@@ -481,12 +481,12 @@ export async function completeTruncatedLovableReply(
   return { reply, finishReason, attempts: maxAttempts };
 }
 
-export async function repairLovableReplyToBundle(
+export async function repairUiReplyToBundle(
   cfg: AIProviderConfig,
   originalPrompt: string,
   brokenReply: string,
-): Promise<{ reply: string; bundle: LovableBundle | null }> {
-  const repairPrompt = `把下面被截断/格式错误的网页生成结果修复成一个可运行的 Lovable JSON。只输出 JSON，不要 Markdown，不要解释。用户需求：${originalPrompt}\n\n坏结果：\n${brokenReply.slice(0, 24000)}`;
+): Promise<{ reply: string; bundle: UiBundle | null }> {
+  const repairPrompt = `把下面被截断/格式错误的网页生成结果修复成一个可运行的 UI bundle JSON。只输出 JSON，不要 Markdown，不要解释。用户需求：${originalPrompt}\n\n坏结果：\n${brokenReply.slice(0, 24000)}`;
   const res = await chatCompletionNonStream(cfg, {
     model: cfg.model,
     messages: [
@@ -500,8 +500,8 @@ export async function repairLovableReplyToBundle(
     | { choices?: Array<{ message?: { content?: string } }> }
     | null;
   const content = json?.choices?.[0]?.message?.content ?? "";
-  const bundle = parseLovableBundleFromReply(content);
-  return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`lovable\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
+  const bundle = parseUiBundleFromReply(content);
+  return { reply: content ? `已修复并生成可预览网页。\n\n\`\`\`uibundle\n${JSON.stringify(bundle ?? parseBundleFromText(content), null, 2)}\n\`\`\`` : brokenReply, bundle };
 }
 
 function buildAppShell(routes: PlannedRoute[], theme: PreviewTheme, brand: string): string {
@@ -566,7 +566,7 @@ async function generateOnePage(
   context: string,
   backendHint = "",
 ): Promise<string> {
-  const sys = `你是 Lovable / Vercel / Linear / Stripe 级别的资深前端设计师 + React 工程师。你只输出**一个 React 函数组件**的完整 .tsx 源码（默认导出），不要 Markdown，不要解释，不要 import './styles.css'，不要 import 路由库（路由由外层 App 处理）。可以 import React、useState/useEffect 等。`;
+  const sys = `你是 Vercel / Linear / Stripe 级别的资深前端设计师 + React 工程师。你只输出**一个 React 函数组件**的完整 .tsx 源码（默认导出），不要 Markdown，不要解释，不要 import './styles.css'，不要 import 路由库（路由由外层 App 处理）。可以 import React、useState/useEffect 等。`;
   const user = `为「${brand}」生成单个页面组件：${route.label}（${route.path}）。
 
 页面意图：${route.brief}
@@ -619,11 +619,11 @@ ${backendHint}
   return code;
 }
 
-export async function generateSegmentedLovableBundle(
+export async function generateSegmentedUiBundle(
   cfg: AIProviderConfig,
   prompt: string,
   messages?: Array<{ role: string; content: string }>,
-): Promise<{ reply: string; bundle: LovableBundle | null; finishReason: string }> {
+): Promise<{ reply: string; bundle: UiBundle | null; finishReason: string }> {
   const context = compactGenerationContext(messages);
 
   // ===== Plan-first：检测后端能力，未确认就先抛 plan 卡片 =====
@@ -682,13 +682,13 @@ export async function generateSegmentedLovableBundle(
     files[`/pages/Page${i}.tsx`] = pageCodes[i];
   });
 
-  const bundle = lovableBundleSchema.safeParse({
+  const bundle = uiBundleSchema.safeParse({
     routes: routes.map(({ path, label }) => ({ path, label })),
     files,
   });
   if (!bundle.success) return { reply: "", bundle: null, finishReason: "bundle_invalid" };
   return {
-    reply: `已生成可预览网页（${routes.length} 页，每页独立生成以提升质量）。\n\n\`\`\`lovable\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
+    reply: `已生成可预览网页（${routes.length} 页，每页独立生成以提升质量）。\n\n\`\`\`uibundle\n${JSON.stringify(bundle.data, null, 2)}\n\`\`\``,
     bundle: { ...bundle.data, files: patchReactImports(bundle.data.files) },
     finishReason: "segmented_parallel",
   };
@@ -702,7 +702,7 @@ export async function persistGenerationResult(
   _fallbackPrompt?: string,
   finishReason?: string,
 ) {
-  let bundle = parseLovableBundleFromReply(reply);
+  let bundle = parseUiBundleFromReply(reply);
   if (!bundle && _fallbackPrompt && finishReason === "force_fallback") bundle = deterministicBundle(_fallbackPrompt);
   if (bundle) bundle = { ...bundle, files: patchReactImports(bundle.files) };
 

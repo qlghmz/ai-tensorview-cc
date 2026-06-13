@@ -1,7 +1,7 @@
 // Client-side helpers for pushing project code to Gitee / GitHub.
 // Both APIs allow CORS from browsers when using a Personal Access Token.
 
-import type { LovableBundle } from "./lovable-bundle";
+import type { UiBundle } from "./ui-bundle";
 
 export type Provider = "gitee" | "github";
 
@@ -13,9 +13,9 @@ export interface PushResult {
   filesPushed: number;
 }
 
-// Extract the actual user-authored files out of a LovableBundle.
+// Extract the actual user-authored files out of a UiBundle.
 // We exclude the synthetic /index.tsx wrapper (it's an internal sandpack entry).
-export function bundleToFiles(bundle: LovableBundle): Record<string, string> {
+export function bundleToFiles(bundle: UiBundle): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [path, value] of Object.entries(bundle.files)) {
     if (path === "/index.tsx") continue;
@@ -28,7 +28,7 @@ export function bundleToFiles(bundle: LovableBundle): Record<string, string> {
   if (!out["package.json"]) {
     out["package.json"] = JSON.stringify(
       {
-        name: "lovable-export",
+        name: "tensorview-export",
         private: true,
         version: "0.1.0",
         type: "module",
@@ -52,7 +52,7 @@ export function bundleToFiles(bundle: LovableBundle): Record<string, string> {
     );
   }
   if (!out["README.md"]) {
-    out["README.md"] = "# Exported from Lovable Clone\n\nRun `npm install && npm run dev` to start.\n";
+    out["README.md"] = "# Exported from TensorView\n\nRun `npm install && npm run dev` to start.\n";
   }
   return out;
 }
@@ -94,7 +94,7 @@ async function giteeCreateRepo(token: string, name: string, isPrivate: boolean):
       name,
       private: isPrivate,
       auto_init: true, // create initial commit so we have a default branch
-      description: "Pushed from Lovable Clone",
+      description: "Pushed from TensorView",
     }),
   });
   if (!res.ok && res.status !== 422) {
@@ -216,7 +216,7 @@ async function ghCreateRepo(token: string, name: string, isPrivate: boolean): Pr
       name,
       private: isPrivate,
       auto_init: true,
-      description: "Pushed from Lovable Clone",
+      description: "Pushed from TensorView",
     }),
   });
   if (!res.ok && res.status !== 422) {

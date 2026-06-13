@@ -1,8 +1,4 @@
-// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
-// or the app will break with duplicate plugins:
-//   - tanstackStart, viteReact, tailwindcss, tsConfigPaths, cloudflare (build-only),
-//     componentTagger (dev-only), VITE_* env injection, @ path alias, React/TanStack dedupe,
-//     error logger plugins, and sandbox detection (port/host/strictPort).
+// @lovable.dev/vite-tanstack-config bundles TanStack Start + Vite plugins — do NOT add duplicates manually
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv, type PluginOption } from "vite";
 import path from "node:path";
@@ -19,7 +15,7 @@ function serverEnvPlugin(): PluginOption {
 }
 
 export default defineConfig({
-  // 本地自托管 Cloudflare 部署需开启 nitro（Lovable 沙箱内会自动启用）
+  // Self-hosted Cloudflare deploy requires nitro
   nitro: true,
   vite: {
     plugins: [serverEnvPlugin(), sandpackSsrStubPlugin()],

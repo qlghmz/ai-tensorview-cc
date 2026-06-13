@@ -26,20 +26,20 @@ import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as ApiPublicIndexnowRouteImport } from './routes/api/public/indexnow'
 import { Route as ApiPublicAfdianRouteImport } from './routes/api/public/afdian'
+import { Route as ApiEmailSuppressionRouteImport } from './routes/api/email/suppression'
 import { Route as ApiAiStreamRouteImport } from './routes/api.ai.stream'
 import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin.users'
 import { Route as AdminAdminProjectsRouteImport } from './routes/_admin.admin.projects'
 import { Route as AdminAdminOrdersRouteImport } from './routes/_admin.admin.orders'
 import { Route as AdminAdminCreditsRouteImport } from './routes/_admin.admin.credits'
 import { Route as AdminAdminCouponsRouteImport } from './routes/_admin.admin.coupons'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as ApiEmailTransactionalSendRouteImport } from './routes/api/email/transactional/send'
+import { Route as ApiEmailTransactionalPreviewRouteImport } from './routes/api/email/transactional/preview'
+import { Route as ApiEmailQueueProcessRouteImport } from './routes/api/email/queue/process'
+import { Route as ApiEmailAuthWebhookRouteImport } from './routes/api/email/auth/webhook'
+import { Route as ApiEmailAuthPreviewRouteImport } from './routes/api/email/auth/preview'
 
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
@@ -125,11 +125,6 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => AdminRoute,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicIndexnowRoute = ApiPublicIndexnowRouteImport.update({
   id: '/api/public/indexnow',
   path: '/api/public/indexnow',
@@ -138,6 +133,11 @@ const ApiPublicIndexnowRoute = ApiPublicIndexnowRouteImport.update({
 const ApiPublicAfdianRoute = ApiPublicAfdianRouteImport.update({
   id: '/api/public/afdian',
   path: '/api/public/afdian',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmailSuppressionRoute = ApiEmailSuppressionRouteImport.update({
+  id: '/api/email/suppression',
+  path: '/api/email/suppression',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAiStreamRoute = ApiAiStreamRouteImport.update({
@@ -170,32 +170,31 @@ const AdminAdminCouponsRoute = AdminAdminCouponsRouteImport.update({
   path: '/admin/coupons',
   getParentRoute: () => AdminRoute,
 } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
+const ApiEmailTransactionalSendRoute =
+  ApiEmailTransactionalSendRouteImport.update({
+    id: '/api/email/transactional/send',
+    path: '/api/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
+const ApiEmailTransactionalPreviewRoute =
+  ApiEmailTransactionalPreviewRouteImport.update({
+    id: '/api/email/transactional/preview',
+    path: '/api/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
+const ApiEmailQueueProcessRoute = ApiEmailQueueProcessRouteImport.update({
+  id: '/api/email/queue/process',
+  path: '/api/email/queue/process',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
+const ApiEmailAuthWebhookRoute = ApiEmailAuthWebhookRouteImport.update({
+  id: '/api/email/auth/webhook',
+  path: '/api/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiEmailAuthPreviewRoute = ApiEmailAuthPreviewRouteImport.update({
+  id: '/api/email/auth/preview',
+  path: '/api/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -221,15 +220,15 @@ export interface FileRoutesByFullPath {
   '/admin/projects': typeof AdminAdminProjectsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin/': typeof AdminAdminIndexRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
+  '/api/email/queue/process': typeof ApiEmailQueueProcessRoute
+  '/api/email/transactional/preview': typeof ApiEmailTransactionalPreviewRoute
+  '/api/email/transactional/send': typeof ApiEmailTransactionalSendRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -253,15 +252,15 @@ export interface FileRoutesByTo {
   '/admin/projects': typeof AdminAdminProjectsRoute
   '/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/admin': typeof AdminAdminIndexRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
+  '/api/email/queue/process': typeof ApiEmailQueueProcessRoute
+  '/api/email/transactional/preview': typeof ApiEmailTransactionalPreviewRoute
+  '/api/email/transactional/send': typeof ApiEmailTransactionalSendRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -287,15 +286,15 @@ export interface FileRoutesById {
   '/_admin/admin/projects': typeof AdminAdminProjectsRoute
   '/_admin/admin/users': typeof AdminAdminUsersRoute
   '/api/ai/stream': typeof ApiAiStreamRoute
+  '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
-  '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
-  '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
-  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
+  '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
+  '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
+  '/api/email/queue/process': typeof ApiEmailQueueProcessRoute
+  '/api/email/transactional/preview': typeof ApiEmailTransactionalPreviewRoute
+  '/api/email/transactional/send': typeof ApiEmailTransactionalSendRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -321,15 +320,15 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/users'
     | '/api/ai/stream'
+    | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
-    | '/lovable/email/suppression'
     | '/admin/'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
-    | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
+    | '/api/email/auth/preview'
+    | '/api/email/auth/webhook'
+    | '/api/email/queue/process'
+    | '/api/email/transactional/preview'
+    | '/api/email/transactional/send'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -353,15 +352,15 @@ export interface FileRouteTypes {
     | '/admin/projects'
     | '/admin/users'
     | '/api/ai/stream'
+    | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
-    | '/lovable/email/suppression'
     | '/admin'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
-    | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
+    | '/api/email/auth/preview'
+    | '/api/email/auth/webhook'
+    | '/api/email/queue/process'
+    | '/api/email/transactional/preview'
+    | '/api/email/transactional/send'
   id:
     | '__root__'
     | '/'
@@ -386,15 +385,15 @@ export interface FileRouteTypes {
     | '/_admin/admin/projects'
     | '/_admin/admin/users'
     | '/api/ai/stream'
+    | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
-    | '/lovable/email/suppression'
     | '/_admin/admin/'
-    | '/lovable/email/auth/preview'
-    | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
-    | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
+    | '/api/email/auth/preview'
+    | '/api/email/auth/webhook'
+    | '/api/email/queue/process'
+    | '/api/email/transactional/preview'
+    | '/api/email/transactional/send'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -414,14 +413,14 @@ export interface RootRouteChildren {
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
   SSlugRoute: typeof SSlugRoute
   ApiAiStreamRoute: typeof ApiAiStreamRoute
+  ApiEmailSuppressionRoute: typeof ApiEmailSuppressionRoute
   ApiPublicAfdianRoute: typeof ApiPublicAfdianRoute
   ApiPublicIndexnowRoute: typeof ApiPublicIndexnowRoute
-  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
-  LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
-  LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
-  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
-  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
+  ApiEmailAuthPreviewRoute: typeof ApiEmailAuthPreviewRoute
+  ApiEmailAuthWebhookRoute: typeof ApiEmailAuthWebhookRoute
+  ApiEmailQueueProcessRoute: typeof ApiEmailQueueProcessRoute
+  ApiEmailTransactionalPreviewRoute: typeof ApiEmailTransactionalPreviewRoute
+  ApiEmailTransactionalSendRoute: typeof ApiEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -545,13 +544,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/indexnow': {
       id: '/api/public/indexnow'
       path: '/api/public/indexnow'
@@ -564,6 +556,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/afdian'
       fullPath: '/api/public/afdian'
       preLoaderRoute: typeof ApiPublicAfdianRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/email/suppression': {
+      id: '/api/email/suppression'
+      path: '/api/email/suppression'
+      fullPath: '/api/email/suppression'
+      preLoaderRoute: typeof ApiEmailSuppressionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/ai/stream': {
@@ -608,39 +607,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminCouponsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
+    '/api/email/transactional/send': {
+      id: '/api/email/transactional/send'
+      path: '/api/email/transactional/send'
+      fullPath: '/api/email/transactional/send'
+      preLoaderRoute: typeof ApiEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/api/email/transactional/preview': {
+      id: '/api/email/transactional/preview'
+      path: '/api/email/transactional/preview'
+      fullPath: '/api/email/transactional/preview'
+      preLoaderRoute: typeof ApiEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+    '/api/email/queue/process': {
+      id: '/api/email/queue/process'
+      path: '/api/email/queue/process'
+      fullPath: '/api/email/queue/process'
+      preLoaderRoute: typeof ApiEmailQueueProcessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+    '/api/email/auth/webhook': {
+      id: '/api/email/auth/webhook'
+      path: '/api/email/auth/webhook'
+      fullPath: '/api/email/auth/webhook'
+      preLoaderRoute: typeof ApiEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/api/email/auth/preview': {
+      id: '/api/email/auth/preview'
+      path: '/api/email/auth/preview'
+      fullPath: '/api/email/auth/preview'
+      preLoaderRoute: typeof ApiEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -693,14 +692,14 @@ const rootRouteChildren: RootRouteChildren = {
   ProjectProjectIdRoute: ProjectProjectIdRoute,
   SSlugRoute: SSlugRoute,
   ApiAiStreamRoute: ApiAiStreamRoute,
+  ApiEmailSuppressionRoute: ApiEmailSuppressionRoute,
   ApiPublicAfdianRoute: ApiPublicAfdianRoute,
   ApiPublicIndexnowRoute: ApiPublicIndexnowRoute,
-  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
-  LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
-  LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
-  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
-  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
+  ApiEmailAuthPreviewRoute: ApiEmailAuthPreviewRoute,
+  ApiEmailAuthWebhookRoute: ApiEmailAuthWebhookRoute,
+  ApiEmailQueueProcessRoute: ApiEmailQueueProcessRoute,
+  ApiEmailTransactionalPreviewRoute: ApiEmailTransactionalPreviewRoute,
+  ApiEmailTransactionalSendRoute: ApiEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

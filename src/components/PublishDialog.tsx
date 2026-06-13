@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Loader2, Check, Copy, Globe, Sparkles, ExternalLink, Rocket } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import type { LovableBundle } from "@/lib/lovable-bundle";
+import type { UiBundle } from "@/lib/ui-bundle";
 import { buildPublishedHtml } from "@/lib/publish-snapshot";
 import { publishToEdgeOne } from "@/lib/edgeone-deploy.functions";
 import { useT, useI18n } from "@/lib/i18n";
@@ -15,7 +15,7 @@ interface Props {
   projectName: string;
   isPublic: boolean;
   publicSlug: string | null;
-  bundle: LovableBundle | null;
+  bundle: UiBundle | null;
   /** 是否已经把页面快照写入数据库（编译过一次） */
   hasSnapshot: boolean;
   onChange: (next: {
@@ -48,64 +48,64 @@ export function PublishDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[60] grid place-items-center bg-black/60 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[60] grid place-items-center bg-black/50 backdrop-blur-md p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md glass rounded-2xl p-5 shadow-[var(--shadow-card)]"
+        className="w-full max-w-lg overflow-hidden rounded-3xl border border-border/60 bg-card shadow-[var(--shadow-card)]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2">
-          <span className="grid h-8 w-8 place-items-center rounded-lg btn-brand">
-            <Rocket className="h-4 w-4" />
-          </span>
-          <div className="flex-1">
-            <div className="text-sm font-semibold">{t("publish.title")}</div>
-            <div className="text-[11px] text-muted-foreground">{t("publish.sub")}</div>
+        <div className="relative px-6 pt-6 pb-5 border-b border-border/40" style={{ background: "var(--gradient-glow)" }}>
+          <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />
+          <div className="relative flex items-start gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-2xl btn-brand shadow-[var(--shadow-glow)] shrink-0">
+              <Rocket className="h-5 w-5" />
+            </span>
+            <div className="flex-1 min-w-0 pt-0.5">
+              <div className="text-base font-semibold">{t("publish.title")}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{t("publish.sub")}</div>
+              <div className="text-[11px] text-muted-foreground/80 mt-1 truncate">{projectName}</div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg glass px-2 py-1 text-xs text-muted-foreground hover:text-foreground shrink-0"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted/30 p-1 text-xs">
-          {(["edgeone", "vercel"] as Tab[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={`rounded-md py-1.5 transition ${
-                tab === k
-                  ? "btn-brand font-medium"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t(k === "edgeone" ? "publish.tab.edgeone" : "publish.tab.vercel")}
-            </button>
-          ))}
-        </div>
+        <div className="p-5">
+          <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/40 p-1 text-xs">
+            {(["edgeone", "vercel"] as Tab[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTab(k)}
+                className={`rounded-lg py-2 transition ${
+                  tab === k ? "btn-brand font-medium shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t(k === "edgeone" ? "publish.tab.edgeone" : "publish.tab.vercel")}
+              </button>
+            ))}
+          </div>
 
-        <div className="mt-4">
-          {tab === "edgeone" ? (
-            <EdgeOnePanel
-              projectId={projectId}
-              projectName={projectName}
-              publicSlug={publicSlug}
-              bundle={bundle}
-              publishedUrl={publishedUrl ?? null}
-              onChange={onChange}
-            />
-          ) : (
-            <VercelDeployPanel
-              projectId={projectId}
-              projectName={projectName}
-              bundle={bundle}
-            />
-          )}
-        </div>
-
-        <div className="mt-4 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-lg glass px-3 py-1.5 text-xs">
-            {t("publish.done")}
-          </button>
+          <div className="mt-5">
+            {tab === "edgeone" ? (
+              <EdgeOnePanel
+                projectId={projectId}
+                projectName={projectName}
+                publicSlug={publicSlug}
+                bundle={bundle}
+                publishedUrl={publishedUrl ?? null}
+                onChange={onChange}
+              />
+            ) : (
+              <VercelDeployPanel projectId={projectId} projectName={projectName} bundle={bundle} />
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -125,7 +125,7 @@ function EdgeOnePanel({
   projectId: string;
   projectName: string;
   publicSlug: string | null;
-  bundle: LovableBundle | null;
+  bundle: UiBundle | null;
   publishedUrl: string | null;
   onChange: Props["onChange"];
 }) {
@@ -221,7 +221,7 @@ function EdgeOnePanel({
             <Globe className="h-3 w-3 text-brand" />
             {t("publish.edgeone.label")}
           </label>
-          <div className="mt-1 flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5 rounded-xl border border-border/50 bg-background/80 px-3 py-2">
             <input
               readOnly
               value={currentUrl}
@@ -257,7 +257,7 @@ function EdgeOnePanel({
             <Globe className="h-3 w-3 text-brand" />
             {t("publish.edgeone.slugLabel")}
           </label>
-          <div className="mt-1 flex items-center gap-1 rounded-lg bg-muted/30 px-2 py-1.5">
+          <div className="mt-1.5 flex items-center gap-1.5 rounded-xl border border-border/50 bg-background/80 px-3 py-2">
             <input
               readOnly
               value={slugUrl}
@@ -288,7 +288,7 @@ function EdgeOnePanel({
         type="button"
         onClick={deploy}
         disabled={busy || !bundle}
-        className="w-full rounded-lg btn-brand py-2.5 text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+        className="w-full rounded-xl btn-brand py-3 text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2 shadow-[var(--shadow-glow)]"
       >
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
         {busy
