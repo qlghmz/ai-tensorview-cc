@@ -1,7 +1,19 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "tanstack-start-app",
+  "name": "ai-tensorview-cc",
   "compatibility_date": "2025-09-24",
   "compatibility_flags": ["nodejs_compat"],
   "main": "@tanstack/react-start/server-entry",
+  "workers_dev": true,
+  "env": {
+    "staging": {
+      "name": "ai-tensorview-staging",
+      "workers_dev": true
+    },
+    "production": {
+      "name": "ai-tensorview-cc",
+      "workers_dev": true,
+      "routes": [{ "pattern": "your-domain.com", "custom_domain": true }]
+    }
+  }
 }

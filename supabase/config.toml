@@ -1,1 +1,13 @@
-project_id = "hbbepipaykhtlzyouzra"
+# Link your project: npx supabase link --project-ref YOUR_REF
+# Then set auth URLs (see docs/DEPLOYMENT.md) and run: npx supabase config push
+
+project_id = "YOUR_SUPABASE_PROJECT_REF"
+
+[auth]
+site_url = "http://localhost:8080"
+additional_redirect_urls = [
+  "http://localhost:8080/**",
+  "http://localhost:3000/**",
+  "https://your-domain.com/**",
+  "https://staging.your-domain.com/**",
+]

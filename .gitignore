@@ -16,17 +16,31 @@ dist-ssr
 .nitro
 *.local
 .env.local
+.env.staging.local
+.env.production.local
+.env.development.local
 
 # Vercel
 .vercel
 
-# Local deploy keys (never commit)
+# Local deploy keys and migration data (never commit)
 github_deploy_ed25519
 github_deploy_ed25519.pub
+.supabase-db-password.txt
+.supabase-staging-db-password.txt
+.cloudflare-dns-token
+data/csv/
 
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars
+
+# Lovable / Cursor local artifacts
+.lovable/
+.cursor/
+
+# Supabase CLI temp
+supabase/.temp/
 
 # Editor directories and files
 .vscode/*
@@ -38,4 +52,3 @@ github_deploy_ed25519.pub
 *.njsproj
 *.sln
 *.sw?
-node_modules
