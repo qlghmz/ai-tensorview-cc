@@ -79,7 +79,10 @@ function Dashboard() {
         .insert({ user_id: user.id, name, description: prompt })
         .select()
         .single();
-      if (error || !data) throw error ?? new Error(t("dash.toast.createFail"));
+      if (error || !data) {
+        const msg = error?.message || error?.code || t("dash.toast.createFail");
+        throw new Error(msg);
+      }
       const initial = applyStyleToPrompt(prompt.trim(), styleId);
       navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial } });
     } catch (err) {

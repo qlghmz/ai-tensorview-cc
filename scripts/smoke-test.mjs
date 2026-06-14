@@ -72,6 +72,35 @@ if (error) {
 }
 
 if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.log("\n>> Supabase: create project (authenticated user)");
+  const testEmail2 = `smoke-proj+${Date.now()}@example.com`;
+  const sb2 = createClient(url, anon);
+  const { data: su, error: se } = await sb2.auth.signUp({
+    email: testEmail2,
+    password: "SmokeTest123!",
+  });
+  if (se || !su.user) {
+    console.log("  FAIL signup for project test:", se?.message);
+    failed++;
+  } else {
+    const { data: proj, error: pe } = await sb2
+      .from("projects")
+      .insert({ user_id: su.user.id, name: "smoke test", description: "smoke" })
+      .select("id")
+      .single();
+    if (pe) {
+      console.log("  FAIL project create:", pe.message, pe.code);
+      failed++;
+    } else {
+      console.log("  OK project create:", proj.id?.slice(0, 8));
+      const service = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
+      await service.from("projects").delete().eq("id", proj.id);
+      await service.auth.admin.deleteUser(su.user.id);
+    }
+  }
+}
+
+if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
   console.log("\n>> Supabase REST (projects count)");
   const service = createClient(url, process.env.SUPABASE_SERVICE_ROLE_KEY);
   const { count, error: ce } = await service.from("projects").select("*", { count: "exact", head: true });

@@ -60,7 +60,11 @@ function TemplatesPage() {
         .insert({ user_id: user.id, name: t.name, description: prompt })
         .select("id")
         .single();
-      if (error) throw error;
+      if (error) {
+        const msg = error?.message || error?.code || "创建失败";
+        throw new Error(msg);
+      }
+      if (!data?.id) throw new Error("创建失败");
       navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial: prompt } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "创建失败");
