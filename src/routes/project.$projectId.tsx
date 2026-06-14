@@ -14,7 +14,8 @@ import {
   MessageSquare,
   GitBranch,
   History,
-  Archive,
+  Users,
+  Database,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -29,9 +30,14 @@ import { PublishDialog } from "@/components/PublishDialog";
 import { CreditBadge } from "@/components/CreditBadge";
 import { MobileGenerationHint } from "@/components/MobileWarningBanner";
 import { VersionHistoryPanel } from "@/components/VersionHistoryPanel";
+import { VersionDiffPanel } from "@/components/VersionDiffPanel";
 import { StylePicker } from "@/components/StylePicker";
+import { ReferenceInputBar } from "@/components/ReferenceInputBar";
+import { ExportMenu } from "@/components/ExportMenu";
+import { ShareTeamDialog } from "@/components/ShareTeamDialog";
+import { SchemaHelperPanel } from "@/components/SchemaHelperPanel";
 import { applyStyleToPrompt } from "@/lib/ui-styles";
-import { downloadViteProjectZip } from "@/lib/download-zip";
+import type { ReferenceInput } from "@/lib/reference-vision";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -122,7 +128,10 @@ function ProjectEditor() {
   const [publishOpen, setPublishOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [schemaOpen, setSchemaOpen] = useState(false);
   const [styleId, setStyleId] = useState<string | null>(null);
+  const [reference, setReference] = useState<ReferenceInput>({});
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -203,6 +212,7 @@ function ProjectEditor() {
     const prompt = applyStyleToPrompt(rawPrompt, styleId);
     setInput("");
     setSending(true);
+    const refSnapshot = { ...reference };
 
     const tempUserId = "tmp-" + Date.now();
     setMessages((prev) => [
@@ -240,7 +250,12 @@ function ProjectEditor() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ projectId, prompt }),
+        body: JSON.stringify({
+          projectId,
+          prompt,
+          referenceImage: refSnapshot.imageDataUrl,
+          figmaUrl: refSnapshot.figmaUrl,
+        }),
         signal: ac.signal,
       });
 
@@ -331,6 +346,7 @@ function ProjectEditor() {
       await reloadThread();
       if (gotFinalSandpack) toast.success("已更新预览");
       else if (!finalReply) toast.message("生成结束，但未得到可用的页面，请补充要求重试");
+      setReference({});
     } catch (err) {
       const msg = err instanceof Error ? err.message : "生成失败";
       toast.error(msg);
@@ -555,6 +571,7 @@ function ProjectEditor() {
           </button>
         </div>
         <MobileGenerationHint />
+        <ReferenceInputBar value={reference} onChange={setReference} disabled={sending} />
         <div className="px-2 pb-1">
           <StylePicker value={styleId} onChange={setStyleId} compact />
         </div>
@@ -615,6 +632,14 @@ function ProjectEditor() {
           </button>
           <button
             type="button"
+            onClick={() => setShareOpen(true)}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
+            title="团队协作"
+          >
+            <Users className="h-3 w-3" /> 协作
+          </button>
+          <button
+            type="button"
             onClick={() => setVersionsOpen(true)}
             disabled={!uiBundle}
             className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
@@ -622,14 +647,14 @@ function ProjectEditor() {
           >
             <History className="h-3 w-3" /> 历史
           </button>
+          {uiBundle && <ExportMenu bundle={uiBundle} projectName={project.name} />}
           <button
             type="button"
-            onClick={() => uiBundle && downloadViteProjectZip(uiBundle, project.name)}
-            disabled={!uiBundle}
-            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
-            title="导出 Vite 项目 zip"
+            onClick={() => setSchemaOpen(true)}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition flex items-center gap-1.5"
+            title="数据库表结构建议"
           >
-            <Archive className="h-3 w-3" /> 导出
+            <Database className="h-3 w-3" /> Schema
           </button>
           <button
             type="button"
@@ -735,6 +760,12 @@ function ProjectEditor() {
         projectName={project.name}
         bundle={uiBundle}
         userId={session?.user.id ?? ""}
+        onPulled={(bundle) => {
+          setProject((p) =>
+            p ? { ...p, preview_sandpack: bundle as unknown as Json, preview_html: null } : p,
+          );
+          toast.success("已从仓库拉取并合并");
+        }}
       />
 
       <PublishDialog
@@ -754,11 +785,20 @@ function ProjectEditor() {
         projectId={projectId}
         open={versionsOpen}
         onClose={() => setVersionsOpen(false)}
+        currentBundle={uiBundle}
         onRestored={(bundle) => {
           setProject((p) =>
             p ? { ...p, preview_sandpack: bundle as unknown as Json, preview_html: null } : p,
           );
         }}
+      />
+
+      <ShareTeamDialog open={shareOpen} onClose={() => setShareOpen(false)} projectId={projectId} />
+
+      <SchemaHelperPanel
+        open={schemaOpen}
+        onClose={() => setSchemaOpen(false)}
+        prompt={[...messages].reverse().find((m) => m.role === "user")?.content ?? input}
       />
     </div>
   );

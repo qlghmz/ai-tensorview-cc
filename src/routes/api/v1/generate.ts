@@ -18,6 +18,8 @@ const bodySchema = z.object({
   projectId: z.string().uuid(),
   prompt: z.string().min(1).max(4000),
   styleId: z.string().optional(),
+  referenceImage: z.string().max(6_000_000).optional(),
+  figmaUrl: z.string().url().max(500).optional(),
 });
 
 type AuthCtx = { supabase: SupabaseClient<Database>; userId: string };
@@ -67,10 +69,15 @@ export const Route = createFileRoute("/api/v1/generate")({
         }
 
         const prompt = applyStyleToPrompt(parsed.data.prompt, parsed.data.styleId);
-        const begun = await beginWebsiteGeneration(supabase, userId, parsed.data.projectId, prompt);
+        const begun = await beginWebsiteGeneration(supabase, userId, parsed.data.projectId, prompt, {
+          reference: {
+            imageDataUrl: parsed.data.referenceImage,
+            figmaUrl: parsed.data.figmaUrl,
+          },
+        });
         if (!begun.ok) return begun.response;
 
-        const generated = await generateSegmentedUiBundle(cfg, prompt, begun.messages);
+        const generated = await generateSegmentedUiBundle(cfg, begun.effectivePrompt, begun.messages);
         const saved = await persistGenerationResult(
           supabase,
           userId,

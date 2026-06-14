@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tensorview.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "tensorview.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "tensorview.name" . }}
+    spec:
+      containers:
+        - name: app
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SUPABASE_URL
+              value: {{ .Values.env.SUPABASE_URL | quote }}
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "tensorview.fullname" . }}-secrets
+                  key: serviceRoleKey
+        {{- if .Values.ollama.enabled }}
+        - name: ollama
+          image: {{ .Values.ollama.image }}
+          ports:
+            - containerPort: 11434
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tensorview.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8080
+  selector:
+    app: {{ include "tensorview.name" . }}

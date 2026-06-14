@@ -8,6 +8,8 @@ import { consumeCredits } from "@/lib/credits-server";
 const bodySchema = z.object({
   projectId: z.string().uuid(),
   prompt: z.string().min(1).max(4000),
+  referenceImage: z.string().max(6_000_000).optional(),
+  figmaUrl: z.string().url().max(500).optional(),
 });
 
 export const Route = createFileRoute("/api/ai/stream")({
@@ -38,7 +40,12 @@ export const Route = createFileRoute("/api/ai/stream")({
           return Response.json({ error: "积分不足，请充值或等待每日补给", balance: balance ?? 0 }, { status: 402 });
         }
 
-        const begun = await beginWebsiteGeneration(supabase, userId, parsed.data.projectId, parsed.data.prompt);
+        const begun = await beginWebsiteGeneration(supabase, userId, parsed.data.projectId, parsed.data.prompt, {
+          reference: {
+            imageDataUrl: parsed.data.referenceImage,
+            figmaUrl: parsed.data.figmaUrl,
+          },
+        });
         if (!begun.ok) return begun.response;
 
         const encoder = new TextEncoder();
@@ -50,7 +57,7 @@ export const Route = createFileRoute("/api/ai/stream")({
               send({ type: "ready" });
               send({ type: "status", message: "正在分段生成页面结构…" });
               heartbeat = setInterval(() => send({ type: "status", message: "AI 仍在生成，请稍候…" }), 15_000);
-              const generated = await generateSegmentedUiBundle(cfg, parsed.data.prompt, begun.messages);
+              const generated = await generateSegmentedUiBundle(cfg, begun.effectivePrompt, begun.messages);
 
               let reply = generated.reply;
               let finishReason = generated.finishReason;

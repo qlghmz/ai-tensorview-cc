@@ -295,7 +295,109 @@ export async function pushToGithub(opts: {
   };
 }
 
+export async function pullFromGithub(opts: {
+  token: string;
+  owner: string;
+  repo: string;
+  branch?: string;
+}): Promise<{ files: Record<string, string>; branch: string }> {
+  const branch = opts.branch ?? "main";
+  const res = await ghReq(opts.token, `/repos/${opts.owner}/${opts.repo}/git/trees/${branch}?recursive=1`);
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`GitHub 拉取失败 (${res.status}): ${t}`);
+  }
+  const tree = (await res.json()) as { tree?: Array<{ path: string; type: string; sha?: string }> };
+  const blobs = (tree.tree ?? []).filter(
+    (n) => n.type === "blob" && /\.(tsx?|css|json|md|html)$/.test(n.path) && !n.path.startsWith("node_modules/"),
+  );
+  const files: Record<string, string> = {};
+  for (const node of blobs.slice(0, 80)) {
+    const fr = await ghReq(
+      opts.token,
+      `/repos/${opts.owner}/${opts.repo}/contents/${encodeURIComponent(node.path)}?ref=${encodeURIComponent(branch)}`,
+    );
+    if (!fr.ok) continue;
+    const data = (await fr.json()) as { content?: string; encoding?: string };
+    if (data.encoding === "base64" && data.content) {
+      files[node.path] = base64ToUtf8(data.content.replace(/\n/g, ""));
+    }
+  }
+  return { files, branch };
+}
+
+export async function pullFromGitee(opts: {
+  token: string;
+  owner: string;
+  repo: string;
+  branch?: string;
+}): Promise<{ files: Record<string, string>; branch: string }> {
+  const branch = opts.branch ?? "master";
+  const res = await giteeReq(opts.token, `/repos/${opts.owner}/${opts.repo}/contents/?ref=${encodeURIComponent(branch)}`);
+  if (!res.ok) {
+    const t = await res.text();
+    throw new Error(`Gitee 拉取失败 (${res.status}): ${t}`);
+  }
+  const top = (await res.json()) as Array<{ name: string; path: string; type: string; download_url?: string }>;
+  const files: Record<string, string> = {};
+
+  async function walk(path: string) {
+    const r = await giteeReq(opts.token, `/repos/${opts.owner}/${opts.repo}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(branch)}`);
+    if (!r.ok) return;
+    const items = (await r.json()) as Array<{ name: string; path: string; type: string; content?: string; encoding?: string }>;
+    if (!Array.isArray(items)) {
+      const single = items as unknown as { content?: string; encoding?: string; path: string };
+      if (single.encoding === "base64" && single.content) {
+        files[single.path] = base64ToUtf8(single.content.replace(/\n/g, ""));
+      }
+      return;
+    }
+    for (const item of items) {
+      if (item.type === "file" && /\.(tsx?|css|json|md|html)$/.test(item.name)) {
+        const fr = await giteeReq(
+          opts.token,
+          `/repos/${opts.owner}/${opts.repo}/contents/${encodeURIComponent(item.path)}?ref=${encodeURIComponent(branch)}`,
+        );
+        if (!fr.ok) continue;
+        const data = (await fr.json()) as { content?: string; encoding?: string };
+        if (data.encoding === "base64" && data.content) {
+          files[item.path] = base64ToUtf8(data.content.replace(/\n/g, ""));
+        }
+      } else if (item.type === "dir" && !item.name.startsWith(".")) {
+        await walk(item.path);
+      }
+    }
+  }
+
+  for (const item of top) {
+    if (item.type === "file" && /\.(tsx?|css|json|md|html)$/.test(item.name)) {
+      const fr = await giteeReq(
+        opts.token,
+        `/repos/${opts.owner}/${opts.repo}/contents/${encodeURIComponent(item.path)}?ref=${encodeURIComponent(branch)}`,
+      );
+      if (!fr.ok) continue;
+      const data = (await fr.json()) as { content?: string; encoding?: string };
+      if (data.encoding === "base64" && data.content) {
+        files[item.path] = base64ToUtf8(data.content.replace(/\n/g, ""));
+      }
+    } else if (item.type === "dir" && !item.name.startsWith(".")) {
+      await walk(item.path);
+    }
+  }
+  return { files, branch };
+}
+
 // =============== utils ===============
+function base64ToUtf8(b64: string): string {
+  if (typeof window === "undefined") {
+    return Buffer.from(b64, "base64").toString("utf-8");
+  }
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
 function utf8ToBase64(s: string): string {
   if (typeof window === "undefined") {
     return Buffer.from(s, "utf-8").toString("base64");

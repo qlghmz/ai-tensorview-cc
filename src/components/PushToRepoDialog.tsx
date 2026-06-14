@@ -6,10 +6,13 @@ import {
   bundleToFiles,
   giteeGetUser,
   githubGetUser,
+  pullFromGitee,
+  pullFromGithub,
   pushToGitee,
   pushToGithub,
   type Provider,
 } from "@/lib/code-hosting";
+import { filterRelevantRepoFiles, mergeBundleWithRepoFiles } from "@/lib/repo-to-bundle";
 import type { UiBundle } from "@/lib/ui-bundle";
 
 interface Props {
@@ -19,6 +22,7 @@ interface Props {
   projectName: string;
   bundle: UiBundle | null;
   userId: string;
+  onPulled?: (bundle: UiBundle) => void;
 }
 
 interface IntegrationRow {
@@ -63,6 +67,7 @@ export function PushToRepoDialog({
   projectName,
   bundle,
   userId,
+  onPulled,
 }: Props) {
   const [provider, setProvider] = useState<Provider>("gitee");
   const [token, setToken] = useState("");
@@ -80,6 +85,7 @@ export function PushToRepoDialog({
   const [commitMsg, setCommitMsg] = useState("Update from TensorView");
   const [loading, setLoading] = useState(false);
   const [pushing, setPushing] = useState(false);
+  const [pulling, setPulling] = useState(false);
   const [lastResult, setLastResult] = useState<{ url: string; count: number } | null>(null);
 
   // Load existing tokens + repo mapping
@@ -183,6 +189,43 @@ export function PushToRepoDialog({
       toast.success("已解绑");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const doPull = async () => {
+    const tokenRow = savedTokens[provider];
+    const repo = savedRepos[provider];
+    if (!tokenRow || !repo) {
+      toast.error("请先推送并绑定仓库");
+      return;
+    }
+    setPulling(true);
+    try {
+      const fn = provider === "gitee" ? pullFromGitee : pullFromGithub;
+      const result = await fn({
+        token: tokenRow.access_token,
+        owner: repo.repo_owner,
+        repo: repo.repo_name,
+        branch: repo.default_branch,
+      });
+      const relevant = filterRelevantRepoFiles(result.files);
+      const merged = mergeBundleWithRepoFiles(bundle, relevant);
+      if (!merged) {
+        toast.error("仓库中未找到可识别的 UI 文件");
+        return;
+      }
+      await supabase.from("projects").update({
+        preview_sandpack: merged as unknown as import("@/integrations/supabase/types").Json,
+        preview_html: null,
+        updated_at: new Date().toISOString(),
+      }).eq("id", projectId);
+      await supabase.from("project_repos").update({ last_pulled_at: new Date().toISOString() }).eq("project_id", projectId).eq("provider", provider);
+      onPulled?.(merged);
+      toast.success(`已拉取 ${Object.keys(relevant).length} 个文件`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "拉取失败");
+    } finally {
+      setPulling(false);
     }
   };
 
@@ -402,15 +445,25 @@ export function PushToRepoDialog({
               <button
                 type="button"
                 onClick={() => onOpenChange(false)}
-                disabled={pushing}
+                disabled={pushing || pulling}
                 className="flex-1 rounded-full glass px-3 py-2 text-xs"
               >
                 关闭
               </button>
+              {savedRepo && (
+                <button
+                  type="button"
+                  onClick={doPull}
+                  disabled={pulling || pushing}
+                  className="flex-1 rounded-full glass px-3 py-2 text-xs disabled:opacity-50"
+                >
+                  {pulling ? "拉取中…" : "从仓库拉取"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={doPush}
-                disabled={pushing || !bundle}
+                disabled={pushing || pulling || !bundle}
                 className="flex-1 rounded-full btn-brand px-3 py-2 text-xs disabled:opacity-50 inline-flex items-center justify-center gap-1.5"
               >
                 {pushing ? (

@@ -1,0 +1,9 @@
+# TensorView Builder — minimal Helm chart (skeleton)
+# Usage: helm install tensorview ./helm/tensorview -f values.yaml
+
+apiVersion: v2
+name: tensorview
+description: AI UI builder (Ollama sidecar optional)
+type: application
+version: 0.1.0
+appVersion: "0.3.0"

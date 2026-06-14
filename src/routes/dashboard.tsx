@@ -142,7 +142,12 @@ function Dashboard() {
           </div>
 
           <div className="mt-10">
-            <h2 className="text-lg font-semibold mb-3 text-center">{lang === "zh" ? "从模板开始" : "Start from template"}</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold">{lang === "zh" ? "从模板开始" : "Start from template"}</h2>
+              <Link to="/templates" className="text-sm text-brand hover:underline">
+                {lang === "zh" ? "模板市场 →" : "Marketplace →"}
+              </Link>
+            </div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {PROJECT_TEMPLATES.map((tpl) => (
                 <button

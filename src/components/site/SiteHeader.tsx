@@ -39,6 +39,7 @@ export function SiteHeader() {
           <a href="/#showcase" className="hover:text-foreground transition">{t("nav.showcase")}</a>
           <Link to="/pricing" className="hover:text-foreground transition">{t("nav.pricing")}</Link>
           <Link to="/gallery" className="hover:text-foreground transition">{lang === "zh" ? "作品展示" : "Gallery"}</Link>
+          <Link to="/templates" className="hover:text-foreground transition">{lang === "zh" ? "模板市场" : "Templates"}</Link>
           <Link to="/docs" className="hover:text-foreground transition">{t("nav.docs")}</Link>
         </nav>
 

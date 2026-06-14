@@ -1,5 +1,16 @@
 # Roadmap
 
+## Shipped (v0.3)
+
+- [x] Visual diff between versions
+- [x] Figma link + screenshot reference input (vision analysis)
+- [x] Team project sharing (members + read/edit share links)
+- [x] Template marketplace (`/templates` + community_templates)
+- [x] Next.js + Vue export options
+- [x] GitHub / Gitee pull sync (bidirectional with push)
+- [x] Supabase schema helper panel
+- [x] Helm chart skeleton for self-host
+
 ## Shipped (v0.2)
 
 - [x] Project version history + rollback
@@ -12,15 +23,12 @@
 
 ## Next
 
-- [ ] Visual diff between versions
-- [ ] Figma / screenshot reference input
-- [ ] Team project sharing (read-only links)
-- [ ] Template marketplace (community PRs)
-- [ ] Next.js export option
-- [ ] GitHub pull sync (bidirectional)
+- [ ] Real-time multi-user co-editing
+- [ ] Figma API deep import (layers → components)
+- [ ] Community template moderation UI
+- [ ] Plugin marketplace for Sandpack npm deps
 
 ## Ideas
 
-- Supabase visual schema helper for generated backends
-- Plugin system for Sandpack dependencies
-- Self-hosted one-click Helm chart
+- GitHub App OAuth (replace PAT)
+- Self-hosted one-click Terraform / Helm operator

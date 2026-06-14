@@ -15,6 +15,9 @@ import {
   extractConfirmedOptions,
 } from "@/lib/backend-recipes";
 import { saveProjectVersion } from "@/lib/project-versions";
+import type { ReferenceInput } from "@/lib/reference-vision";
+import { enrichPromptWithReferences } from "@/lib/reference-vision";
+import { canEditProject, getProjectAccess } from "@/lib/project-access";
 
 export const SYSTEM_PROMPT = `你是专业的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
@@ -95,23 +98,25 @@ export async function beginWebsiteGeneration(
   userId: string,
   projectId: string,
   prompt: string,
+  options?: { reference?: ReferenceInput },
 ): Promise<
   | {
       ok: true;
       messages: Array<{ role: string; content: string }>;
       projectId: string;
+      effectivePrompt: string;
     }
   | { ok: false; response: Response }
 > {
-  const { data: project, error: pErr } = await supabase
-    .from("projects")
-    .select("id, preview_html, preview_sandpack")
-    .eq("id", projectId)
-    .eq("user_id", userId)
-    .single();
+  const access = await getProjectAccess(supabase, userId, projectId);
+  if (!canEditProject(access.access) || !access.project) {
+    return { ok: false, response: new Response("项目未找到或无权编辑", { status: 404 }) };
+  }
+  const project = access.project;
 
-  if (pErr || !project) {
-    return { ok: false, response: new Response("项目未找到", { status: 404 }) };
+  let effectivePrompt = prompt;
+  if (options?.reference?.imageDataUrl || options?.reference?.figmaUrl) {
+    effectivePrompt = await enrichPromptWithReferences(prompt, options.reference);
   }
 
   const { data: history } = await supabase
@@ -125,7 +130,7 @@ export async function beginWebsiteGeneration(
     project_id: projectId,
     user_id: userId,
     role: "user",
-    content: prompt,
+    content: options?.reference?.imageDataUrl ? `[截图参考]\n${prompt}` : prompt,
   });
 
   const messages: Array<{ role: string; content: string }> = [{ role: "system", content: SYSTEM_PROMPT }];
@@ -156,9 +161,9 @@ export async function beginWebsiteGeneration(
         : m.content;
     messages.push({ role: m.role, content });
   }
-  messages.push({ role: "user", content: prompt });
+  messages.push({ role: "user", content: effectivePrompt });
 
-  return { ok: true, messages, projectId };
+  return { ok: true, messages, projectId, effectivePrompt };
 }
 
 /** 检测 uibundle 代码块是否被截断（缺少闭合 ``` 或 JSON 大括号未闭合）。 */

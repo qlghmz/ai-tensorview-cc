@@ -339,6 +339,7 @@ export type Database = {
           created_at: string
           default_branch: string
           id: string
+          last_pulled_at: string | null
           last_pushed_at: string | null
           project_id: string
           provider: string
@@ -351,6 +352,7 @@ export type Database = {
           created_at?: string
           default_branch?: string
           id?: string
+          last_pulled_at?: string | null
           last_pushed_at?: string | null
           project_id: string
           provider: string
@@ -363,6 +365,7 @@ export type Database = {
           created_at?: string
           default_branch?: string
           id?: string
+          last_pulled_at?: string | null
           last_pushed_at?: string | null
           project_id?: string
           provider?: string
@@ -399,6 +402,150 @@ export type Database = {
           preview_sandpack?: Json | null
           project_id?: string
           prompt_summary?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_members: {
+        Row: {
+          created_at: string
+          invited_by: string | null
+          project_id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          invited_by?: string | null
+          project_id: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          invited_by?: string | null
+          project_id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_share_links: {
+        Row: {
+          created_at: string
+          created_by: string
+          expires_at: string | null
+          id: string
+          project_id: string
+          role: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          expires_at?: string | null
+          id?: string
+          project_id: string
+          role?: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          expires_at?: string | null
+          id?: string
+          project_id?: string
+          role?: string
+          token?: string
+        }
+        Relationships: []
+      }
+      community_templates: {
+        Row: {
+          author: string | null
+          created_at: string
+          description: string
+          description_en: string | null
+          emoji: string
+          featured: boolean
+          id: string
+          name: string
+          name_en: string | null
+          prompt: string
+          slug: string
+          source_url: string | null
+          style_id: string
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          description?: string
+          description_en?: string | null
+          emoji?: string
+          featured?: boolean
+          id?: string
+          name: string
+          name_en?: string | null
+          prompt: string
+          slug: string
+          source_url?: string | null
+          style_id?: string
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          description?: string
+          description_en?: string | null
+          emoji?: string
+          featured?: boolean
+          id?: string
+          name?: string
+          name_en?: string | null
+          prompt?: string
+          slug?: string
+          source_url?: string | null
+          style_id?: string
+        }
+        Relationships: []
+      }
+      teams: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          role: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          role?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          role?: string
+          team_id?: string
           user_id?: string
         }
         Relationships: []

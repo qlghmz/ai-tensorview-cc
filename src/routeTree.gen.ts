@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
+import { Route as TemplatesRouteImport } from './routes/templates'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -21,6 +22,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ShareTokenRouteImport } from './routes/share.$token'
 import { Route as SSlugRouteImport } from './routes/s.$slug'
 import { Route as ProjectProjectIdRouteImport } from './routes/project.$projectId'
 import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
@@ -46,6 +48,11 @@ import { Route as ApiEmailAuthPreviewRouteImport } from './routes/api/email/auth
 const UnsubscribeRoute = UnsubscribeRouteImport.update({
   id: '/unsubscribe',
   path: '/unsubscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TemplatesRoute = TemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -100,6 +107,11 @@ const AdminRoute = AdminRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareTokenRoute = ShareTokenRouteImport.update({
+  id: '/share/$token',
+  path: '/share/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SSlugRoute = SSlugRouteImport.update({
@@ -221,12 +233,14 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/templates': typeof TemplatesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/share/$token': typeof ShareTokenRoute
   '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/credits': typeof AdminAdminCreditsRoute
   '/admin/orders': typeof AdminAdminOrdersRoute
@@ -255,12 +269,14 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/templates': typeof TemplatesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/share/$token': typeof ShareTokenRoute
   '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/credits': typeof AdminAdminCreditsRoute
   '/admin/orders': typeof AdminAdminOrdersRoute
@@ -291,12 +307,14 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/templates': typeof TemplatesRoute
   '/unsubscribe': typeof UnsubscribeRoute
   '/docs/$slug': typeof DocsSlugRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/p/$projectId': typeof PProjectIdRoute
   '/project/$projectId': typeof ProjectProjectIdRoute
   '/s/$slug': typeof SSlugRoute
+  '/share/$token': typeof ShareTokenRoute
   '/_admin/admin/coupons': typeof AdminAdminCouponsRoute
   '/_admin/admin/credits': typeof AdminAdminCreditsRoute
   '/_admin/admin/orders': typeof AdminAdminOrdersRoute
@@ -327,12 +345,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sitemap.xml'
+    | '/templates'
     | '/unsubscribe'
     | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/share/$token'
     | '/admin/coupons'
     | '/admin/credits'
     | '/admin/orders'
@@ -361,12 +381,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sitemap.xml'
+    | '/templates'
     | '/unsubscribe'
     | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/share/$token'
     | '/admin/coupons'
     | '/admin/credits'
     | '/admin/orders'
@@ -396,12 +418,14 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/settings'
     | '/sitemap.xml'
+    | '/templates'
     | '/unsubscribe'
     | '/docs/$slug'
     | '/email/unsubscribe'
     | '/p/$projectId'
     | '/project/$projectId'
     | '/s/$slug'
+    | '/share/$token'
     | '/_admin/admin/coupons'
     | '/_admin/admin/credits'
     | '/_admin/admin/orders'
@@ -432,11 +456,13 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TemplatesRoute: typeof TemplatesRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   PProjectIdRoute: typeof PProjectIdRoute
   ProjectProjectIdRoute: typeof ProjectProjectIdRoute
   SSlugRoute: typeof SSlugRoute
+  ShareTokenRoute: typeof ShareTokenRoute
   ApiAiStreamRoute: typeof ApiAiStreamRoute
   ApiEmailSuppressionRoute: typeof ApiEmailSuppressionRoute
   ApiPublicAfdianRoute: typeof ApiPublicAfdianRoute
@@ -456,6 +482,13 @@ declare module '@tanstack/react-router' {
       path: '/unsubscribe'
       fullPath: '/unsubscribe'
       preLoaderRoute: typeof UnsubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/templates': {
+      id: '/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof TemplatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -533,6 +566,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share/$token': {
+      id: '/share/$token'
+      path: '/share/$token'
+      fullPath: '/share/$token'
+      preLoaderRoute: typeof ShareTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$slug': {
@@ -727,11 +767,13 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TemplatesRoute: TemplatesRoute,
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   PProjectIdRoute: PProjectIdRoute,
   ProjectProjectIdRoute: ProjectProjectIdRoute,
   SSlugRoute: SSlugRoute,
+  ShareTokenRoute: ShareTokenRoute,
   ApiAiStreamRoute: ApiAiStreamRoute,
   ApiEmailSuppressionRoute: ApiEmailSuppressionRoute,
   ApiPublicAfdianRoute: ApiPublicAfdianRoute,
