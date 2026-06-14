@@ -72,6 +72,18 @@ export function getAIConfigChain(): AIProviderConfig[] {
     });
   }
 
+  const ollamaBase = process.env.OLLAMA_BASE_URL?.trim() || process.env.OLLAMA_HOST?.trim();
+  if (ollamaBase) {
+    chain.push({
+      provider: "ollama",
+      apiKey: process.env.OLLAMA_API_KEY?.trim() || "ollama",
+      baseUrl: ollamaBase.replace(/\/$/, "").endsWith("/v1")
+        ? ollamaBase.replace(/\/$/, "")
+        : `${ollamaBase.replace(/\/$/, "")}/v1`,
+      model: process.env.OLLAMA_MODEL?.trim() || "llama3.2",
+    });
+  }
+
   return chain;
 }
 

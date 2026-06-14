@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       coupon_codes: {
         Row: {
           batch: string | null
@@ -339,6 +369,36 @@ export type Database = {
           repo_name?: string
           repo_owner?: string
           repo_url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      project_versions: {
+        Row: {
+          created_at: string
+          id: string
+          label: string | null
+          preview_sandpack: Json | null
+          project_id: string
+          prompt_summary: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          preview_sandpack?: Json | null
+          project_id: string
+          prompt_summary?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string | null
+          preview_sandpack?: Json | null
+          project_id?: string
+          prompt_summary?: string | null
           user_id?: string
         }
         Relationships: []

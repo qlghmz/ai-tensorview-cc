@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { CreditsPanel } from "@/components/CreditsPanel";
 import { RedeemCouponPanel } from "@/components/RedeemCouponPanel";
+import { ApiKeysPanel } from "@/components/ApiKeysPanel";
 import { useI18n } from "@/lib/i18n";
 import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
@@ -132,6 +133,10 @@ function SettingsPage() {
           </section>
           <CreditsPanel />
           <RedeemCouponPanel />
+          <div className="mt-5">
+            <ApiKeysPanel />
+          </div>
+          <AiProvidersSection />
           <LanguageSection />
 
 
@@ -166,6 +171,29 @@ function SettingsPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+function AiProvidersSection() {
+  const { lang } = useI18n();
+  const zh = lang === "zh";
+  return (
+    <section className="glass rounded-3xl p-6 mt-5">
+      <div className="font-semibold mb-1">{zh ? "AI 模型配置" : "AI providers"}</div>
+      <p className="text-sm text-muted-foreground mb-3">
+        {zh
+          ? "在服务器环境变量中配置（.env.local / Cloudflare Secrets）。支持通义千问、Gemini、Ollama、OpenAI 兼容网关。"
+          : "Configure via server env (.env.local / Cloudflare Secrets): DashScope, Gemini, Ollama, OpenAI-compatible."}
+      </p>
+      <ul className="text-xs text-muted-foreground space-y-1 font-mono">
+        <li>DASHSCOPE_API_KEY / DASHSCOPE_MODEL</li>
+        <li>OLLAMA_BASE_URL=http://127.0.0.1:11434 + OLLAMA_MODEL</li>
+        <li>CUSTOM_AI_API_KEY / CUSTOM_AI_BASE_URL</li>
+      </ul>
+      <Link to="/docs/api" className="inline-block mt-3 text-sm text-brand hover:underline">
+        {zh ? "查看 API 文档 →" : "API docs →"}
+      </Link>
+    </section>
   );
 }
 

@@ -14,6 +14,7 @@ import {
   renderPlanMessage,
   extractConfirmedOptions,
 } from "@/lib/backend-recipes";
+import { saveProjectVersion } from "@/lib/project-versions";
 
 export const SYSTEM_PROMPT = `你是专业的「全栈 React 网页生成器」——用户用自然语言描述产品界面，你要输出**可运行的多文件 React + TypeScript 项目**（在 Sandpack 里实时预览）。
 
@@ -728,6 +729,8 @@ export async function persistGenerationResult(
   }
 
   if (bundle) {
+    await saveProjectVersion(supabase, userId, projectId, bundle, _fallbackPrompt);
+
     const { error: projectError } = await supabase
       .from("projects")
       .update({

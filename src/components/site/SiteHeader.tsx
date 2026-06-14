@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { CreditBadge } from "@/components/CreditBadge";
 import { LanguageToggle } from "@/components/LanguageToggle";
-import { useT } from "@/lib/i18n";
+import { useT, useI18n } from "@/lib/i18n";
 import { supabase } from "@/integrations/supabase/client";
 
 export function SiteHeader() {
   const { user } = useAuth();
   const t = useT();
+  const { lang } = useI18n();
   const [isAdmin, setIsAdmin] = useState(false);
   useNavigate();
 
@@ -37,6 +38,7 @@ export function SiteHeader() {
           <a href="/#features" className="hover:text-foreground transition">{t("nav.features")}</a>
           <a href="/#showcase" className="hover:text-foreground transition">{t("nav.showcase")}</a>
           <Link to="/pricing" className="hover:text-foreground transition">{t("nav.pricing")}</Link>
+          <Link to="/gallery" className="hover:text-foreground transition">{lang === "zh" ? "作品展示" : "Gallery"}</Link>
           <Link to="/docs" className="hover:text-foreground transition">{t("nav.docs")}</Link>
         </nav>
 

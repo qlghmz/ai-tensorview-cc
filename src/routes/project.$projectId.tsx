@@ -13,6 +13,8 @@ import {
   Check,
   MessageSquare,
   GitBranch,
+  History,
+  Archive,
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -26,6 +28,10 @@ import { PushToRepoDialog } from "@/components/PushToRepoDialog";
 import { PublishDialog } from "@/components/PublishDialog";
 import { CreditBadge } from "@/components/CreditBadge";
 import { MobileGenerationHint } from "@/components/MobileWarningBanner";
+import { VersionHistoryPanel } from "@/components/VersionHistoryPanel";
+import { StylePicker } from "@/components/StylePicker";
+import { applyStyleToPrompt } from "@/lib/ui-styles";
+import { downloadViteProjectZip } from "@/lib/download-zip";
 import { toast } from "sonner";
 
 const searchSchema = z.object({
@@ -115,6 +121,8 @@ function ProjectEditor() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [publishOpen, setPublishOpen] = useState(false);
   const [pushOpen, setPushOpen] = useState(false);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [styleId, setStyleId] = useState<string | null>(null);
   const [streamAssistId, setStreamAssistId] = useState<string | null>(null);
   const initialFiredRef = useRef(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -190,15 +198,16 @@ function ProjectEditor() {
   }, [project?.preview_sandpack, project?.preview_html, sending]);
 
   const send = async (text?: string) => {
-    const prompt = (text ?? input).trim();
-    if (!prompt || sending || !session) return;
+    const rawPrompt = (text ?? input).trim();
+    if (!rawPrompt || sending || !session) return;
+    const prompt = applyStyleToPrompt(rawPrompt, styleId);
     setInput("");
     setSending(true);
 
     const tempUserId = "tmp-" + Date.now();
     setMessages((prev) => [
       ...prev,
-      { id: tempUserId, role: "user", content: prompt, created_at: new Date().toISOString() },
+      { id: tempUserId, role: "user", content: rawPrompt, created_at: new Date().toISOString() },
     ]);
 
     const asstId = "tmp-asst-" + Date.now();
@@ -546,6 +555,9 @@ function ProjectEditor() {
           </button>
         </div>
         <MobileGenerationHint />
+        <div className="px-2 pb-1">
+          <StylePicker value={styleId} onChange={setStyleId} compact />
+        </div>
       </form>
 
     </aside>
@@ -603,11 +615,29 @@ function ProjectEditor() {
           </button>
           <button
             type="button"
+            onClick={() => setVersionsOpen(true)}
+            disabled={!uiBundle}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
+            title="版本历史"
+          >
+            <History className="h-3 w-3" /> 历史
+          </button>
+          <button
+            type="button"
+            onClick={() => uiBundle && downloadViteProjectZip(uiBundle, project.name)}
+            disabled={!uiBundle}
+            className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
+            title="导出 Vite 项目 zip"
+          >
+            <Archive className="h-3 w-3" /> 导出
+          </button>
+          <button
+            type="button"
             onClick={download}
             disabled={!canDownload}
             className="rounded-full glass px-3 py-1.5 text-xs hover:border-brand/40 transition disabled:opacity-40 flex items-center gap-1.5"
           >
-            <Download className="h-3 w-3" /> 下载
+            <Download className="h-3 w-3" /> JSON
           </button>
         </div>
 
@@ -718,6 +748,17 @@ function ProjectEditor() {
         hasSnapshot={project.has_snapshot}
         publishedUrl={project.published_url}
         onChange={updatePublishState}
+      />
+
+      <VersionHistoryPanel
+        projectId={projectId}
+        open={versionsOpen}
+        onClose={() => setVersionsOpen(false)}
+        onRestored={(bundle) => {
+          setProject((p) =>
+            p ? { ...p, preview_sandpack: bundle as unknown as Json, preview_html: null } : p,
+          );
+        }}
       />
     </div>
   );

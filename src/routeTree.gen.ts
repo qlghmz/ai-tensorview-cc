@@ -14,6 +14,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as GalleryRouteImport } from './routes/gallery'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -26,6 +27,7 @@ import { Route as PProjectIdRouteImport } from './routes/p.$projectId'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as DocsSlugRouteImport } from './routes/docs.$slug'
 import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin.index'
+import { Route as ApiV1GenerateRouteImport } from './routes/api/v1/generate'
 import { Route as ApiPublicIndexnowRouteImport } from './routes/api/public/indexnow'
 import { Route as ApiPublicAfdianRouteImport } from './routes/api/public/afdian'
 import { Route as ApiEmailSuppressionRouteImport } from './routes/api/email/suppression'
@@ -64,6 +66,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GalleryRoute = GalleryRouteImport.update({
+  id: '/gallery',
+  path: '/gallery',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -124,6 +131,11 @@ const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
   getParentRoute: () => AdminRoute,
+} as any)
+const ApiV1GenerateRoute = ApiV1GenerateRouteImport.update({
+  id: '/api/v1/generate',
+  path: '/api/v1/generate',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicIndexnowRoute = ApiPublicIndexnowRouteImport.update({
   id: '/api/public/indexnow',
@@ -204,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -223,6 +236,7 @@ export interface FileRoutesByFullPath {
   '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
+  '/api/v1/generate': typeof ApiV1GenerateRoute
   '/admin/': typeof AdminAdminIndexRoute
   '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
   '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
@@ -236,6 +250,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -255,6 +270,7 @@ export interface FileRoutesByTo {
   '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
+  '/api/v1/generate': typeof ApiV1GenerateRoute
   '/admin': typeof AdminAdminIndexRoute
   '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
   '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
@@ -270,6 +286,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRouteWithChildren
   '/forgot-password': typeof ForgotPasswordRoute
+  '/gallery': typeof GalleryRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/settings': typeof SettingsRoute
@@ -289,6 +306,7 @@ export interface FileRoutesById {
   '/api/email/suppression': typeof ApiEmailSuppressionRoute
   '/api/public/afdian': typeof ApiPublicAfdianRoute
   '/api/public/indexnow': typeof ApiPublicIndexnowRoute
+  '/api/v1/generate': typeof ApiV1GenerateRoute
   '/_admin/admin/': typeof AdminAdminIndexRoute
   '/api/email/auth/preview': typeof ApiEmailAuthPreviewRoute
   '/api/email/auth/webhook': typeof ApiEmailAuthWebhookRoute
@@ -304,6 +322,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/forgot-password'
+    | '/gallery'
     | '/pricing'
     | '/reset-password'
     | '/settings'
@@ -323,6 +342,7 @@ export interface FileRouteTypes {
     | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
+    | '/api/v1/generate'
     | '/admin/'
     | '/api/email/auth/preview'
     | '/api/email/auth/webhook'
@@ -336,6 +356,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/forgot-password'
+    | '/gallery'
     | '/pricing'
     | '/reset-password'
     | '/settings'
@@ -355,6 +376,7 @@ export interface FileRouteTypes {
     | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
+    | '/api/v1/generate'
     | '/admin'
     | '/api/email/auth/preview'
     | '/api/email/auth/webhook'
@@ -369,6 +391,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/forgot-password'
+    | '/gallery'
     | '/pricing'
     | '/reset-password'
     | '/settings'
@@ -388,6 +411,7 @@ export interface FileRouteTypes {
     | '/api/email/suppression'
     | '/api/public/afdian'
     | '/api/public/indexnow'
+    | '/api/v1/generate'
     | '/_admin/admin/'
     | '/api/email/auth/preview'
     | '/api/email/auth/webhook'
@@ -403,6 +427,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DocsRoute: typeof DocsRouteWithChildren
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GalleryRoute: typeof GalleryRoute
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SettingsRoute: typeof SettingsRoute
@@ -416,6 +441,7 @@ export interface RootRouteChildren {
   ApiEmailSuppressionRoute: typeof ApiEmailSuppressionRoute
   ApiPublicAfdianRoute: typeof ApiPublicAfdianRoute
   ApiPublicIndexnowRoute: typeof ApiPublicIndexnowRoute
+  ApiV1GenerateRoute: typeof ApiV1GenerateRoute
   ApiEmailAuthPreviewRoute: typeof ApiEmailAuthPreviewRoute
   ApiEmailAuthWebhookRoute: typeof ApiEmailAuthWebhookRoute
   ApiEmailQueueProcessRoute: typeof ApiEmailQueueProcessRoute
@@ -458,6 +484,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gallery': {
+      id: '/gallery'
+      path: '/gallery'
+      fullPath: '/gallery'
+      preLoaderRoute: typeof GalleryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -543,6 +576,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminAdminIndexRouteImport
       parentRoute: typeof AdminRoute
+    }
+    '/api/v1/generate': {
+      id: '/api/v1/generate'
+      path: '/api/v1/generate'
+      fullPath: '/api/v1/generate'
+      preLoaderRoute: typeof ApiV1GenerateRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/indexnow': {
       id: '/api/public/indexnow'
@@ -682,6 +722,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DocsRoute: DocsRouteWithChildren,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GalleryRoute: GalleryRoute,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SettingsRoute: SettingsRoute,
@@ -695,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiEmailSuppressionRoute: ApiEmailSuppressionRoute,
   ApiPublicAfdianRoute: ApiPublicAfdianRoute,
   ApiPublicIndexnowRoute: ApiPublicIndexnowRoute,
+  ApiV1GenerateRoute: ApiV1GenerateRoute,
   ApiEmailAuthPreviewRoute: ApiEmailAuthPreviewRoute,
   ApiEmailAuthWebhookRoute: ApiEmailAuthWebhookRoute,
   ApiEmailQueueProcessRoute: ApiEmailQueueProcessRoute,

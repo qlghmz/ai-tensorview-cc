@@ -11,6 +11,9 @@ import { pickLang, localizedMeta, localizedLinks } from "@/lib/seo-head";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { zhCN, enUS } from "date-fns/locale";
+import { StylePicker } from "@/components/StylePicker";
+import { PROJECT_TEMPLATES } from "@/lib/project-templates";
+import { applyStyleToPrompt } from "@/lib/ui-styles";
 
 const searchSchema = z.object({
   prompt: z.string().optional(),
@@ -48,6 +51,7 @@ function Dashboard() {
   const [prompt, setPrompt] = useState(search.prompt ?? "");
   const [creating, setCreating] = useState(false);
   const [renaming, setRenaming] = useState<Project | null>(null);
+  const [styleId, setStyleId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) navigate({ to: "/auth" });
@@ -76,7 +80,8 @@ function Dashboard() {
         .select()
         .single();
       if (error || !data) throw error ?? new Error(t("dash.toast.createFail"));
-      navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial: prompt } });
+      const initial = applyStyleToPrompt(prompt.trim(), styleId);
+      navigate({ to: "/project/$projectId", params: { projectId: data.id }, search: { initial } });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("dash.toast.createFail"));
     } finally {
@@ -130,6 +135,32 @@ function Dashboard() {
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
               </button>
+            </div>
+            <div className="mt-3 px-2">
+              <StylePicker value={styleId} onChange={setStyleId} lang={lang} compact />
+            </div>
+          </div>
+
+          <div className="mt-10">
+            <h2 className="text-lg font-semibold mb-3 text-center">{lang === "zh" ? "从模板开始" : "Start from template"}</h2>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {PROJECT_TEMPLATES.map((tpl) => (
+                <button
+                  key={tpl.id}
+                  type="button"
+                  onClick={() => {
+                    setPrompt(tpl.prompt);
+                    setStyleId(tpl.styleId);
+                  }}
+                  className="glass rounded-2xl p-4 text-left hover:border-brand/40 hover:shadow-[var(--shadow-soft)] transition"
+                >
+                  <div className="text-2xl">{tpl.emoji}</div>
+                  <div className="mt-2 font-semibold text-sm">{lang === "zh" ? tpl.name : tpl.nameEn}</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    {lang === "zh" ? tpl.description : tpl.descriptionEn}
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
